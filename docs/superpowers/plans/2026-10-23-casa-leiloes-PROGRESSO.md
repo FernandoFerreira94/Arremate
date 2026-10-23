@@ -1,6 +1,15 @@
 # Progresso — Casa de Leilões
 
-Atualizado em 23/10/2026. Tarefa 5 concluída no código e nos testes. As revisões independentes de auth, catálogo e carteira continuam abertas. Tarefa 6 é a próxima.
+Atualizado em 23/10/2026. Tarefa 6 concluída no código e nos testes. As revisões independentes de auth, catálogo, carteira e lance continuam abertas. Tarefa 7 é a próxima.
+
+## Tarefa 6 — concluída no local
+
+- Lance: `POST /api/lots/:id/bids`, só licitante, `Idempotency-Key` obrigatório. Resposta pública sem ID de usuário.
+- Transação única: lote `FOR UPDATE`, carteiras em ordem de ID, relógio do banco, decisão pura, lance + revisão + prazo + `RELEASE`/`RESERVE` + idempotência; testemunha avança depois do commit (falha → 503 `CONFIRMATION_PENDING`, lote bloqueado até `retryCheckpoint`).
+- Anti-sniping: menos de 120 s restantes → fim = aceite + 120 s.
+- Corridas testadas 20 vezes; invariantes de reserva/ledger/auditoria conferidas.
+- Stub 501 de lance da Tarefa 3 removido. Teste intermitente de `lots` com folga de 5 s no início (causa NÃO VERIFICADO).
+- Evidência: `docs/evidence/2026-10-23-tarefa-6.md`.
 
 ## Tarefa 5 — concluída no local
 
@@ -46,7 +55,7 @@ Atualizado em 23/10/2026. Tarefa 5 concluída no código e nos testes. As revis�
 
 ## Comandos (exit 0, Node v24.22.1)
 
-Tarefa 5: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (62), `npm run build`. Tarefa 4: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (41), `npm run build`. Tarefa 3: `npm test` (22), `npm run test:integration` (25), `npm run db:validate`. Vitest do front: 7 testes.
+Tarefa 6: `npm run lint`, `npm run typecheck`, `npm test` (51), `npm run test:integration` (74), `npm run build`. Tarefa 5: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (62), `npm run build`. Tarefa 4: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (41), `npm run build`. Tarefa 3: `npm test` (22), `npm run test:integration` (25), `npm run db:validate`. Vitest do front: 7 testes.
 
 `GET /api/health/live` e `GET /api/health/ready` em 127.0.0.1:4300 responderam 200. `GET /api/auth/csrf` pelo site em 3300 respondeu 200; login inválido respondeu 401.
 
@@ -54,7 +63,6 @@ Tarefa 5: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:in
 
 - Adicionar `AUDIT_HMAC_KEY` (hex, 32 bytes ou mais) ao arquivo de ambiente local; opcional `AUDIT_WITNESS_DIR` e `MEDIA_DIR`. Só Fernando edita esse arquivo.
 - Revisão independente de SSRF, imagem e publicação.
-- Corrida cancelamento × primeiro lance: Tarefa 6.
 
 - Revisão independente de autenticação, limite, cache e proxy.
 - Notion README não atualizado: o conector pede autenticação no Cursor desktop.
