@@ -1,6 +1,14 @@
 # Progresso — Casa de Leilões
 
-Atualizado em 23/10/2026. Tarefa 6 concluída no código e nos testes. As revisões independentes de auth, catálogo, carteira e lance continuam abertas. Tarefa 7 é a próxima.
+Atualizado em 23/10/2026. Tarefa 7 concluída no código e nos testes. As revisões independentes de auth, catálogo, carteira, lance e liquidação continuam abertas. Tarefa 8 é a próxima.
+
+## Tarefa 7 — concluída no local
+
+- Liquidação: runner a cada 1 s e varredura no startup; lote → carteiras em ordem de ID → relógio do banco; débito do vencedor, crédito do vendedor, ledger, settlement e recibo numa transação; vínculo selado na testemunha.
+- Lote não íntegro ou com confirmação pendente não liquida. Falha da testemunha depois do commit deixa INDETERMINATE até `retryCheckpoint`, sem duplicar.
+- Comprovante público `GET /api/receipts/:token` (token de 192 bits), validado pela auditoria a cada leitura; sem PII.
+- Listas: `GET /api/me/participations`, `GET /api/me/awards`, `GET /api/seller/summary`. `LotView.result` distingue CLOSED_PENDING, SETTLED e CLOSED_NO_BIDS.
+- Evidência: `docs/evidence/2026-10-23-tarefa-7.md`.
 
 ## Tarefa 6 — concluída no local
 
@@ -55,7 +63,7 @@ Atualizado em 23/10/2026. Tarefa 6 concluída no código e nos testes. As revis�
 
 ## Comandos (exit 0, Node v24.22.1)
 
-Tarefa 6: `npm run lint`, `npm run typecheck`, `npm test` (51), `npm run test:integration` (74), `npm run build`. Tarefa 5: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (62), `npm run build`. Tarefa 4: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (41), `npm run build`. Tarefa 3: `npm test` (22), `npm run test:integration` (25), `npm run db:validate`. Vitest do front: 7 testes.
+Tarefa 7: `npm run lint`, `npm run typecheck`, `npm test` (53), `npm run test:integration` (88), `npm run build`. Tarefa 6: `npm run lint`, `npm run typecheck`, `npm test` (51), `npm run test:integration` (74), `npm run build`. Tarefa 5: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (62), `npm run build`. Tarefa 4: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (41), `npm run build`. Tarefa 3: `npm test` (22), `npm run test:integration` (25), `npm run db:validate`. Vitest do front: 7 testes.
 
 `GET /api/health/live` e `GET /api/health/ready` em 127.0.0.1:4300 responderam 200. `GET /api/auth/csrf` pelo site em 3300 respondeu 200; login inválido respondeu 401.
 

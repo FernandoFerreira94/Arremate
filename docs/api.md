@@ -64,7 +64,7 @@ O papel `auction_app` faz SELECT/INSERT/UPDATE/DELETE. CREATE/ALTER ficam com o 
 | GET /api/seller/lots; GET /api/seller/summary | Leiloeiro autenticado |
 | GET /api/wallet; POST /api/wallet/deposits | Licitante, própria carteira |
 | POST /api/lots/:id/bids | Licitante |
-| GET /api/me/bids; GET /api/me/awards | Próprias participações e arremates |
+| GET /api/me/participations; GET /api/me/awards | Licitante: próprias participações e arremates (Tarefa 7; `me/bids` virou `me/participations`) |
 | GET /api/lots/:id/audit; GET /api/receipts/:publicToken | Público, sem PII |
 | GET /api/events?lotId= | SSE |
 | GET /api/health/live; GET /api/health/ready | Saúde, sem segredo |
@@ -144,3 +144,11 @@ Publicação: snapshot e imagem primeiro; depois uma transação grava lote e re
 Cancelamento: `SELECT ... FOR UPDATE` no lote. Outro dono ou lote inexistente: 404. Já cancelado, liquidado ou encerrado: 409 `LOTE_NAO_CANCELAVEL`. Com lance: 409 `LOTE_COM_LANCES`. Só muda `status`; `revision` fica igual e a auditoria continua íntegra. A corrida com o primeiro lance fecha na Tarefa 6, que usa o mesmo lock.
 
 Erros do provedor: 503 `PROVEDOR_INDISPONIVEL`, 502 `PROVEDOR_RESPOSTA_INVALIDA` ou `ORIGEM_RECUSADA`, 422 `LICENCA_RECUSADA` ou `IMAGEM_INVALIDA`, 404 `OBRA_NAO_ENCONTRADA`.
+
+## Liquidação e comprovante (Tarefa 7)
+
+- Runner a cada 1 s e no startup; sem auditoria configurada não liquida. Resultado em `LotView.result`: `OPEN`, `CLOSED_PENDING`, `SETTLED`, `CLOSED_NO_BIDS`, `CANCELLED`.
+- `GET /api/receipts/:token` → `PublicReceipt { code, simulated, valid, lotId, artwork { externalId, title, artist, credit, license, imageUrl }, winnerAlias, sellerAlias, amountCents, startsAt, endsAt, settledAt, audit { status, verifiedAt, message } }`. `valid` só com auditoria `INTACT`. Token `[A-Za-z0-9_-]{32}` (192 bits); outro formato ou inexistente → 404 `NAO_ENCONTRADO`. O token localiza o documento, não autentica.
+- `GET /api/me/participations?page=` → `{ items: [{ lotId, title, imageUrl, endsAt, myTopCents, currentCents, outcome, receiptToken }], page, pageSize: 20, total }`; `outcome`: `LEADING`, `OUTBID`, `PENDING`, `WON`, `LOST`, `CANCELLED`. `WON` só depois de liquidado.
+- `GET /api/me/awards?page=` → `{ items: [{ lotId, title, imageUrl, amountCents, settledAt, receiptToken }] , ... }`.
+- `GET /api/seller/summary` → `{ settledCreditCents, settled, closedNoBids, open, pending, cancelled }`; soma só créditos liquidados.
