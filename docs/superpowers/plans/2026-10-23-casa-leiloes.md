@@ -141,10 +141,10 @@ Nota 23/10/2026: feita sem cursor-agent. Smoke real do Met OK (busca 153 resulta
 
 **Consumes:** Actor, MoneyText, schema. **Produces:** `getWallet(actor: Actor): Promise<WalletView>`; `deposit(actor: Actor,amountCents: MoneyText,key: string): Promise<WalletView>`. WalletView contém totalCents/committedCents/availableCents strings e revisão; somente titular lê.
 
-- [ ] Escrever testes: depósito10000 aumenta total/disponível10000 e comprometido0; valor inválido e overflow não movem saldo; duas chamadas simultâneas com mesma chave creditam uma vez; chave/corpo diferente 409; carteira de terceiro/leiloeiro inacessível. Somatório do ledger reconcilia saldo.
-- [ ] Rodar vermelho. Implementar transação concreta no repository: lock carteira, idempotência/unicidade, teto somente da entrada/capacidade de armazenamento e lançamento de depósito simulado. Sem pagamento, saque ou gateway.
-- [ ] Rodar `npm run test:integration --workspace back-end -- --testPathPatterns="wallets|idempotency"`: verde com conexões PostgreSQL independentes. Verificar rollback por falha após ledger não deixa saldo parcial.
-- [ ] Review de autorização/atomicidade e evidência. Não marcar reserva/liberação testadas até tarefa 6.
+- [x] Escrever testes: depósito10000 aumenta total/disponível10000 e comprometido0; valor inválido e overflow não movem saldo; duas chamadas simultâneas com mesma chave creditam uma vez; chave/corpo diferente 409; carteira de terceiro/leiloeiro inacessível. Somatório do ledger reconcilia saldo.
+- [x] Rodar vermelho. Implementar transação concreta no repository: lock carteira, idempotência/unicidade, teto somente da entrada/capacidade de armazenamento e lançamento de depósito simulado. Sem pagamento, saque ou gateway.
+- [x] Rodar `npm run test:integration --workspace back-end -- --testPathPatterns="wallets|idempotency"`: verde com conexões PostgreSQL independentes. Verificar rollback por falha após ledger não deixa saldo parcial.
+- [x] Review de autorização/atomicidade e evidência (autoria própria; review independente segue aberto). Não marcar reserva/liberação testadas até tarefa 6.
 
 ## Tarefa 6 — Lance, reserva e anti-sniping sob concorrência
 

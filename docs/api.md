@@ -89,9 +89,20 @@ CSRF: o cookie guarda o segredo; o JSON traz HMAC-SHA-256 desse segredo (ou do t
 
 Limites na memória de uma instância: login 10/min/IP, mutação 60/min/ator, catálogo 30/min/ator, auditoria 30/min/IP, SSE 3 conexões. As tarefas 4 e 9 chamam `consume("catalog"|"audit")` e `tryAcquireSse` nas rotas que ainda não existem. 429 `LIMITE_EXCEDIDO`.
 
-`POST /api/wallet/deposits` e `POST /api/lots/:id/bids` exigem licitante. `POST /api/lots` e `POST /api/lots/:id/cancel` exigem leiloeiro. Papel errado: 403. Cancelar lote de outro: 404, sem dono no corpo. `userId`/`role` no corpo: 400. Depósito e lance ainda respondem 501 depois da autorização e não gravam (tarefas 5 e 6). Criação e cancelamento de lote são reais desde a Tarefa 4.
+`POST /api/wallet/deposits` e `POST /api/lots/:id/bids` exigem licitante. `POST /api/lots` e `POST /api/lots/:id/cancel` exigem leiloeiro. Papel errado: 403. Cancelar lote de outro: 404, sem dono no corpo. `userId`/`role` no corpo: 400. Lance ainda responde 501 depois da autorização e não grava (Tarefa 6). Depósito é real desde a Tarefa 5. Criação e cancelamento de lote são reais desde a Tarefa 4.
 
 O site encaminha `/api` em `front-end/src/app/api/[...path]/route.ts` para `API_PROXY_TARGET` (padrão `http://127.0.0.1:4300`). Só segue `cookie`, `origin`, `content-type`, `accept`, `x-csrf-token` e `idempotency-key`. Não segue `host` nem `X-Forwarded-For`. O cliente usa `credentials: "same-origin"`, CSRF só em mutação, sem `localStorage`/`sessionStorage`. `endSession` faz logout, fecha canais privados, remove queries que não são `public` e então redireciona.
+
+## Carteira (Tarefa 5)
+
+- `GET /api/wallet` — só licitante, só a própria carteira. Responde `{ totalCents, committedCents, availableCents, revision }`, valores em centavos como texto. Sem depósito ainda: tudo `"0"` e revisão 0, sem criar linha.
+- `POST /api/wallet/deposits` — só licitante. Corpo `{ "amountCents": "10000" }`, cabeçalho `Idempotency-Key` (UUID). Responde 200 com a carteira atualizada.
+  - Valor: inteiro positivo em texto, até `999999999999` por entrada. O saldo acumulado pode passar disso. Inválido: 400 `VALOR_INVALIDO`.
+  - Mesma chave e mesmo valor: devolve a resposta gravada, sem creditar de novo, inclusive em chamadas simultâneas. Mesma chave com outro valor: 409 `IDEMPOTENCIA_CONFLITO`.
+  - Capacidade física da coluna (38 dígitos) estourada: 409 `CAPACIDADE_EXCEDIDA`.
+  - `userId` no corpo: 400. Leiloeiro: 403. Sem sessão: 401.
+- Atomicidade: trava a carteira (`FOR UPDATE`), grava o lançamento `DEPOSIT` com referência única, atualiza o saldo e grava o registro de idempotência na mesma transação. Falha em qualquer passo desfaz tudo.
+- Auxiliar comum: `back-end/src/common/idempotency.ts` (`withIdempotency`) com trava consultiva por escopo; resposta gravada até 32 KiB.
 
 ## Catálogo e lotes (Tarefa 4)
 

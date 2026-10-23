@@ -1,6 +1,15 @@
 # Progresso — Casa de Leilões
 
-Atualizado em 23/10/2026. Tarefa 4 concluída no código e nos testes. As revisões independentes de auth e catálogo continuam abertas. Tarefa 5 é a próxima.
+Atualizado em 23/10/2026. Tarefa 5 concluída no código e nos testes. As revisões independentes de auth, catálogo e carteira continuam abertas. Tarefa 6 é a próxima.
+
+## Tarefa 5 — concluída no local
+
+- Carteira: `GET /api/wallet` e `POST /api/wallet/deposits`, só licitante e só a própria carteira. Depósito simulado, sem pagamento real.
+- Transação única: trava da carteira, lançamento `DEPOSIT`, saldo e registro de idempotência. Falha depois do lançamento não deixa saldo parcial (testado).
+- Idempotência comum em `back-end/src/common/idempotency.ts`: mesma chave em paralelo credita uma vez; outra carga na mesma chave dá 409.
+- Teto de 999999999999 centavos só por entrada; saldo acumulado passa disso (testado com 1999999999998).
+- Reserva e liberação ficam para a Tarefa 6.
+- Evidência: `docs/evidence/2026-10-23-tarefa-5.md`.
 
 ## Tarefa 4 — concluída no local
 
@@ -37,7 +46,7 @@ Atualizado em 23/10/2026. Tarefa 4 concluída no código e nos testes. As revis�
 
 ## Comandos (exit 0, Node v24.22.1)
 
-Tarefa 4: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (41), `npm run build`. Tarefa 3: `npm test` (22), `npm run test:integration` (25), `npm run db:validate`. Vitest do front: 7 testes.
+Tarefa 5: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (62), `npm run build`. Tarefa 4: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (41), `npm run build`. Tarefa 3: `npm test` (22), `npm run test:integration` (25), `npm run db:validate`. Vitest do front: 7 testes.
 
 `GET /api/health/live` e `GET /api/health/ready` em 127.0.0.1:4300 responderam 200. `GET /api/auth/csrf` pelo site em 3300 respondeu 200; login inválido respondeu 401.
 
