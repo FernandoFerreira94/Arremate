@@ -29,27 +29,36 @@ export async function withIdempotency<T extends object>(
   work: (client: PoolClient) => Promise<T>,
 ): Promise<{ result: T; replayed: boolean }> {
   return database.transaction(async (client) => {
-    await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
-      `${scope.userId}|${scope.operation}|${scope.resourceKey}|${scope.key}`,
-    ]);
-    const previous = await client.query<{ request_hash: string; response: T }>(
-      `SELECT request_hash, response FROM idempotency_records
-       WHERE user_id = $1 AND operation = $2 AND resource_key = $3 AND idempotency_key = $4`,
-      [scope.userId, scope.operation, scope.resourceKey, scope.key],
-    );
-    const row = previous.rows[0];
-    if (row) {
-      if (row.request_hash !== scope.requestHash) throw new ApiException(409, "IDEMPOTENCIA_CONFLITO");
-      return { result: row.response, replayed: true };
-    }
+    const previous = await findIdempotent<T>(client, scope);
+    if (previous) return { result: previous, replayed: true };
     const result = await work(client);
-    const response = JSON.stringify(result);
-    if (Buffer.byteLength(response, "utf8") > MAX_RESPONSE_BYTES) throw new Error("resposta idempotente grande demais");
-    await client.query(
-      `INSERT INTO idempotency_records (user_id, operation, resource_key, idempotency_key, request_hash, response)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
-      [scope.userId, scope.operation, scope.resourceKey, scope.key, scope.requestHash, response],
-    );
+    await saveIdempotent(client, scope, result);
     return { result, replayed: false };
   });
+}
+
+/** Trava a chave na transação e devolve a resposta original; corpo distinto é conflito. */
+export async function findIdempotent<T>(client: PoolClient, scope: IdempotencyScope): Promise<T | null> {
+  await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
+    `${scope.userId}|${scope.operation}|${scope.resourceKey}|${scope.key}`,
+  ]);
+  const previous = await client.query<{ request_hash: string; response: T }>(
+    `SELECT request_hash, response FROM idempotency_records
+     WHERE user_id = $1 AND operation = $2 AND resource_key = $3 AND idempotency_key = $4`,
+    [scope.userId, scope.operation, scope.resourceKey, scope.key],
+  );
+  const row = previous.rows[0];
+  if (!row) return null;
+  if (row.request_hash !== scope.requestHash) throw new ApiException(409, "IDEMPOTENCIA_CONFLITO");
+  return row.response;
+}
+
+export async function saveIdempotent(client: PoolClient, scope: IdempotencyScope, result: object): Promise<void> {
+  const response = JSON.stringify(result);
+  if (Buffer.byteLength(response, "utf8") > MAX_RESPONSE_BYTES) throw new Error("resposta idempotente grande demais");
+  await client.query(
+    `INSERT INTO idempotency_records (user_id, operation, resource_key, idempotency_key, request_hash, response)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
+    [scope.userId, scope.operation, scope.resourceKey, scope.key, scope.requestHash, response],
+  );
 }

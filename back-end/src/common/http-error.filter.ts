@@ -25,6 +25,14 @@ const codes: Record<string, { status: number; message: string }> = {
   PROVEDOR_RESPOSTA_INVALIDA: { status: 502, message: "O acervo respondeu de forma inesperada." },
   PROVEDOR_INDISPONIVEL: { status: 503, message: "O acervo do museu está indisponível. Tente novamente em instantes." },
   AUDITORIA_INDISPONIVEL: { status: 503, message: "Auditoria indisponível; publicação suspensa." },
+  BID_BELOW_MINIMUM: { status: 409, message: "O lance precisa ser igual ou maior que o mínimo atual." },
+  INSUFFICIENT_FUNDS: { status: 409, message: "Saldo disponível insuficiente para reservar este lance." },
+  ALREADY_LEADING: { status: 409, message: "Você já lidera este lote; aguarde ser superado." },
+  LOT_NOT_STARTED: { status: 409, message: "Este lote ainda não abriu para lances." },
+  LOT_ENDED: { status: 409, message: "Este lote já encerrou." },
+  LOT_CANCELLED: { status: 409, message: "Este lote foi cancelado." },
+  LOTE_BLOQUEADO: { status: 409, message: "Lote bloqueado: a auditoria não confere." },
+  CONFIRMATION_PENDING: { status: 503, message: "Confirmação pendente. Repita com a mesma chave para saber o resultado." },
   ERRO_INTERNO: { status: 500, message: "Não foi possível concluir a operação." },
 };
 

@@ -13,11 +13,12 @@ import { AuthService } from "./auth/auth.service";
 import { AuditRepository } from "./audit/audit.repository";
 import { AuditService } from "./audit/audit.service";
 import { FileCheckpointStore } from "./audit/checkpoint-store";
-import { AuthorizationController } from "./auth/authorization.controller";
 import { CatalogController } from "./catalog/catalog.controller";
 import { CatalogService } from "./catalog/catalog.service";
 import { MediaStore } from "./catalog/image-importer";
 import { MetCatalogClient, type FetchLike, type LookupLike } from "./catalog/met-catalog.client";
+import { BiddingRepository } from "./lots/bidding.repository";
+import { BiddingService } from "./lots/bidding.service";
 import { LotsController } from "./lots/lots.controller";
 import { LotsRepository } from "./lots/lots.repository";
 import { LotsService } from "./lots/lots.service";
@@ -52,7 +53,7 @@ class ApplicationModule {
   static register(options: ApplicationOptions): DynamicModule {
     return {
       module: ApplicationModule,
-      controllers: [HealthController, AuthController, AuthorizationController, CatalogController, LotsController, WalletsController],
+      controllers: [HealthController, AuthController, CatalogController, LotsController, WalletsController],
       providers: [
         {
           provide: DatabaseRepository,
@@ -98,6 +99,11 @@ class ApplicationModule {
           useFactory: (database: DatabaseRepository, lots: LotsRepository, catalog: CatalogService, audit: AuditService | null) =>
             new LotsService(database, lots, catalog, audit),
           inject: [DatabaseRepository, LotsRepository, CatalogService, AuditService],
+        },
+        {
+          provide: BiddingService,
+          useFactory: (database: DatabaseRepository, audit: AuditService | null) => new BiddingService(database, audit, new BiddingRepository()),
+          inject: [DatabaseRepository, AuditService],
         },
         { provide: WalletsRepository, useFactory: (database: DatabaseRepository) => new WalletsRepository(database), inject: [DatabaseRepository] },
         {

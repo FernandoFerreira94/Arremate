@@ -82,30 +82,46 @@ export class AuditRepository {
       await client.query("BEGIN");
       await client.query(`SET LOCAL search_path TO ${this.schema}`);
       try {
-        await client.query(
-          `INSERT INTO bids (id, lot_id, user_id, alias, sequence, amount_cents, accepted_at, signature)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [
-            input.bidId,
-            input.lotId,
-            input.bidderUserId,
-            input.alias,
-            input.sequence,
-            input.amountCents.toString(),
-            input.acceptedAt,
-            input.signature,
-          ],
-        );
-        const updated = await client.query(
-          `UPDATE lots SET revision = $2, ends_at = $3 WHERE id = $1 AND revision = $4`,
-          [input.lotId, input.nextRevision, input.endsAt, input.expectedRevision],
-        );
-        if (updated.rowCount !== 1) {
-          throw new Error("revisão do lote divergente");
-        }
+        await this.insertBid(client, input);
         await client.query("COMMIT");
       } catch (error) {
         await client.query("ROLLBACK");
+        throw error;
+      }
+    });
+  }
+
+  /** Grava lance e revisão no cliente de uma transação externa (lance + carteira + idempotência). */
+  async insertBid(client: PoolClient, input: BidCommit): Promise<void> {
+    assertUuid(input.lotId);
+    assertUuid(input.bidId);
+    assertUuid(input.bidderUserId);
+    await client.query(
+      `INSERT INTO ${this.schema}.bids (id, lot_id, user_id, alias, sequence, amount_cents, accepted_at, signature)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [input.bidId, input.lotId, input.bidderUserId, input.alias, input.sequence, input.amountCents.toString(), input.acceptedAt, input.signature],
+    );
+    const updated = await client.query(`UPDATE ${this.schema}.lots SET revision = $2, ends_at = $3 WHERE id = $1 AND revision = $4`, [
+      input.lotId,
+      input.nextRevision,
+      input.endsAt,
+      input.expectedRevision,
+    ]);
+    if (updated.rowCount !== 1) {
+      throw new Error("revisão do lote divergente");
+    }
+  }
+
+  async transaction<T>(action: (client: PoolClient) => Promise<T>): Promise<T> {
+    return this.withClient(async (client) => {
+      await client.query("BEGIN");
+      await client.query(`SET LOCAL search_path TO ${this.schema}`);
+      try {
+        const result = await action(client);
+        await client.query("COMMIT");
+        return result;
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => undefined);
         throw error;
       }
     });

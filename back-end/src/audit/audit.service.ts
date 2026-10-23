@@ -1,4 +1,5 @@
 import { signBid, signCheckpoint, signGenesis, signaturesMatch, verifyBidSignature } from "./audit-chain";
+import type { PoolClient } from "pg";
 import type { AuditRepository } from "./audit.repository";
 import type { CheckpointStore } from "./checkpoint-store";
 import type {
@@ -22,6 +23,20 @@ export type AcceptBidInput = {
   acceptedAt: string;
   endsAt: string;
 };
+
+export type BidDraft = Omit<AcceptBidInput, "lotId" | "sequence">;
+export type BidHead = { count: number; revision: number };
+/** Resultado do passo decisório dentro da transação do lance. */
+export type BidPlan<T> =
+  | { kind: "replay"; result: T }
+  | { kind: "accept"; draft: BidDraft; finish: (client: PoolClient, accepted: { sequence: number; revision: number }) => Promise<T> };
+
+export class ConfirmationPendingError extends Error {
+  constructor() {
+    super("CONFIRMATION_PENDING");
+    this.name = "ConfirmationPendingError";
+  }
+}
 
 export class IntegrityBlockedError extends Error {
   readonly code: string;
@@ -133,6 +148,69 @@ export class AuditService {
       }
       await this.store.advance(current.revision, next);
       await this.store.clearPending(input.lotId);
+    });
+  }
+
+  /**
+   * Lance atômico: decide, grava lance + revisão + efeitos (carteira/idempotência) numa única transação
+   * e só então avança a testemunha. Se a testemunha falhar depois do commit, a intenção fica pendente
+   * e o lote bloqueia mutações até `retryCheckpoint` (fail-closed).
+   */
+  async acceptBidAtomic<T>(lotId: string, decide: (client: PoolClient, head: BidHead) => Promise<BidPlan<T>>): Promise<T> {
+    return this.exclusive(lotId, async () => {
+      await this.assertCanMutate(lotId);
+      const key = this.requireKey();
+      const current = await this.store.read(lotId);
+      if (!current) throw new IntegrityBlockedError("CONFIRMATION_PENDING");
+      const state: { next: Checkpoint | null } = { next: null };
+      let committed = false;
+      try {
+        const result = await this.repository.transaction(async (client) => {
+          const plan = await decide(client, { count: current.count, revision: current.revision });
+          if (plan.kind === "replay") return plan.result;
+          const sequence = current.count + 1;
+          const event: CanonicalBid = {
+            lotId,
+            bidId: plan.draft.bidId,
+            bidderUserId: plan.draft.bidderUserId,
+            alias: plan.draft.alias,
+            sequence,
+            amountCents: plan.draft.amountCents,
+            acceptedAt: plan.draft.acceptedAt,
+            previousSignature: current.headSignature,
+            keyVersion: 1,
+          };
+          const signature = signBid(event, event.previousSignature, key);
+          const next = seal(nextBody(current, signature, plan.draft.endsAt), key);
+          await this.store.writePending(next);
+          state.next = next;
+          await this.repository.insertBid(client, {
+            lotId,
+            expectedRevision: current.revision,
+            nextRevision: next.revision,
+            endsAt: plan.draft.endsAt,
+            bidId: plan.draft.bidId,
+            bidderUserId: plan.draft.bidderUserId,
+            alias: plan.draft.alias,
+            sequence,
+            amountCents: plan.draft.amountCents,
+            acceptedAt: plan.draft.acceptedAt,
+            signature,
+          });
+          return plan.finish(client, { sequence, revision: next.revision });
+        });
+        committed = true;
+        const pending = state.next;
+        if (pending) {
+          await this.store.advance(current.revision, pending);
+          await this.store.clearPending(lotId);
+        }
+        return result;
+      } catch (error) {
+        if (committed) throw new ConfirmationPendingError();
+        if (state.next) await this.store.clearPending(lotId);
+        throw error;
+      }
     });
   }
 
@@ -254,6 +332,25 @@ export class AuditService {
       release();
     }
   }
+}
+
+function nextBody(current: Checkpoint, signature: string, endsAt: string): CheckpointBody {
+  return {
+    lotId: current.lotId,
+    revision: current.revision + 1,
+    count: current.count + 1,
+    headSignature: signature,
+    genesisSignature: current.genesisSignature,
+    keyVersion: current.keyVersion,
+    endsAt,
+    ownerId: current.ownerId,
+    snapshotId: current.snapshotId,
+    initialCents: current.initialCents,
+    incrementCents: current.incrementCents,
+    startsAt: current.startsAt,
+    genesisEndsAt: current.genesisEndsAt,
+    settlement: current.settlement,
+  };
 }
 
 function seal(body: CheckpointBody, key: Uint8Array): Checkpoint {

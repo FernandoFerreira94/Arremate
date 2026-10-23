@@ -4,14 +4,19 @@ import { ApiException } from "../auth/api.exception";
 import type { Actor } from "../auth/auth.service";
 import { Roles } from "../auth/roles.guard";
 import { RejectExtraDto } from "../auth/dto/login.dto";
+import { BiddingService } from "./bidding.service";
 import { CreateLotDto, PageQuery } from "./dto/create-lot.dto";
+import { PlaceBidDto } from "./dto/place-bid.dto";
 import { LotsService } from "./lots.service";
 
 type ActorRequest = Request & { actor?: Actor };
 
 @Controller()
 export class LotsController {
-  constructor(private readonly lots: LotsService) {}
+  constructor(
+    private readonly lots: LotsService,
+    private readonly bidding: BiddingService,
+  ) {}
 
   @Get("lots")
   showcase(@Query() query: PageQuery) {
@@ -39,6 +44,13 @@ export class LotsController {
   @HttpCode(201)
   create(@Body() body: CreateLotDto, @Headers("idempotency-key") key: string | undefined, @Req() request: ActorRequest) {
     return this.lots.createLot(actorOf(request), body, key);
+  }
+
+  @Post("lots/:id/bids")
+  @Roles("BIDDER")
+  @HttpCode(201)
+  bid(@Param("id") id: string, @Body() body: PlaceBidDto, @Headers("idempotency-key") key: string | undefined, @Req() request: ActorRequest) {
+    return this.bidding.placeBid(actorOf(request), id, body.amountCents, key);
   }
 
   @Post("lots/:id/cancel")

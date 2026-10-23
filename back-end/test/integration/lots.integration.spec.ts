@@ -40,7 +40,8 @@ describe("lotes", () => {
       externalId,
       initialCents: "100000",
       incrementCents: "5000",
-      startsAt: new Date(Date.now()).toISOString(),
+      // folga de 5s (dentro da tolerância de 60s) para não depender da deriva entre o relógio do host e o do PostgreSQL no Docker
+      startsAt: new Date(Date.now() - 5_000).toISOString(),
       endsAt: new Date(Date.now() + HOUR).toISOString(),
       ...extra,
     };
