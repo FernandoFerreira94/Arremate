@@ -4,7 +4,7 @@ Atualizado em 23/10/2026. Tarefa 3 concluída no código e nos testes. A revisã
 
 ## Tarefa 3 — concluída no local
 
-- Sessão: Argon2id m=19456, t=2, p=1; token de 256 bits; só o hash no banco; 8 horas absolutas; logout revoga.
+- Sessão: Argon2id m=19456, t=2, p=1; token de 256 bits; só o hash no banco; 8 horas absolutas; logout revoga. `@node-rs/argon2` aprovado por Fernando (D15, 23/10 14:21).
 - CSRF: HMAC do cookie HttpOnly; `Origin` exato; sem CORS; `trust proxy` desligado.
 - Papéis: leiloeiro não deposita nem lança; licitante não cria; lote de outro no cancelamento volta 404. Os quatro caminhos são stubs e não gravam.
 - Proxy: Route Handler `front-end/src/app/api/[...path]/route.ts`. O rewrite externo não repassou o cookie.
