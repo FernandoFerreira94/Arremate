@@ -11,7 +11,7 @@ README e página do Notion ([README — em elaboração](https://app.notion.com/
 - **Nome:** Arremate (“Casa de Leilões”/`casadeleilao` fica como nome interno do repositório).
 - **Stack:** monorepo npm (Node 24 LTS); `front-end` Next.js App Router + React + Tailwind 4 + shadcn; `back-end` NestJS 12 + Prisma 7; PostgreSQL 18 via Docker Compose. Site na Vercel e API Node persistente separada.
 - **Design:** congelado (Design Freeze D12); fonte visual = pranchas HTML/PNG em `docs/design/pranchas/` e `docs/design/HANDOFF-GROK.md` (S6 aceito sem Penpot, D13).
-- **Tarefa 1 concluída, só local:** dinheiro inteiro (`parseMoney` / `formatMoney`), schema do núcleo e migration `20261023104706_auction_core` aplicada em 127.0.0.1:5462 (`casadeleilao`) e 5463 (`casadeleilao_test`). Contratos em [docs/api.md](docs/api.md). Sem push, sem deploy, sem Tarefa 2.
+- **Tarefa 2 concluída, só local:** auditoria HMAC e testemunha em disco fora do PostgreSQL. Ordem e códigos em [docs/operacao-integridade.md](docs/operacao-integridade.md). A Tarefa 1 permanece: dinheiro inteiro, schema e migration `20261023104706_auction_core` em 127.0.0.1:5462 (`casadeleilao`) e 5463 (`casadeleilao_test`). Sem push, sem deploy, sem Tarefa 3. O site ainda não tem a página de auditoria.
 - **Arquitetura:** S5 continua aberto como risco aceito (D13). Topologia de produção ainda não foi escolhida nem contratada. S7 não declarado.
 
 ## Como rodar (local)
@@ -20,8 +20,9 @@ README e página do Notion ([README — em elaboração](https://app.notion.com/
 2. Copiar `.env.example` para `.env` e preencher as senhas locais (`DB_OWNER_PASSWORD`, `DB_APP_PASSWORD`, `DB_TEST_APP_PASSWORD`).
 3. `npm run db:up` — PostgreSQL dev em 127.0.0.1:5462 e teste em 5463.
 4. `npm run dev:api` (API, porta 4300) e `npm run dev:web` (site em http://127.0.0.1:3300).
-5. Verificação: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run db:validate`, `npm run build`. E2E: `npm run test:e2e` (não faz parte da Tarefa 1).
-6. A API usa `DATABASE_URL` com o papel `auction_app`, sem DDL. A migration local usa o owner só no runner, nos bancos 5462 e 5463. Não apontar a API para o owner e não aplicar migration fora do loopback.
+5. Verificação: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run db:validate`, `npm run build`. E2E: `npm run test:e2e` (não faz parte da Tarefa 2).
+6. Saúde da API, com ela no ar na porta 4300: `GET http://127.0.0.1:4300/api/health/live` e `GET http://127.0.0.1:4300/api/health/ready`. A resposta não traz senha nem URL de banco.
+7. A API usa `DATABASE_URL` com o papel `auction_app`, sem DDL. A migration local usa o owner só no runner, nos bancos 5462 e 5463. Não apontar a API para o owner e não aplicar migration fora do loopback. A chave `AUDIT_HMAC_KEY` e o diretório `AUDIT_WITNESS_DIR` ficam fora do banco e do Git; a API ainda não lê esses nomes porque a rota de auditoria entra depois.
 
 ## Fontes e documentação
 
@@ -85,7 +86,9 @@ Verificação: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:in
 
 Executado na base (bootstrap U12, antes da Tarefa 1):5testes health/erros/pool,2integrações PostgreSQL real e2E2E Chromium (placeholder/HTMLlang-title-noindex/404). Lint front/back, tipos, Prisma validate/generate e builds passaram. Rodada final após `npm ci`:1043pacotes, árvore completa sem problemas, lint/tipos/Prisma/builds e os9testes da fundação passaram (exit0). Dossiê:24Markdown,33R presentes,0links locais quebrados e hash do PDF conferido. Resultados em evidence. Vitest está instalado, sem suíte de componentes ainda. CI configurado, não executado no GitHub.
 
-Tarefa 1 (23/10/2026, Node v24.22.1): `npm run lint`, `npm run typecheck`, `npm test` (14 testes: health + money), `npm run test:integration` (6 testes, inclusive o schema no `casadeleilao_test`), `npm run db:validate` e `npm run build` saíram 0. Detalhe em [docs/evidence/2026-10-23-tarefa-1.md](docs/evidence/2026-10-23-tarefa-1.md). E2E, concorrência, auditoria, SSE, páginas e deploy não foram executados nesta tarefa.
+Tarefa 1 (23/10/2026, Node v24.22.1): `npm run lint`, `npm run typecheck`, `npm test` (14 testes: health + money), `npm run test:integration` (6 testes, inclusive o schema no `casadeleilao_test`), `npm run db:validate` e `npm run build` saíram 0. Detalhe em [docs/evidence/2026-10-23-tarefa-1.md](docs/evidence/2026-10-23-tarefa-1.md).
+
+Tarefa 2 (23/10/2026, Node v24.22.1): a mesma bateria da raiz saiu 0, agora com a cadeia HMAC e a integração da testemunha. Detalhe e contagens em [docs/evidence/2026-10-23-tarefa-2.md](docs/evidence/2026-10-23-tarefa-2.md). E2E, sessão, páginas e deploy não foram executados nesta tarefa. O fsync de diretório no Linux não foi ensaiado.
 
 Segurança das dependências: auditoria de runtime (`--omit=dev`)0alertas. Auditoria completa9High derivados de braces3.0.3 sem correção upstream, só tooling eslint-config-next/shadcnCLI; não aceitar patterns externos nessas ferramentas. ESLint9.39.5 compatível com peers atuais do Next, com aviso de fim de suporte; acompanhar atualização compatível. Sem `audit fix --force` ou downgrade automático sugerido pelo auditor. Isso não é declaração de produção pronta.
 

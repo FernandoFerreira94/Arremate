@@ -2,7 +2,7 @@
 
 Pasta de trabalho: `C:/Users/ferna/Desktop/WebCode/Projetos/casadeleilao/docs`.
 
-**Estado:** Tarefa 1 concluída em 23/10/2026 (dinheiro inteiro, schema e migration local `20261023104706_auction_core`). Design Freeze D01–D12; S6 aceito com HTML/PNG, sem Penpot (D13); S5 aberto como risco; S7 não declarado. Sem push/deploy. Next/Nest/Prisma; shadcn obrigatório por U13; nome **Arremate**.
+**Estado:** Tarefa 2 concluída em 23/10/2026 (HMAC encadeado e testemunha fora do banco; ver [operação da integridade](operacao-integridade.md)). Tarefa 1 permanece (dinheiro inteiro, schema e migration local `20261023104706_auction_core`). Design Freeze D01–D12; S6 aceito com HTML/PNG, sem Penpot (D13); S5 aberto como risco; S7 não declarado. Sem push/deploy. Next/Nest/Prisma; shadcn obrigatório por U13; nome **Arremate**.
 
 ## Fontes e responsáveis
 
@@ -23,6 +23,7 @@ Pasta de trabalho: `C:/Users/ferna/Desktop/WebCode/Projetos/casadeleilao/docs`.
 | [Hospedagem Vercel](hospedagem.md) | Compatibilidade, alternativas e decisões ainda abertas |
 | [Arquitetura proposta](superpowers/specs/2026-10-23-casa-leiloes-design.md) | A01-A13, módulos, dados, API, concorrência, segurança e integridade |
 | [Contratos da API](api.md) | Dinheiro, tipos de fronteira, tabelas e endpoints previstos |
+| [Operação da integridade](operacao-integridade.md) | Ordem DB commit, checkpoint e resposta; códigos INTACT/TAMPERED/INDETERMINATE |
 | [Plano Superpowers completo](superpowers/plans/2026-10-23-casa-leiloes.md) | Dez tarefas: dados, integridade, sessão, catálogo, carteira, lance, liquidação, UI, tempo real e release |
 | [Decisões visuais](design/DECISOES-VISUAIS.md) | shadcn definido; nome, logo, paleta, tipografia e tema LOCKED (D01–D12) |
 | [Ambiente](ambiente.md) | Base, comandos, portas e limites |

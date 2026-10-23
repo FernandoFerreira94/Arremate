@@ -6,15 +6,15 @@ Data de consulta/registro: 23/10/2026. [Projeto no Notion — privado](https://a
 
 ```text
 Lifecycle version: 1.0
-Current stage: S9 — Tarefa 1 concluída localmente; S5 continua aberto como risco aceito (D13)
-Stage status: IN_PROGRESS — Tarefa 1 aplicada (money, schema, migration local 20261023104706_auction_core). S6 aceito com HTML/PNG, sem Penpot (D13). S7 não declarado. S5 não marcado PASSED
+Current stage: S9 — Tarefa 2 concluída localmente; S5 continua aberto como risco aceito (D13)
+Stage status: IN_PROGRESS — Tarefa 2 aplicada (HMAC e testemunha fora do banco). Tarefa 1 permanece. S6 aceito com HTML/PNG, sem Penpot (D13). S7 não declarado. S5 não marcado PASSED
 Execution profile: STANDARD proposto; gates reforçados de saldo/auth/integridade
 Last gate: S4 — PRE-DEVELOPMENT ALIGNED; S6 aceito por D13 sem fechar S5/S7
 Last validation: 2026-10-23
 Canonical project page: https://app.notion.com/p/402d66ddfe93818daba9d5db48b1d2a9
-Current source: plano superpowers, Tarefa 1 concluída
-Next action: Tarefa 2 (auditoria e falhas de confirmação), somente quando Fernando pedir; topologia concreta antes do release, sem contratar
-Next source: plano superpowers, Tarefa 2
+Current source: plano superpowers, Tarefa 2 concluída
+Next action: Tarefa 3 (sessão e fronteira), somente quando Fernando pedir; topologia concreta antes do release, sem contratar
+Next source: plano superpowers, Tarefa 3
 Blockers: nenhum da Tarefa 1; riscos aceitos (D13): Architecture Freeze não aprovado; fornecedor/custo de API/DB e integração Vercel não definidos
 User decision required: só para push/deploy/gasto e escolhas do S5 quando a tarefa exigir
 Implementation authorized: yes, a partir da Tarefa 1 (D13): migration só local, commits locais, sem push/deploy
@@ -120,4 +120,6 @@ Design Freeze de 23/10/2026: Fernando aprovou tudo (“aprovo tudo”): logo, pa
 
 Liberação D13 (23/10/2026 10:26): Fernando: “Libero: aceito HTML/PNG sem Penpot, arquitetura em aberto como risco, e Tarefa 1 com migration local e commits locais”. S6 aceito com HTML/PNG como fonte visual; itens abertos do S5 ficam como risco, decididos por tarefa (S5 não marcado PASSED); implementação autorizada a partir da Tarefa 1, migration só local, sem push.
 
-Tarefa 1 concluída em 23/10/2026: handoff D01–D14 registrado, `parseMoney`/`formatMoney`/`parsePositiveMoney`, schema do núcleo e migration `20261023104706_auction_core` aplicada só em 127.0.0.1:5462 (`casadeleilao`) e 127.0.0.1:5463 (`casadeleilao_test`). Evidência em [docs/evidence/2026-10-23-tarefa-1.md](evidence/2026-10-23-tarefa-1.md). Tarefa 2 não iniciada. S7 e release continuam não declarados. Topologia de produção segue em aberto; nada foi contratado.
+Tarefa 1 concluída em 23/10/2026: handoff D01–D14 registrado, `parseMoney`/`formatMoney`/`parsePositiveMoney`, schema do núcleo e migration `20261023104706_auction_core` aplicada só em 127.0.0.1:5462 (`casadeleilao`) e 127.0.0.1:5463 (`casadeleilao_test`). Evidência em [docs/evidence/2026-10-23-tarefa-1.md](evidence/2026-10-23-tarefa-1.md).
+
+Tarefa 2 concluída em 23/10/2026: cadeia HMAC e testemunha fora do banco, com falha de checkpoint INDETERMINATE. Evidência em [docs/evidence/2026-10-23-tarefa-2.md](evidence/2026-10-23-tarefa-2.md). S7 e release continuam não declarados. Topologia de produção e fsync de diretório no Linux seguem em aberto; nada foi contratado.

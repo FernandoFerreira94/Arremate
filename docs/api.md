@@ -1,6 +1,6 @@
 # API — contratos de fronteira
 
-Contratos da Tarefa 1. Os endpoints abaixo são o desenho; a implementação começa nas tarefas 3–7. Dinheiro e o schema já existem.
+Contratos da Tarefa 1, com o resultado de auditoria da Tarefa 2. Os endpoints abaixo são o desenho; a implementação HTTP começa nas tarefas 3–7 e 9. Dinheiro, schema e a verificação de integridade já existem.
 
 ## Tipos
 
@@ -33,6 +33,23 @@ Depósito, lance e publicação exigem `Idempotency-Key` UUID. O escopo único �
 ## Tabelas
 
 `users`, `sessions`, `catalog_item_snapshots`, `lots`, `bids`, `wallets`, `wallet_entries`, `settlements`, `receipts`, `idempotency_records`. Detalhe e CHECKs: `back-end/prisma/schema.prisma` e a migration `20261023104706_auction_core`. A testemunha de auditoria não fica no PostgreSQL.
+
+## Auditoria
+
+A Tarefa 2 verifica o lote no backend. A rota `GET /api/lots/:id/audit` continua prevista para a Tarefa 9. O resultado público é:
+
+```ts
+type AuditResult = {
+  status: AuditStatus;
+  revision: number | null;
+  count: number | null;
+  verifiedAt: string;
+  reasonCode: string;
+  message: string; // pt-BR, sem id interno, e-mail, chave ou token
+};
+```
+
+`signBid(event, previousSignature, key)` devolve hex de HMAC-SHA-256 dos bytes canônicos `v1`. A chave fica fora do banco. Ordem operacional e códigos: [operacao-integridade.md](operacao-integridade.md).
 
 O papel `auction_app` faz SELECT/INSERT/UPDATE/DELETE. CREATE/ALTER ficam com o owner, só na migration local. A API não usa a credencial de owner.
 

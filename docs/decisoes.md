@@ -90,3 +90,9 @@ Artefatos congelados, sem Penpot (D13). Fonte visual: [HANDOFF-GROK](design/HAND
 Pendências que seguem abertas: validação de a11y; textos/códigos de erro alinhados ao back; escolha concreta de topologia antes do release. Nada é contratado automaticamente.
 
 Contrato de dinheiro e tabelas desta tarefa: [api.md](api.md) e `back-end/prisma/schema.prisma` (migration `20261023104706_auction_core`).
+
+## Integridade provada na Tarefa 2 (23/10/2026)
+
+A08, no recorte local: HMAC-SHA-256 encadeado e testemunha em disco fora do PostgreSQL. A ordem é assinar, gravar `pending`, commit no banco, promover o checkpoint e só então responder. Gap de confirmação fica INDETERMINATE e bloqueia mutação; o banco suspeito não é reassinado. Detalhe: [operacao-integridade.md](operacao-integridade.md).
+
+Continua risco do S5, sem contratação: diretório de produção da testemunha, fsync de diretório no Linux (neste Windows o ensaio devolve EPERM) e a topologia da API. A rota HTTP de auditoria não existe ainda.
