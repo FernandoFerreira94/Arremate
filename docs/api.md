@@ -89,6 +89,47 @@ CSRF: o cookie guarda o segredo; o JSON traz HMAC-SHA-256 desse segredo (ou do t
 
 Limites na memória de uma instância: login 10/min/IP, mutação 60/min/ator, catálogo 30/min/ator, auditoria 30/min/IP, SSE 3 conexões. As tarefas 4 e 9 chamam `consume("catalog"|"audit")` e `tryAcquireSse` nas rotas que ainda não existem. 429 `LIMITE_EXCEDIDO`.
 
-`POST /api/wallet/deposits` e `POST /api/lots/:id/bids` exigem licitante. `POST /api/lots` e `POST /api/lots/:id/cancel` exigem leiloeiro. Papel errado: 403. Cancelar lote de outro: 404, sem dono no corpo. `userId`/`role` no corpo: 400. Depois da autorização esses quatro caminhos respondem 501 e não gravam. As tarefas 4–6 substituem `authorization.controller.ts` antes de registrar os mesmos caminhos.
+`POST /api/wallet/deposits` e `POST /api/lots/:id/bids` exigem licitante. `POST /api/lots` e `POST /api/lots/:id/cancel` exigem leiloeiro. Papel errado: 403. Cancelar lote de outro: 404, sem dono no corpo. `userId`/`role` no corpo: 400. Depósito e lance ainda respondem 501 depois da autorização e não gravam (tarefas 5 e 6). Criação e cancelamento de lote são reais desde a Tarefa 4.
 
 O site encaminha `/api` em `front-end/src/app/api/[...path]/route.ts` para `API_PROXY_TARGET` (padrão `http://127.0.0.1:4300`). Só segue `cookie`, `origin`, `content-type`, `accept`, `x-csrf-token` e `idempotency-key`. Não segue `host` nem `X-Forwarded-For`. O cliente usa `credentials: "same-origin"`, CSRF só em mutação, sem `localStorage`/`sessionStorage`. `endSession` faz logout, fecha canais privados, remove queries que não são `public` e então redireciona.
+
+## Catálogo e lotes (Tarefa 4)
+
+Fonte: The Met Collection API. Busca `GET https://collectionapi.metmuseum.org/public/collection/v1.1/search?q=&hasImages=true&offset=&limit=8` (a busca v1 foi aposentada em 01/10/2026). Objeto: `/public/collection/v1/objects/{id}`. Imagem: `primaryImageSmall` em `images.metmuseum.org`.
+
+Chamadas externas: só HTTPS, hosts exatos `collectionapi.metmuseum.org` e `images.metmuseum.org`, sem porta e sem credencial na URL. O DNS não pode resolver para rede privada, loopback, link-local ou multicast. Redirecionamento é recusado (`redirect: "manual"`). Timeout de 5 s por chamada e orçamento de 10 s por operação. No máximo uma nova tentativa em falha de rede, 429, 502, 503 ou 504, respeitando `Retry-After` se couber no orçamento. JSON até 1 MiB, com esquema validado campo a campo.
+
+Imagem: até 10 MiB e 20 MP; JPEG, PNG ou WebP, com `Content-Type` e assinatura coerentes e dimensões lidas do cabeçalho. SVG e HTML são recusados. O arquivo vai para `MEDIA_DIR` com nome `sha256.ext` gerado pelo servidor, gravado em arquivo temporário e depois `rename`. `GET /api/media/:key` só aceita esse formato e responde com `nosniff` e cache imutável. `CatalogService.removeOrphanMedia(idade, agora)` apaga arquivos sem snapshot e mais velhos que a idade; não roda sozinho.
+
+Snapshot: `(provider, external_id)` único, com `ON CONFLICT DO NOTHING`. Importar de novo não chama o provedor. Só entra obra com `isPublicDomain = true`; a licença é gravada como "Domínio público (The Met Open Access, CC0)". Título e demais campos ficam como texto puro e saem em JSON.
+
+| Rota | Acesso | Resposta |
+| --- | --- | --- |
+| `GET /api/catalog/search?q=&page=` | Leiloeiro, 30/min | `{ items, page, pageSize: 8, total, hasMore }`; item com `externalId`, `title`, `artist`, `date`, `medium`, `credit`, `sourceUrl`, `thumbnailUrl`, `importable`, `reason` (`LICENCA_RECUSADA` ou `SEM_IMAGEM`) |
+| `GET /api/catalog/items/:externalId` | Leiloeiro, 30/min | O mesmo item |
+| `POST /api/lots` | Leiloeiro, `Idempotency-Key` UUID | 201 `LotView` |
+| `POST /api/lots/:id/cancel` | Leiloeiro dono | 200 `LotView` |
+| `GET /api/lots?page=` | Público | 8 por página, sem cancelados; ao vivo, depois agendados, depois encerrados |
+| `GET /api/lots/:id` | Público | `LotView`, inclusive cancelado |
+| `GET /api/lots/:id/bids?page=&limit=` | Público | `{ alias, amountCents, sequence, acceptedAt }` |
+| `GET /api/seller/lots?page=&limit=` | Leiloeiro | Os próprios lotes, inclusive cancelados |
+| `GET /api/media/:key` | Público | A imagem |
+
+Corpo de `POST /api/lots`: só `externalId`, `initialCents`, `incrementCents`, `startsAt` e `endsAt` (ISO 8601). Outro campo: 400 `REQUISICAO_INVALIDA`. Valores em texto de centavos, maiores que zero e até `999999999999`; senão 400 `VALOR_INVALIDO`. Início até 60 s no passado pelo relógio do banco e fim depois do início; senão 400 `DATAS_INVALIDAS`. A mesma chave com o mesmo corpo devolve o mesmo lote; com outro corpo, 409 `IDEMPOTENCIA_CONFLITO`. Chave ausente ou inválida: 400 `IDEMPOTENCIA_INVALIDA`.
+
+```ts
+type LotView = {
+  id: string; externalId: string; title: string; artist: string; date: string; medium: string; dimensions: string;
+  credit: string; license: string; sourceUrl: string | null; imageUrl: string; // /api/media/<sha256>.<ext>
+  initialCents: string; incrementCents: string; currentCents: string | null; minimumNextCents: string; bidCount: number;
+  startsAt: string; endsAt: string; state: "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED"; settlementPending: boolean; serverNow: string;
+};
+```
+
+O estado vem de `clock_timestamp()` do banco. `LotView` não traz o dono.
+
+Publicação: snapshot e imagem primeiro; depois uma transação grava lote e registro de idempotência; depois a gênese da auditoria. Se a gênese falhar, lote e registro são apagados e a resposta é 503 `AUDITORIA_INDISPONIVEL`. Sem `AUDIT_HMAC_KEY` a API não publica (503) e não grava nada.
+
+Cancelamento: `SELECT ... FOR UPDATE` no lote. Outro dono ou lote inexistente: 404. Já cancelado, liquidado ou encerrado: 409 `LOTE_NAO_CANCELAVEL`. Com lance: 409 `LOTE_COM_LANCES`. Só muda `status`; `revision` fica igual e a auditoria continua íntegra. A corrida com o primeiro lance fecha na Tarefa 6, que usa o mesmo lock.
+
+Erros do provedor: 503 `PROVEDOR_INDISPONIVEL`, 502 `PROVEDOR_RESPOSTA_INVALIDA` ou `ORIGEM_RECUSADA`, 422 `LICENCA_RECUSADA` ou `IMAGEM_INVALIDA`, 404 `OBRA_NAO_ENCONTRADA`.
