@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { Module, ValidationPipe } from "@nestjs/common";
 import type { DynamicModule, INestApplication } from "@nestjs/common";
@@ -9,7 +10,17 @@ import helmet from "helmet";
 import { AuthController } from "./auth/auth.controller";
 import { AuthRepository } from "./auth/auth.repository";
 import { AuthService } from "./auth/auth.service";
+import { AuditRepository } from "./audit/audit.repository";
+import { AuditService } from "./audit/audit.service";
+import { FileCheckpointStore } from "./audit/checkpoint-store";
 import { AuthorizationController } from "./auth/authorization.controller";
+import { CatalogController } from "./catalog/catalog.controller";
+import { CatalogService } from "./catalog/catalog.service";
+import { MediaStore } from "./catalog/image-importer";
+import { MetCatalogClient, type FetchLike, type LookupLike } from "./catalog/met-catalog.client";
+import { LotsController } from "./lots/lots.controller";
+import { LotsRepository } from "./lots/lots.repository";
+import { LotsService } from "./lots/lots.service";
 import { CsrfGuard } from "./auth/csrf.guard";
 import { MutationRateLimitGuard } from "./auth/mutation-rate-limit.guard";
 import { RateLimiter } from "./auth/rate-limit";
@@ -26,6 +37,11 @@ interface ApplicationOptions {
   now?: () => number;
   allowedOrigins?: readonly string[];
   productionCookies?: boolean;
+  catalogFetch?: FetchLike;
+  catalogLookup?: LookupLike;
+  mediaDir?: string;
+  auditKey?: Uint8Array | null;
+  witnessDir?: string;
 }
 
 @Module({})
@@ -33,7 +49,7 @@ class ApplicationModule {
   static register(options: ApplicationOptions): DynamicModule {
     return {
       module: ApplicationModule,
-      controllers: [HealthController, AuthController, AuthorizationController],
+      controllers: [HealthController, AuthController, AuthorizationController, CatalogController, LotsController],
       providers: [
         {
           provide: DatabaseRepository,
@@ -54,6 +70,31 @@ class ApplicationModule {
             options.productionCookies ?? process.env.NODE_ENV === "production",
           ),
           inject: [AuthRepository],
+        },
+        { provide: MediaStore, useFactory: () => new MediaStore(options.mediaDir ?? process.env.MEDIA_DIR ?? resolve(__dirname, "../../.data/media")) },
+        { provide: MetCatalogClient, useFactory: () => new MetCatalogClient({ fetch: options.catalogFetch, lookup: options.catalogLookup }) },
+        {
+          provide: CatalogService,
+          useFactory: (client: MetCatalogClient, database: DatabaseRepository, media: MediaStore) => new CatalogService(client, database, media),
+          inject: [MetCatalogClient, DatabaseRepository, MediaStore],
+        },
+        {
+          provide: AuditService,
+          useFactory: (database: DatabaseRepository) => {
+            const key = options.auditKey !== undefined ? options.auditKey : auditKeyFromEnv();
+            const pool = (database as Partial<DatabaseRepository>).connectionPool;
+            if (!key || !pool) return null;
+            const witnessDir = options.witnessDir ?? process.env.AUDIT_WITNESS_DIR ?? resolve(__dirname, "../../.data/witness");
+            return new AuditService(new AuditRepository(pool, "public"), new FileCheckpointStore(witnessDir), key);
+          },
+          inject: [DatabaseRepository],
+        },
+        { provide: LotsRepository, useFactory: (database: DatabaseRepository) => new LotsRepository(database), inject: [DatabaseRepository] },
+        {
+          provide: LotsService,
+          useFactory: (database: DatabaseRepository, lots: LotsRepository, catalog: CatalogService, audit: AuditService | null) =>
+            new LotsService(database, lots, catalog, audit),
+          inject: [DatabaseRepository, LotsRepository, CatalogService, AuditService],
         },
         { provide: APP_GUARD, useClass: CsrfGuard },
         { provide: APP_GUARD, useClass: SessionGuard },
@@ -80,6 +121,12 @@ export async function createApplication(options: ApplicationOptions = {}): Promi
   app.useGlobalFilters(new HttpErrorFilter());
   app.enableShutdownHooks();
   return app;
+}
+
+function auditKeyFromEnv(): Uint8Array | null {
+  const raw = process.env.AUDIT_HMAC_KEY;
+  if (typeof raw !== "string" || !/^(?:[0-9a-fA-F]{2}){32,}$/.test(raw)) return null;
+  return Buffer.from(raw, "hex");
 }
 
 function defaultOrigins(): string[] {

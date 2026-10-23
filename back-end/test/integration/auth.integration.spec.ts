@@ -249,10 +249,9 @@ describe("sessão HTTP", () => {
     expect(injected.body.code).toBe("REQUISICAO_INVALIDA");
 
     const own = await mutate(ownerJar, "post", `/api/lots/${lotId}/cancel`, {});
-    expect(own.status).toBeGreaterThanOrEqual(400);
-    expect(own.status).not.toBe(404);
+    expect(own.status).toBe(200);
     const status = await pool.query<{ status: string }>(`SELECT status FROM lots WHERE id = $1`, [lotId]);
-    expect(status.rows[0]?.status).toBe("PUBLISHED");
+    expect(status.rows[0]?.status).toBe("CANCELLED");
   });
 
   it("recusa role e userId no login e não promove o papel", async () => {
