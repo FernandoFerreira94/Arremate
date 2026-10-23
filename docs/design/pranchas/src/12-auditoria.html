@@ -1,0 +1,485 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Auditoria pública · desktop e mobile</title><style>
+:root{--bg:#F6F3EC;--surface:#FFFDF8;--muted:#EEE9DE;--border:#DDD5C4;--ink:#1F1B16;--ink-2:#5C5448;--ink-3:#7A705F;
+--primary:#6E1E2B;--primary-h:#5A1722;--primary-fg:#FFF8F0;--accent:#A9823A;--accent-soft:#F3E8D0;
+--live:#B42318;--live-soft:#FBE9E7;--sched:#2F5D8A;--sched-soft:#E6EEF6;--closed:#5C5448;--closed-soft:#ECE7DD;
+--ok:#1E6B45;--ok-soft:#E3F1E8;--warn:#8A5300;--warn-soft:#FBEFD9;--err:#B42318;--err-soft:#FBE9E7;--info:#2F5D8A;--info-soft:#E6EEF6;
+--ring:#A9823A;--r-sm:4px;--r-md:6px;--r-lg:10px;--r-xl:14px;
+--sh-sm:0 1px 2px rgba(31,27,22,.08);--sh-md:0 2px 8px rgba(31,27,22,.10);--sh-lg:0 12px 32px rgba(31,27,22,.16)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;color:var(--ink);background:#D9D3C6;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.serif{font-family:Fraunces,serif;font-optical-sizing:auto}
+.num{font-variant-numeric:tabular-nums}
+.board{padding:40px;}
+.bh{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:24px}
+.bh h1{font-family:Fraunces,serif;font-size:34px;font-weight:600}
+.bh p{color:var(--ink-2);max-width:760px}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:var(--warn-soft);color:var(--warn);border:1px solid #E9CF9C}
+.frame{background:var(--bg);box-shadow:0 10px 40px rgba(0,0,0,.18);overflow:hidden;position:relative}
+.flabel{font-size:12px;font-weight:600;color:#3d372e;margin:0 0 8px;display:flex;gap:8px;align-items:center}
+.flabel b{background:#1F1B16;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px}
+.note{font-size:12px;color:#3d372e;background:#fff8;border-left:3px solid var(--accent);padding:6px 10px;margin-top:8px;border-radius:0 4px 4px 0}
+.ic{flex:none;vertical-align:middle}
+/* shell */
+.top{height:64px;display:flex;align-items:center;gap:24px;padding:0 40px;background:var(--surface);border-bottom:1px solid var(--border)}
+.top nav{display:flex;gap:4px;margin-left:16px}
+.top nav a{padding:8px 12px;border-radius:var(--r-md);color:var(--ink-2);font-weight:500;text-decoration:none}
+.top nav a.on{color:var(--ink);background:var(--muted)}
+.sp{flex:1}
+.logo{display:flex;align-items:center;gap:10px;font-family:Fraunces,serif;font-weight:600;font-size:20px;letter-spacing:-.01em}
+.sim{font-size:11px;font-weight:600;color:var(--warn);background:var(--warn-soft);border:1px solid #E9CF9C;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:var(--r-md);font-weight:600;font-size:14px;border:1px solid transparent;white-space:nowrap;font-family:Inter}
+.btn.p{background:var(--primary);color:var(--primary-fg);box-shadow:var(--sh-sm)}
+.btn.o{background:var(--surface);border-color:var(--border);color:var(--ink)}
+.btn.g{background:transparent;color:var(--ink)}
+.btn.d{background:var(--err);color:#fff}
+.btn.lg{height:48px;padding:0 22px;font-size:15px}
+.btn.sm{height:32px;padding:0 12px;font-size:13px}
+.btn.dis{opacity:.5}
+.btn.focus{outline:2px solid var(--ring);outline-offset:2px}
+.btn.hov.p{background:var(--primary-h)}
+.input{height:44px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);padding:0 12px;display:flex;align-items:center;gap:8px;font-size:15px}
+.input.err{border-color:var(--err);box-shadow:0 0 0 3px var(--err-soft)}
+.input.focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.lbl{font-size:13px;font-weight:600;margin-bottom:6px;display:block}
+.help{font-size:12px;color:var(--ink-3);margin-top:6px}
+.help.e{color:var(--err);display:flex;gap:6px;align-items:flex-start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-sm)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.b-live{background:var(--live-soft);color:var(--live)}.b-live:before{content:"";width:7px;height:7px;border-radius:9px;background:var(--live)}
+.b-sched{background:var(--sched-soft);color:var(--sched)}.b-closed{background:var(--closed-soft);color:var(--closed)}
+.b-ok{background:var(--ok-soft);color:var(--ok)}.b-warn{background:var(--warn-soft);color:var(--warn)}.b-err{background:var(--err-soft);color:var(--err)}.b-info{background:var(--info-soft);color:var(--info)}
+.b-ext{background:var(--accent-soft);color:#6B5220}
+.alert{display:flex;gap:10px;padding:12px 14px;border-radius:var(--r-md);border:1px solid;font-size:13px;align-items:flex-start}
+.alert b{display:block;font-size:14px;margin-bottom:2px}
+.a-err{background:var(--err-soft);border-color:#F2C4BE;color:#7A1A12}.a-ok{background:var(--ok-soft);border-color:#B9DCC6;color:#14492F}
+.a-warn{background:var(--warn-soft);border-color:#E9CF9C;color:#5E3A00}.a-info{background:var(--info-soft);border-color:#C3D5E8;color:#1E3F60}
+.tabs{display:inline-flex;background:var(--muted);border-radius:var(--r-md);padding:4px;gap:2px}
+.tabs span{padding:7px 14px;border-radius:var(--r-sm);font-weight:600;color:var(--ink-2);font-size:13px;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.tabs span.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh-sm)}
+.tabs .ct{font-size:11px;background:var(--border);border-radius:9px;padding:0 6px}
+.art{width:100%;object-fit:cover;display:block;background:var(--muted)}
+.ph{background:repeating-linear-gradient(45deg,var(--muted),var(--muted) 10px,#E6E0D3 10px,#E6E0D3 20px);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-2);gap:6px;font-size:12px;font-weight:600;text-align:center}
+.sk{background:linear-gradient(90deg,#E9E3D7,#F2EEE5,#E9E3D7);border-radius:4px}
+.muted{color:var(--ink-2)}.small{font-size:12px}.xs{font-size:11px}
+.row{display:flex;gap:12px;align-items:center}.col{display:flex;flex-direction:column}
+.grid{display:grid;gap:24px}
+.lot .meta{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.lot h3{font-family:Fraunces,serif;font-size:18px;font-weight:600;line-height:1.2}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.kv span:first-child{color:var(--ink-2)}
+.price{font-family:Fraunces,serif;font-weight:600;font-variant-numeric:tabular-nums}
+.foot{padding:20px 40px;border-top:1px solid var(--border);color:var(--ink-3);font-size:12px;display:flex;justify-content:space-between;background:var(--surface)}
+table{border-collapse:collapse;width:100%}
+th{font-size:12px;text-align:left;color:var(--ink-2);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid #ECE6DA;font-size:13px}
+.dialog{background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--sh-lg);padding:24px;border:1px solid var(--border)}
+.overlay{position:absolute;inset:0;background:rgba(31,27,22,.45);display:flex;align-items:center;justify-content:center}
+.mtop{height:56px;display:flex;align-items:center;padding:0 16px;gap:10px;background:var(--surface);border-bottom:1px solid var(--border)}
+.mbar{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:12px 16px 20px;box-shadow:0 -4px 16px rgba(31,27,22,.08)}
+h2.s{font-family:Fraunces,serif;font-size:22px;font-weight:600;margin-bottom:12px}
+.sec{background:#F3EFE7;border-radius:12px;padding:24px;margin-bottom:24px}
+.sec>h2{font-family:Fraunces,serif;font-size:24px;margin-bottom:4px}
+.sec>p.d{color:var(--ink-2);margin-bottom:16px;font-size:13px}
+.cred{font-size:11px;color:var(--ink-3)}
+</style></head><body style="width:1520px"><div class="board"><div class="bh"><div><div class="row" style="margin-bottom:6px"><span class="tag">Decisões aprovadas por Fernando em 23/10, segundo o Orquestrador Dev · sem Design Freeze</span><span class="xs muted">Arremate · 23/10/2026</span></div><h1>Auditoria pública · desktop e mobile</h1><p>R14/R26/R27: sem login; histórico completo paginado; veredito íntegro/adulterado/indeterminado com texto e ícone; só aliases, sem nome, e-mail, IP ou IDs internos.</p></div><div class="row"><svg width="40" height="40" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg><span class="serif" style="font-size:22px;font-weight:600">Arremate</span></div></div><div class="flabel"><b>E1</b>Desktop 1440 — estado principal</div><div class="frame" style="width:1440px"><div class="top"><div class="logo"><svg width="30" height="30" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg>Arremate</div><span class="sim">Demonstração · valores simulados</span><nav><a class="">Vitrine</a></nav><div class="sp"></div><span class="btn p sm"><svg
+  class="ic  lucide lucide-log-in"
+  xmlns="http://www.w3.org/2000/svg"
+  width="15"
+  height="15"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m10 17 5-5-5-5" />
+  <path d="M15 12H3" />
+  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+</svg>Entrar</span></div><div style="padding:16px 40px 0" class="small muted">Vitrine › Lote 0007 › Auditoria pública</div><div style="padding:16px 40px 8px;display:flex;gap:20px;align-items:center"><img style="width:88px;height:88px;border-radius:4px;flex:none" class="art " style="height:88px" src="../assets/obras/436105.jpg" alt="A morte de Sócrates, Jacques Louis David, 1787"><div><h1 class="serif" style="font-size:34px;font-weight:600">Auditoria do lote 0007</h1><p class="muted" style="margin-top:4px">A morte de Sócrates · Jacques Louis David · The Met (CC0) · encerrado 23/10 17:03 BRT</p></div></div>
+<div style="padding:12px 40px"><div class="alert a-ok" style="padding:18px 20px"><svg
+  class="ic  lucide lucide-shield-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="m9 12 2 2 4-4" />
+</svg><div><b style="font-size:18px">Histórico íntegro</b>Os 5 lances conferem com a cadeia de assinaturas e com a âncora externa. Verificado em 23/10/2026 17:05:02 BRT · versão 1.</div></div></div><div style="display:grid;grid-template-columns:8fr 4fr;gap:24px;padding:8px 40px 40px"><div class="card" style="padding:16px 20px"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 class="serif" style="font-size:18px">Histórico completo</h3><span class="small muted">5 lances · página 1 de 1</span></div><table><tr><th>Seq.</th><th>Licitante (alias)</th><th style="text-align:right">Lance</th><th>Horário (BRT)</th><th>Elo da cadeia</th><th>Verificação</th></tr><tr style=""><td class="num">#05</td><td>Licitante Âmbar-47</td><td class="num" style="text-align:right;font-weight:600">R$ 12.900,00</td><td class="num">23/10 17:01:12</td><td class="num xs" style="font-family:DejaVu Sans Mono">9f3a…c21e</td><td><span class="badge b-ok"><svg
+  class="ic  lucide lucide-circle-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>Confere</span></td></tr><tr style=""><td class="num">#04</td><td>Licitante Cobalto-12</td><td class="num" style="text-align:right;font-weight:600">R$ 12.400,00</td><td class="num">23/10 14:28:51</td><td class="num xs" style="font-family:DejaVu Sans Mono">b77d…0a94</td><td><span class="badge b-ok"><svg
+  class="ic  lucide lucide-circle-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>Confere</span></td></tr><tr style=""><td class="num">#03</td><td>Licitante Âmbar-47</td><td class="num" style="text-align:right;font-weight:600">R$ 11.900,00</td><td class="num">23/10 14:20:03</td><td class="num xs" style="font-family:DejaVu Sans Mono">41ce…77f0</td><td><span class="badge b-ok"><svg
+  class="ic  lucide lucide-circle-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>Confere</span></td></tr><tr style=""><td class="num">#02</td><td>Licitante Jade-08</td><td class="num" style="text-align:right;font-weight:600">R$ 10.500,00</td><td class="num">23/10 13:41:12</td><td class="num xs" style="font-family:DejaVu Sans Mono">e02b…5d13</td><td><span class="badge b-ok"><svg
+  class="ic  lucide lucide-circle-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>Confere</span></td></tr><tr style=""><td class="num">#01</td><td>Licitante Cobalto-12</td><td class="num" style="text-align:right;font-weight:600">R$ 10.000,00</td><td class="num">23/10 12:02:09</td><td class="num xs" style="font-family:DejaVu Sans Mono">0c9e…a8b2</td><td><span class="badge b-ok"><svg
+  class="ic  lucide lucide-circle-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>Confere</span></td></tr></table><div class="row" style="justify-content:space-between;margin-top:12px"><span class="xs muted">Gênese: lote publicado 22/10 18:40 · elo 7a1f…e003</span><div class="row"><span class="btn o sm dis"><svg
+  class="ic  lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg>Anterior</span><span class="btn o sm dis">Próxima<svg
+  class="ic  lucide lucide-chevron-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg></span></div></div></div><div class="col" style="gap:16px"><div class="card" style="padding:18px"><h3 class="serif" style="font-size:18px">Como a verificação funciona</h3><p class="small muted" style="margin-top:6px">Cada lance é encadeado ao anterior com uma assinatura (HMAC) e a ponta da cadeia é registrada numa âncora independente. Qualquer alteração, remoção ou inserção posterior, mesmo direto no banco, quebra a cadeia. A verificação considera <b>todo</b> o histórico, não só a página visível.</p><p class="xs muted" style="margin-top:8px">Limites: comprova a integridade dos registros deste sistema, não a autenticidade ou propriedade da obra física. Licitantes aparecem só por alias.</p></div><div class="card" style="padding:18px"><h3 class="serif" style="font-size:18px;margin-bottom:8px">Resultado</h3><div class="kv"><span>Vencedor</span><b>Licitante Âmbar-47</b></div><div class="kv" style="margin-top:6px"><span>Valor final</span><b class="num">R$ 12.900,00</b></div><div class="row" style="margin-top:12px"><span class="btn o sm">Sala do lote</span><span class="btn o sm"><svg
+  class="ic  lucide lucide-receipt"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 17V7" />
+  <path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8" />
+  <path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z" />
+</svg>Comprovante</span></div></div></div></div><div class="foot"><span>Arremate — demonstração técnica. Obras de acervo público (The Met Open Access, CC0); nenhuma obra está à venda.</span><span>Valores simulados · horário de Brasília (UTC−3)</span></div></div>
+<div class="grid" style="grid-template-columns:repeat(3,1fr);margin-top:28px;align-items:start"><div><div class="flabel"><b>E2</b>Verificando</div><div class="frame" style="padding:18px;border-radius:12px"><div class="alert a-info" style="padding:16px"><svg
+  class="ic  lucide lucide-loader-circle"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+</svg><div><b style="font-size:16px">Verificando o histórico…</b>Conferindo todos os lances com a âncora externa.</div></div></div><div class=note>Nunca mostra “íntegro” antes do fim.</div></div><div><div class="flabel"><b>E3</b>Adulterado (R26)</div><div class="frame" style="padding:18px;border-radius:12px"><div class="alert a-err" style="padding:18px 20px"><svg
+  class="ic  lucide lucide-shield-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="M12 8v4" />
+  <path d="M12 16h.01" />
+</svg><div><b style="font-size:18px">Histórico adulterado</b>O lance #04 não confere: foi alterado, removido ou inserido depois do registro. Verificado em 23/10/2026 17:05:02 BRT.</div></div><div style="margin-top:12px"><div class="kv" style="padding:7px 0;border-bottom:1px solid var(--border);"><span>#05 · Âmbar-47</span><span class="num">R$ 12.900,00 · Confere</span></div><div class="kv" style="padding:7px 0;border-bottom:1px solid var(--border);color:var(--err);font-weight:600"><span>#04 · Cobalto-12</span><span class="num">R$ 12.400,00 · Não confere</span></div><div class="kv" style="padding:7px 0;border-bottom:1px solid var(--border);"><span>#03 · Âmbar-47</span><span class="num">R$ 11.900,00 · Confere</span></div><div class="kv" style="padding:7px 0;border-bottom:1px solid var(--border);"><span>#02 · Jade-08</span><span class="num">R$ 10.500,00 · Confere</span></div><div class="kv" style="padding:7px 0;border-bottom:1px solid var(--border);"><span>#01 · Cobalto-12</span><span class="num">R$ 10.000,00 · Confere</span></div></div></div><div class=note>Linha afetada destacada com ícone e texto.</div></div><div><div class="flabel"><b>E4</b>Indeterminado</div><div class="frame" style="padding:18px;border-radius:12px"><div class="alert a-warn" style="padding:18px 20px"><svg
+  class="ic  lucide lucide-shield-question"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3" />
+  <path d="M12 17h.01" />
+</svg><div><b style="font-size:18px">Não foi possível verificar agora</b>A âncora externa não respondeu. Isto não significa que o histórico esteja íntegro. Tente novamente mais tarde.</div></div><span class="btn o sm" style="margin-top:10px"><svg
+  class="ic  lucide lucide-refresh-cw"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>Verificar de novo</span></div><div class=note>Falta de dados ou de âncora não parece íntegro.</div></div><div><div class="flabel"><b>E5</b>Sem lances, gênese válida</div><div class="frame" style="padding:18px;border-radius:12px"><div class="alert a-ok"><svg
+  class="ic  lucide lucide-shield-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="m9 12 2 2 4-4" />
+</svg><div><b>Íntegro · nenhum lance</b>O registro de publicação confere. Lote encerrado sem lances.</div></div></div></div><div><div class="flabel"><b>E6</b>Lote removido, evidência remanescente</div><div class="frame" style="padding:18px;border-radius:12px"><div class="alert a-err"><svg
+  class="ic  lucide lucide-shield-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="M12 8v4" />
+  <path d="M12 16h.01" />
+</svg><div><b>Lote não encontrado, mas há evidência</b>A âncora externa registra 5 lances para este lote que não estão mais no banco. Resultado: adulterado.</div></div></div></div><div><div class="flabel"><b>E7</b>Paginação longa</div><div class="frame" style="padding:18px;border-radius:12px"><div class="row" style="justify-content:space-between"><span class="small muted" style="white-space:nowrap">51–100 de 312</span><div class="row"><span class="btn o sm"><svg
+  class="ic  lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg>Anterior</span><span class="btn sm" style="background:var(--ink);color:#fff">2</span><span class="btn o sm">3</span><span class="btn o sm">7</span><span class="btn o sm">Próxima<svg
+  class="ic  lucide lucide-chevron-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg></span></div></div><p class="xs muted" style="margin-top:8px">O veredito vale para os 312 lances da mesma revisão.</p></div></div></div>
+<h2 class="serif" style="font-size:26px;margin:36px 0 14px">Mobile 390</h2><div class="row" style="gap:28px;align-items:flex-start"><div><div class="flabel"><b>M1</b>Íntegro</div><div class="frame" style="width:390px;height:844px;border-radius:24px"><div class="mtop"><span class="btn g sm" style="padding:0 6px" aria-label="Voltar"><svg
+  class="ic  lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg></span><b>Auditoria</b><div class="sp"></div><span class="btn g sm" style="padding:0 10px" aria-label="Menu"><svg
+  class="ic  lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg></span></div><div style="background:var(--warn-soft);color:var(--warn);font-size:11px;font-weight:600;text-align:center;padding:4px">Demonstração · valores simulados</div><div style="padding:14px 16px 6px"><div class="row" style="gap:10px"><img style="width:52px;height:52px;border-radius:4px;flex:none" class="art " style="height:52px" src="../assets/obras/436105.jpg" alt="A morte de Sócrates, Jacques Louis David, 1787"><div><b class="serif" style="font-size:17px">Lote 0007 · A morte de Sócrates</b><div class="xs muted">The Met · CC0 · encerrado 23/10</div></div></div></div><div style="padding:8px 16px"><div class="alert a-ok" style="padding:12px"><svg
+  class="ic  lucide lucide-shield-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="m9 12 2 2 4-4" />
+</svg><div><b style="font-size:15px">Histórico íntegro</b>Os 5 lances conferem com a cadeia de assinaturas e com a âncora externa. Verificado em 23/10/2026 17:05:02 BRT · versão 1.</div></div></div><div style="padding:0 16px"><div class="kv" style="padding:9px 0;border-bottom:1px solid var(--border)"><span>#05 · Âmbar-47<br><span class="xs num">23/10 17:01:12</span></span><span style="text-align:right"><b class="num">R$ 12.900,00</b><br><span class="badge b-ok" style="font-size:10px">Confere</span></span></div><div class="kv" style="padding:9px 0;border-bottom:1px solid var(--border)"><span>#04 · Cobalto-12<br><span class="xs num">23/10 14:28:51</span></span><span style="text-align:right"><b class="num">R$ 12.400,00</b><br><span class="badge b-ok" style="font-size:10px">Confere</span></span></div><div class="kv" style="padding:9px 0;border-bottom:1px solid var(--border)"><span>#03 · Âmbar-47<br><span class="xs num">23/10 14:20:03</span></span><span style="text-align:right"><b class="num">R$ 11.900,00</b><br><span class="badge b-ok" style="font-size:10px">Confere</span></span></div><div class="kv" style="padding:9px 0;border-bottom:1px solid var(--border)"><span>#02 · Jade-08<br><span class="xs num">23/10 13:41:12</span></span><span style="text-align:right"><b class="num">R$ 10.500,00</b><br><span class="badge b-ok" style="font-size:10px">Confere</span></span></div><div class="kv" style="padding:9px 0;border-bottom:1px solid var(--border)"><span>#01 · Cobalto-12<br><span class="xs num">23/10 12:02:09</span></span><span style="text-align:right"><b class="num">R$ 10.000,00</b><br><span class="badge b-ok" style="font-size:10px">Confere</span></span></div><p class="xs muted" style="margin-top:10px">Verificação considera todo o histórico. </p></div><div style="padding:12px 16px"><div class="card" style="padding:14px"><h3 class="serif" style="font-size:18px">Como a verificação funciona</h3><p class="small muted" style="margin-top:6px">Cada lance é encadeado ao anterior com uma assinatura (HMAC) e a ponta da cadeia é registrada numa âncora independente. Qualquer alteração, remoção ou inserção posterior, mesmo direto no banco, quebra a cadeia. A verificação considera <b>todo</b> o histórico, não só a página visível.</p><p class="xs muted" style="margin-top:8px">Limites: comprova a integridade dos registros deste sistema, não a autenticidade ou propriedade da obra física. Licitantes aparecem só por alias.</p></div></div></div></div><div><div class="flabel"><b>M2</b>Adulterado</div><div class="frame" style="width:390px;height:844px;border-radius:24px"><div class="mtop"><span class="btn g sm" style="padding:0 6px" aria-label="Voltar"><svg
+  class="ic  lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg></span><b>Auditoria</b><div class="sp"></div><span class="btn g sm" style="padding:0 10px" aria-label="Menu"><svg
+  class="ic  lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg></span></div><div style="background:var(--warn-soft);color:var(--warn);font-size:11px;font-weight:600;text-align:center;padding:4px">Demonstração · valores simulados</div><div style="padding:14px 16px 6px"><div class="row" style="gap:10px"><img style="width:52px;height:52px;border-radius:4px;flex:none" class="art " style="height:52px" src="../assets/obras/436105.jpg" alt="A morte de Sócrates, Jacques Louis David, 1787"><div><b class="serif" style="font-size:17px">Lote 0007 · A morte de Sócrates</b><div class="xs muted">The Met · CC0 · encerrado 23/10</div></div></div></div><div style="padding:8px 16px"><div class="alert a-err" style="padding:12px"><svg
+  class="ic  lucide lucide-shield-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="M12 8v4" />
+  <path d="M12 16h.01" />
+</svg><div><b style="font-size:15px">Histórico adulterado</b>O lance #04 não confere: foi alterado, removido ou inserido depois do registro. Verificado em 23/10/2026 17:05:02 BRT.</div></div></div><div style="padding:0 16px"><div class="kv" style="padding:9px 0;border-bottom:1px solid var(--border)"><span>#05 · Âmbar-47<br><span class="xs num">23/10 17:01:12</span></span><span style="text-align:right"><b class="num">R$ 12.900,00</b><br><span class="badge b-ok" style="font-size:10px">Confere</span></span></div><div class="kv" style="padding:9px 0;border-bottom:1px solid var(--border)"><span style="color:var(--err)">#04 · Cobalto-12<br><span class="xs num">23/10 14:28:51</span></span><span style="text-align:right"><b class="num">R$ 12.400,00</b><br><span class="badge b-err" style="font-size:10px">Não confere</span></span></div><div class="kv" style="padding:9px 0;border-bottom:1px solid var(--border)"><span>#03 · Âmbar-47<br><span class="xs num">23/10 14:20:03</span></span><span style="text-align:right"><b class="num">R$ 11.900,00</b><br><span class="badge b-ok" style="font-size:10px">Confere</span></span></div><div class="kv" style="padding:9px 0;border-bottom:1px solid var(--border)"><span>#02 · Jade-08<br><span class="xs num">23/10 13:41:12</span></span><span style="text-align:right"><b class="num">R$ 10.500,00</b><br><span class="badge b-ok" style="font-size:10px">Confere</span></span></div><div class="kv" style="padding:9px 0;border-bottom:1px solid var(--border)"><span>#01 · Cobalto-12<br><span class="xs num">23/10 12:02:09</span></span><span style="text-align:right"><b class="num">R$ 10.000,00</b><br><span class="badge b-ok" style="font-size:10px">Confere</span></span></div></div></div></div><div><div class="flabel"><b>M3</b>Indeterminado</div><div class="frame" style="width:390px;height:844px;border-radius:24px"><div class="mtop"><span class="btn g sm" style="padding:0 6px" aria-label="Voltar"><svg
+  class="ic  lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg></span><b>Auditoria</b><div class="sp"></div><span class="btn g sm" style="padding:0 10px" aria-label="Menu"><svg
+  class="ic  lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg></span></div><div style="background:var(--warn-soft);color:var(--warn);font-size:11px;font-weight:600;text-align:center;padding:4px">Demonstração · valores simulados</div><div style="padding:14px 16px 6px"><div class="row" style="gap:10px"><img style="width:52px;height:52px;border-radius:4px;flex:none" class="art " style="height:52px" src="../assets/obras/436105.jpg" alt="A morte de Sócrates, Jacques Louis David, 1787"><div><b class="serif" style="font-size:17px">Lote 0007 · A morte de Sócrates</b><div class="xs muted">The Met · CC0 · encerrado 23/10</div></div></div></div><div style="padding:8px 16px"><div class="alert a-warn" style="padding:12px"><svg
+  class="ic  lucide lucide-shield-question"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3" />
+  <path d="M12 17h.01" />
+</svg><div><b style="font-size:15px">Não foi possível verificar agora</b>A âncora externa não respondeu. Isto não significa que o histórico esteja íntegro. Tente novamente mais tarde.</div></div></div><div style="padding:0 16px"><span class="btn o" style="width:100%"><svg
+  class="ic  lucide lucide-refresh-cw"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>Verificar de novo</span></div></div></div></div></div></body></html>

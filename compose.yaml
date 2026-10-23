@@ -1,0 +1,41 @@
+name: casadeleilao
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: auction_owner
+      POSTGRES_PASSWORD: ${DB_OWNER_PASSWORD:?Configure DB_OWNER_PASSWORD no .env}
+      POSTGRES_DB: casadeleilao
+      APP_DATABASE_PASSWORD: ${DB_APP_PASSWORD:?Configure DB_APP_PASSWORD no .env}
+    ports:
+      - "127.0.0.1:5462:5432"
+    volumes:
+      - postgres_dev:/var/lib/postgresql
+      - ./infra/postgres/init-app-user.sh:/docker-entrypoint-initdb.d/10-app-user.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auction_owner -d casadeleilao"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+  db-test:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: auction_owner
+      POSTGRES_PASSWORD: ${DB_OWNER_PASSWORD:?Configure DB_OWNER_PASSWORD no .env}
+      POSTGRES_DB: casadeleilao_test
+      APP_DATABASE_PASSWORD: ${DB_TEST_APP_PASSWORD:?Configure DB_TEST_APP_PASSWORD no .env}
+    ports:
+      - "127.0.0.1:5463:5432"
+    volumes:
+      - postgres_test:/var/lib/postgresql
+      - ./infra/postgres/init-app-user.sh:/docker-entrypoint-initdb.d/10-app-user.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auction_owner -d casadeleilao_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+volumes:
+  postgres_dev:
+  postgres_test:

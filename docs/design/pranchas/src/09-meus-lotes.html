@@ -1,0 +1,365 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Meus lotes · desktop e mobile</title><style>
+:root{--bg:#F6F3EC;--surface:#FFFDF8;--muted:#EEE9DE;--border:#DDD5C4;--ink:#1F1B16;--ink-2:#5C5448;--ink-3:#7A705F;
+--primary:#6E1E2B;--primary-h:#5A1722;--primary-fg:#FFF8F0;--accent:#A9823A;--accent-soft:#F3E8D0;
+--live:#B42318;--live-soft:#FBE9E7;--sched:#2F5D8A;--sched-soft:#E6EEF6;--closed:#5C5448;--closed-soft:#ECE7DD;
+--ok:#1E6B45;--ok-soft:#E3F1E8;--warn:#8A5300;--warn-soft:#FBEFD9;--err:#B42318;--err-soft:#FBE9E7;--info:#2F5D8A;--info-soft:#E6EEF6;
+--ring:#A9823A;--r-sm:4px;--r-md:6px;--r-lg:10px;--r-xl:14px;
+--sh-sm:0 1px 2px rgba(31,27,22,.08);--sh-md:0 2px 8px rgba(31,27,22,.10);--sh-lg:0 12px 32px rgba(31,27,22,.16)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;color:var(--ink);background:#D9D3C6;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.serif{font-family:Fraunces,serif;font-optical-sizing:auto}
+.num{font-variant-numeric:tabular-nums}
+.board{padding:40px;}
+.bh{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:24px}
+.bh h1{font-family:Fraunces,serif;font-size:34px;font-weight:600}
+.bh p{color:var(--ink-2);max-width:760px}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:var(--warn-soft);color:var(--warn);border:1px solid #E9CF9C}
+.frame{background:var(--bg);box-shadow:0 10px 40px rgba(0,0,0,.18);overflow:hidden;position:relative}
+.flabel{font-size:12px;font-weight:600;color:#3d372e;margin:0 0 8px;display:flex;gap:8px;align-items:center}
+.flabel b{background:#1F1B16;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px}
+.note{font-size:12px;color:#3d372e;background:#fff8;border-left:3px solid var(--accent);padding:6px 10px;margin-top:8px;border-radius:0 4px 4px 0}
+.ic{flex:none;vertical-align:middle}
+/* shell */
+.top{height:64px;display:flex;align-items:center;gap:24px;padding:0 40px;background:var(--surface);border-bottom:1px solid var(--border)}
+.top nav{display:flex;gap:4px;margin-left:16px}
+.top nav a{padding:8px 12px;border-radius:var(--r-md);color:var(--ink-2);font-weight:500;text-decoration:none}
+.top nav a.on{color:var(--ink);background:var(--muted)}
+.sp{flex:1}
+.logo{display:flex;align-items:center;gap:10px;font-family:Fraunces,serif;font-weight:600;font-size:20px;letter-spacing:-.01em}
+.sim{font-size:11px;font-weight:600;color:var(--warn);background:var(--warn-soft);border:1px solid #E9CF9C;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:var(--r-md);font-weight:600;font-size:14px;border:1px solid transparent;white-space:nowrap;font-family:Inter}
+.btn.p{background:var(--primary);color:var(--primary-fg);box-shadow:var(--sh-sm)}
+.btn.o{background:var(--surface);border-color:var(--border);color:var(--ink)}
+.btn.g{background:transparent;color:var(--ink)}
+.btn.d{background:var(--err);color:#fff}
+.btn.lg{height:48px;padding:0 22px;font-size:15px}
+.btn.sm{height:32px;padding:0 12px;font-size:13px}
+.btn.dis{opacity:.5}
+.btn.focus{outline:2px solid var(--ring);outline-offset:2px}
+.btn.hov.p{background:var(--primary-h)}
+.input{height:44px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);padding:0 12px;display:flex;align-items:center;gap:8px;font-size:15px}
+.input.err{border-color:var(--err);box-shadow:0 0 0 3px var(--err-soft)}
+.input.focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.lbl{font-size:13px;font-weight:600;margin-bottom:6px;display:block}
+.help{font-size:12px;color:var(--ink-3);margin-top:6px}
+.help.e{color:var(--err);display:flex;gap:6px;align-items:flex-start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-sm)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.b-live{background:var(--live-soft);color:var(--live)}.b-live:before{content:"";width:7px;height:7px;border-radius:9px;background:var(--live)}
+.b-sched{background:var(--sched-soft);color:var(--sched)}.b-closed{background:var(--closed-soft);color:var(--closed)}
+.b-ok{background:var(--ok-soft);color:var(--ok)}.b-warn{background:var(--warn-soft);color:var(--warn)}.b-err{background:var(--err-soft);color:var(--err)}.b-info{background:var(--info-soft);color:var(--info)}
+.b-ext{background:var(--accent-soft);color:#6B5220}
+.alert{display:flex;gap:10px;padding:12px 14px;border-radius:var(--r-md);border:1px solid;font-size:13px;align-items:flex-start}
+.alert b{display:block;font-size:14px;margin-bottom:2px}
+.a-err{background:var(--err-soft);border-color:#F2C4BE;color:#7A1A12}.a-ok{background:var(--ok-soft);border-color:#B9DCC6;color:#14492F}
+.a-warn{background:var(--warn-soft);border-color:#E9CF9C;color:#5E3A00}.a-info{background:var(--info-soft);border-color:#C3D5E8;color:#1E3F60}
+.tabs{display:inline-flex;background:var(--muted);border-radius:var(--r-md);padding:4px;gap:2px}
+.tabs span{padding:7px 14px;border-radius:var(--r-sm);font-weight:600;color:var(--ink-2);font-size:13px;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.tabs span.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh-sm)}
+.tabs .ct{font-size:11px;background:var(--border);border-radius:9px;padding:0 6px}
+.art{width:100%;object-fit:cover;display:block;background:var(--muted)}
+.ph{background:repeating-linear-gradient(45deg,var(--muted),var(--muted) 10px,#E6E0D3 10px,#E6E0D3 20px);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-2);gap:6px;font-size:12px;font-weight:600;text-align:center}
+.sk{background:linear-gradient(90deg,#E9E3D7,#F2EEE5,#E9E3D7);border-radius:4px}
+.muted{color:var(--ink-2)}.small{font-size:12px}.xs{font-size:11px}
+.row{display:flex;gap:12px;align-items:center}.col{display:flex;flex-direction:column}
+.grid{display:grid;gap:24px}
+.lot .meta{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.lot h3{font-family:Fraunces,serif;font-size:18px;font-weight:600;line-height:1.2}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.kv span:first-child{color:var(--ink-2)}
+.price{font-family:Fraunces,serif;font-weight:600;font-variant-numeric:tabular-nums}
+.foot{padding:20px 40px;border-top:1px solid var(--border);color:var(--ink-3);font-size:12px;display:flex;justify-content:space-between;background:var(--surface)}
+table{border-collapse:collapse;width:100%}
+th{font-size:12px;text-align:left;color:var(--ink-2);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid #ECE6DA;font-size:13px}
+.dialog{background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--sh-lg);padding:24px;border:1px solid var(--border)}
+.overlay{position:absolute;inset:0;background:rgba(31,27,22,.45);display:flex;align-items:center;justify-content:center}
+.mtop{height:56px;display:flex;align-items:center;padding:0 16px;gap:10px;background:var(--surface);border-bottom:1px solid var(--border)}
+.mbar{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:12px 16px 20px;box-shadow:0 -4px 16px rgba(31,27,22,.08)}
+h2.s{font-family:Fraunces,serif;font-size:22px;font-weight:600;margin-bottom:12px}
+.sec{background:#F3EFE7;border-radius:12px;padding:24px;margin-bottom:24px}
+.sec>h2{font-family:Fraunces,serif;font-size:24px;margin-bottom:4px}
+.sec>p.d{color:var(--ink-2);margin-bottom:16px;font-size:13px}
+.cred{font-size:11px;color:var(--ink-3)}
+</style></head><body style="width:1520px"><div class="board"><div class="bh"><div><div class="row" style="margin-bottom:6px"><span class="tag">Decisões aprovadas por Fernando em 23/10, segundo o Orquestrador Dev · sem Design Freeze</span><span class="xs muted">Arremate · 23/10/2026</span></div><h1>Meus lotes · desktop e mobile</h1><p>R02/R08/R09: só lotes do leiloeiro; cancelar apenas sem lances; total efetivamente recebido sem somar disputas abertas.</p></div><div class="row"><svg width="40" height="40" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg><span class="serif" style="font-size:22px;font-weight:600">Arremate</span></div></div><div class="flabel"><b>E1</b>Desktop 1440 — estado principal</div><div class="frame" style="width:1440px"><div class="top"><div class="logo"><svg width="30" height="30" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg>Arremate</div><span class="sim">Demonstração · valores simulados</span><nav><a class="">Vitrine</a><a class="on">Meus lotes</a></nav><div class="sp"></div><span class="small">Leiloeiro L-01</span></div><div style="padding:32px 40px 8px;display:flex;justify-content:space-between;align-items:flex-end"><div><h1 class="serif" style="font-size:34px;font-weight:600">Meus lotes</h1><p class="muted" style="margin-top:4px">Leiloeiro L-01 · lotes próprios, inclusive cancelados</p></div><span class="btn p lg"><svg
+  class="ic  lucide lucide-plus"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="M12 5v14" />
+</svg>Criar lote</span></div>
+<div class="grid" style="grid-template-columns:repeat(3,1fr);gap:20px;padding:16px 40px"><div class="card" style="padding:18px;border:2px solid var(--primary);"><div class="small muted">Total recebido</div><div class="price" style="font-size:28px">R$ 15.500,00</div><div class="xs muted">Só liquidações concluídas · não soma disputas abertas</div></div><div class="card" style="padding:18px;"><div class="small muted">Lotes arrematados</div><div class="price" style="font-size:28px">1 de 2 encerrados</div><div class="xs muted">1 encerrado sem lances</div></div><div class="card" style="padding:18px;"><div class="small muted">Em andamento</div><div class="price" style="font-size:28px">2 ao vivo · 1 agendado</div><div class="xs muted">R$ 12.900,00 em disputa (não recebido)</div></div></div>
+<div style="padding:8px 40px 16px"><div class="tabs"><span class="on">Todos <i class="ct">6</i></span><span>Ao vivo <i class="ct">2</i></span><span>Agendados <i class="ct">1</i></span><span>Encerrados <i class="ct">2</i></span><span>Cancelados <i class="ct">1</i></span></div></div><div style="padding:0 40px 40px"><div class="card" style="padding:8px 16px"><table><tr><th>Lote</th><th>Estado</th><th>Inicial</th><th>Atual / final</th><th style="text-align:center">Lances</th><th>Resultado</th><th></th></tr><tr><td><div class="row" style="gap:10px"><img style="width:40px;height:40px;border-radius:4px;flex:none" class="art " style="height:40px" src="../assets/obras/436105.jpg" alt="A morte de Sócrates, Jacques Louis David, 1787"><div><b>A morte de Sócrates</b><div class="xs muted">Lote 0007</div></div></div></td><td><span class="badge b-live">Ao vivo</span></td><td class="num">R$ 8.000,00</td><td class="num">R$ 12.900,00 (atual)</td><td class="num" style="text-align:center">5</td><td>—</td><td style="text-align:right"><span class="btn g sm">Abrir sala</span></td></tr><tr><td><div class="row" style="gap:10px"><img style="width:40px;height:40px;border-radius:4px;flex:none" class="art " style="height:40px" src="../assets/obras/45434.jpg" alt="Sob a onda em Kanagawa, Katsushika Hokusai, c. 1830–32"><div><b>Sob a onda em Kanagawa</b><div class="xs muted">Lote 0003</div></div></div></td><td><span class="badge b-live">Ao vivo</span></td><td class="num">R$ 2.000,00</td><td class="num">—</td><td class="num" style="text-align:center">0</td><td>—</td><td style="text-align:right"><span class="btn o sm" style="color:var(--err)">Cancelar</span></td></tr><tr><td><div class="row" style="gap:10px"><img style="width:40px;height:40px;border-radius:4px;flex:none" class="art " style="height:40px" src="../assets/obras/10481.jpg" alt="O coração dos Andes, Frederic Edwin Church, 1859"><div><b>O coração dos Andes</b><div class="xs muted">Lote 0014</div></div></div></td><td><span class="badge b-sched"><svg
+  class="ic  lucide lucide-calendar"
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M8 2v3" />
+  <path d="M16 2v3" />
+  <rect x="3" y="3" width="18" height="18" rx="2" />
+  <path d="M3 9h18" />
+</svg>Agendado</span></td><td class="num">R$ 30.000,00</td><td class="num">—</td><td class="num" style="text-align:center">0</td><td>—</td><td style="text-align:right"><span class="btn o sm" style="color:var(--err)">Cancelar</span></td></tr><tr><td><div class="row" style="gap:10px"><img style="width:40px;height:40px;border-radius:4px;flex:none" class="art " style="height:40px" src="../assets/obras/437984.jpg" alt="La Berceuse, Vincent van Gogh, 1889"><div><b>La Berceuse</b><div class="xs muted">Lote 0012</div></div></div></td><td><span class="badge b-closed">Encerrado</span></td><td class="num">R$ 9.000,00</td><td class="num">R$ 15.500,00</td><td class="num" style="text-align:center">6</td><td><span class="badge b-ok">Arrematado · recebido</span></td><td style="text-align:right"><span class="btn g sm">Comprovante</span></td></tr><tr><td><div class="row" style="gap:10px"><img style="width:40px;height:40px;border-radius:4px;flex:none" class="art " style="height:40px" src="../assets/obras/438815.jpg" alt="Madame Georges Charpentier e os filhos, Auguste Renoir, 1878"><div><b>Madame Georges Charpentier e os filhos</b><div class="xs muted">Lote 0005</div></div></div></td><td><span class="badge b-closed">Encerrado</span></td><td class="num">R$ 6.000,00</td><td class="num">—</td><td class="num" style="text-align:center">0</td><td><span class="badge b-closed">Sem lances</span></td><td style="text-align:right"><span class="btn g sm">Auditoria</span></td></tr><tr><td><div class="row" style="gap:10px"><img style="width:40px;height:40px;border-radius:4px;flex:none" class="art " style="height:40px" src="../assets/obras/436535.jpg" alt="Campo de trigo com ciprestes, Vincent van Gogh, 1889"><div><b>Campo de trigo com ciprestes</b><div class="xs muted">Lote 0010</div></div></div></td><td><span class="badge b-closed">Cancelado</span></td><td class="num">R$ 20.000,00</td><td class="num">—</td><td class="num" style="text-align:center">0</td><td><span class="xs muted">Fora da vitrine</span></td><td style="text-align:right"></td></tr></table></div></div><div class="foot"><span>Arremate — demonstração técnica. Obras de acervo público (The Met Open Access, CC0); nenhuma obra está à venda.</span><span>Valores simulados · horário de Brasília (UTC−3)</span></div></div>
+<div class="grid" style="grid-template-columns:repeat(3,1fr);margin-top:28px;align-items:start"><div><div class="flabel"><b>E2</b>Confirmar cancelamento</div><div class="frame" style="padding:18px;border-radius:12px"><div style="position:relative;height:320px;border-radius:10px;overflow:hidden;background:var(--bg)"><div class="overlay"><div class="dialog" style="width:400px"><h3 class="serif" style="font-size:20px">Cancelar “Sob a onda em Kanagawa”?</h3><p class="small muted" style="margin:8px 0 14px">O lote sai da vitrine e não poderá ser reaberto. Possível porque o lote está ao vivo sem lances (ou agendado) e não terminou.</p><div class="row" style="justify-content:flex-end"><span class="btn g">Manter lote</span><span class="btn d">Cancelar lote</span></div></div></div></div></div><div class=note>R08: o botão só aparece em lote próprio sem lances e não encerrado.</div></div><div><div class="flabel"><b>E3</b>Cancelando</div><div class="frame" style="padding:18px;border-radius:12px"><div style="position:relative;height:320px;border-radius:10px;overflow:hidden;background:var(--bg)"><div class="overlay"><div class="dialog" style="width:400px"><h3 class="serif" style="font-size:20px">Cancelar “Sob a onda em Kanagawa”?</h3><p class="small muted" style="margin:8px 0 14px">Aguardando o servidor…</p><div class="row" style="justify-content:flex-end"><span class="btn g dis">Manter lote</span><span class="btn d"><svg
+  class="ic  lucide lucide-loader-circle"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+</svg>Cancelando…</span></div></div></div></div></div></div><div><div class="flabel"><b>E4</b>Corrida: primeiro lance chegou antes</div><div class="frame" style="padding:18px;border-radius:12px"><div class="alert a-err"><svg
+  class="ic  lucide lucide-circle-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <line x1="12" x2="12" y1="8" y2="12" />
+  <line x1="12" x2="12.01" y1="16" y2="16" />
+</svg><div><b>Não foi possível cancelar</b>Este lote recebeu um lance enquanto você confirmava. Ele segue ao vivo; os dados foram atualizados.</div></div></div><div class=note>Nunca mostrar “cancelado” antes da resposta do servidor.</div></div><div><div class="flabel"><b>E5</b>Cancelado</div><div class="frame" style="padding:18px;border-radius:12px"><div class="alert a-ok"><svg
+  class="ic  lucide lucide-circle-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg><div><b>Lote cancelado</b>“Sob a onda em Kanagawa” saiu da vitrine e continua listado aqui como Cancelado.</div></div></div></div><div><div class="flabel"><b>E6</b>Resultado em processamento</div><div class="frame" style="padding:18px;border-radius:12px"><div class="row" style="gap:10px"><img style="width:40px;height:40px;border-radius:4px;flex:none" class="art " style="height:40px" src="../assets/obras/436105.jpg" alt="A morte de Sócrates, Jacques Louis David, 1787"><div style="flex:1"><b>A morte de Sócrates</b><div class="xs muted">Lote 0007 · encerrou 17:03</div></div><span class="badge b-info"><svg
+  class="ic  lucide lucide-hourglass"
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 22h14" />
+  <path d="M5 2h14" />
+  <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
+  <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
+</svg>Processando</span></div><p class="xs muted" style="margin-top:10px">Não entra no total recebido até a liquidação ser concluída (R09/R24).</p></div></div><div><div class="flabel"><b>E7</b>Vazio</div><div class="frame" style="padding:18px;border-radius:12px"><div style="text-align:center;padding:24px"><svg
+  class="ic  lucide lucide-gavel"
+  xmlns="http://www.w3.org/2000/svg"
+  width="30"
+  height="30"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m14 13-8.381 8.38a1 1 0 0 1-3.001-3l8.384-8.381" />
+  <path d="m16 16 6-6" />
+  <path d="m21.5 10.5-8-8" />
+  <path d="m8 8 6-6" />
+  <path d="m8.5 7.5 8 8" />
+</svg><h3 class="serif" style="font-size:20px;margin-top:8px">Você ainda não criou lotes</h3><p class="small muted" style="margin:6px 0 14px">Busque uma obra do acervo público e configure o leilão.</p><span class="btn p"><svg
+  class="ic  lucide lucide-plus"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="M12 5v14" />
+</svg>Criar lote</span></div></div></div><div><div class="flabel"><b>E8</b>Carregando</div><div class="frame" style="padding:18px;border-radius:12px"><div class="row" style="gap:10px;padding:8px 0"><div class="sk" style="width:40px;height:40px"></div><div style="flex:1"><div class="sk" style="height:12px;width:60%"></div><div class="sk" style="height:10px;width:30%;margin-top:6px"></div></div></div><div class="row" style="gap:10px;padding:8px 0"><div class="sk" style="width:40px;height:40px"></div><div style="flex:1"><div class="sk" style="height:12px;width:60%"></div><div class="sk" style="height:10px;width:30%;margin-top:6px"></div></div></div><div class="row" style="gap:10px;padding:8px 0"><div class="sk" style="width:40px;height:40px"></div><div style="flex:1"><div class="sk" style="height:12px;width:60%"></div><div class="sk" style="height:10px;width:30%;margin-top:6px"></div></div></div><div class="row" style="gap:10px;padding:8px 0"><div class="sk" style="width:40px;height:40px"></div><div style="flex:1"><div class="sk" style="height:12px;width:60%"></div><div class="sk" style="height:10px;width:30%;margin-top:6px"></div></div></div></div></div><div><div class="flabel"><b>E9</b>Erro</div><div class="frame" style="padding:18px;border-radius:12px"><div style="text-align:center;padding:24px"><svg
+  class="ic  lucide lucide-circle-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="30"
+  height="30"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <line x1="12" x2="12" y1="8" y2="12" />
+  <line x1="12" x2="12.01" y1="16" y2="16" />
+</svg><h3 class="serif" style="font-size:20px;margin-top:8px">Não foi possível carregar seus lotes</h3><span class="btn p" style="margin-top:12px"><svg
+  class="ic  lucide lucide-refresh-cw"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>Tentar novamente</span></div></div></div></div>
+<h2 class="serif" style="font-size:26px;margin:36px 0 14px">Mobile 390</h2><div class="row" style="gap:28px;align-items:flex-start"><div><div class="flabel"><b>M1</b>Lista</div><div class="frame" style="width:390px;height:844px;border-radius:24px"><div class="mtop"><span class="btn g sm" style="padding:0 6px" aria-label="Voltar"><svg
+  class="ic  lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg></span><b>Meus lotes</b><div class="sp"></div><span class="btn g sm" style="padding:0 10px" aria-label="Menu"><svg
+  class="ic  lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg></span></div><div style="background:var(--warn-soft);color:var(--warn);font-size:11px;font-weight:600;text-align:center;padding:4px">Demonstração · valores simulados</div><div style="padding:16px 16px 8px"><div class="card" style="padding:18px;border:2px solid var(--primary);"><div class="small muted">Total recebido</div><div class="price" style="font-size:28px">R$ 15.500,00</div><div class="xs muted">Só liquidações concluídas</div></div></div><div style="padding:0 16px 8px;overflow:hidden"><div class="tabs"><span class="on">Todos</span><span>Ao vivo</span><span>Encerrados</span><span>Cancelados</span></div></div><div class="col" style="gap:10px;padding:0 16px"><div class="card" style="padding:12px;display:flex;gap:10px"><img style="width:56px;height:56px;border-radius:4px;flex:none" class="art " style="height:56px" src="../assets/obras/436105.jpg" alt="A morte de Sócrates, Jacques Louis David, 1787"><div style="flex:1;min-width:0"><div class="row" style="justify-content:space-between"><span class="badge b-live">Ao vivo</span><span class="xs muted">Lote 0007</span></div><b class="serif" style="font-size:15px;display:block;margin-top:4px">A morte de Sócrates</b><div class="kv" style="margin-top:2px"><span class="xs">Atual · 5 lances</span><b class="num small">R$ 12.900,00</b></div></div></div><div class="card" style="padding:12px;display:flex;gap:10px"><img style="width:56px;height:56px;border-radius:4px;flex:none" class="art " style="height:56px" src="../assets/obras/45434.jpg" alt="Sob a onda em Kanagawa, Katsushika Hokusai, c. 1830–32"><div style="flex:1;min-width:0"><div class="row" style="justify-content:space-between"><span class="badge b-live">Ao vivo</span><span class="xs muted">Lote 0003</span></div><b class="serif" style="font-size:15px;display:block;margin-top:4px">Sob a onda em Kanagawa</b><div class="kv" style="margin-top:2px"><span class="xs">Inicial · 0 lances</span><b class="num small">R$ 2.000,00</b></div><span class="btn o sm" style="color:var(--err);margin-top:6px">Cancelar lote</span></div></div><div class="card" style="padding:12px;display:flex;gap:10px"><img style="width:56px;height:56px;border-radius:4px;flex:none" class="art " style="height:56px" src="../assets/obras/437984.jpg" alt="La Berceuse, Vincent van Gogh, 1889"><div style="flex:1;min-width:0"><div class="row" style="justify-content:space-between"><span class="badge b-closed">Encerrado</span><span class="xs muted">Lote 0012</span></div><b class="serif" style="font-size:15px;display:block;margin-top:4px">La Berceuse</b><div class="kv" style="margin-top:2px"><span class="xs">Arrematado · recebido</span><b class="num small">R$ 15.500,00</b></div></div></div><div class="card" style="padding:12px;display:flex;gap:10px"><img style="width:56px;height:56px;border-radius:4px;flex:none" class="art " style="height:56px" src="../assets/obras/438815.jpg" alt="Madame Georges Charpentier e os filhos, Auguste Renoir, 1878"><div style="flex:1;min-width:0"><div class="row" style="justify-content:space-between"><span class="badge b-closed">Encerrado</span><span class="xs muted">Lote 0005</span></div><b class="serif" style="font-size:15px;display:block;margin-top:4px">Madame Georges Charpentier e os filhos</b><div class="kv" style="margin-top:2px"><span class="xs">Sem lances</span><b class="num small">—</b></div></div></div></div><div class="mbar"><span class="btn p lg" style="width:100%"><svg
+  class="ic  lucide lucide-plus"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="M12 5v14" />
+</svg>Criar lote</span></div></div></div><div><div class="flabel"><b>M2</b>Confirmar cancelamento</div><div class="frame" style="width:390px;height:844px;border-radius:24px"><div class="mtop"><span class="btn g sm" style="padding:0 6px" aria-label="Voltar"><svg
+  class="ic  lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg></span><b>Meus lotes</b><div class="sp"></div><span class="btn g sm" style="padding:0 10px" aria-label="Menu"><svg
+  class="ic  lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg></span></div><div style="background:var(--warn-soft);color:var(--warn);font-size:11px;font-weight:600;text-align:center;padding:4px">Demonstração · valores simulados</div><div style="padding:16px 16px 8px"><div class="card" style="padding:18px;border:2px solid var(--primary);"><div class="small muted">Total recebido</div><div class="price" style="font-size:28px">R$ 15.500,00</div><div class="xs muted">Só liquidações concluídas</div></div></div><div style="position:absolute;inset:0;background:rgba(31,27,22,.45)"></div><div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:18px 18px 0 0;padding:22px 16px 28px"><h3 class="serif" style="font-size:20px">Cancelar “Sob a onda em Kanagawa”?</h3><p class="small muted" style="margin:8px 0 16px">O lote sai da vitrine e não poderá ser reaberto.</p><span class="btn d lg" style="width:100%">Cancelar lote</span><span class="btn g" style="width:100%;margin-top:6px">Manter lote</span></div></div></div><div><div class="flabel"><b>M3</b>Corrida perdida</div><div class="frame" style="width:390px;height:844px;border-radius:24px"><div class="mtop"><span class="btn g sm" style="padding:0 6px" aria-label="Voltar"><svg
+  class="ic  lucide lucide-chevron-left"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m15 18-6-6 6-6" />
+</svg></span><b>Meus lotes</b><div class="sp"></div><span class="btn g sm" style="padding:0 10px" aria-label="Menu"><svg
+  class="ic  lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg></span></div><div style="background:var(--warn-soft);color:var(--warn);font-size:11px;font-weight:600;text-align:center;padding:4px">Demonstração · valores simulados</div><div class="alert a-err" style="margin:16px"><svg
+  class="ic  lucide lucide-circle-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <line x1="12" x2="12" y1="8" y2="12" />
+  <line x1="12" x2="12.01" y1="16" y2="16" />
+</svg><div><b>Não foi possível cancelar</b>O lote recebeu um lance e segue ao vivo.</div></div><div class="col" style="gap:10px;padding:0 16px"><div class="card" style="padding:12px;display:flex;gap:10px"><img style="width:56px;height:56px;border-radius:4px;flex:none" class="art " style="height:56px" src="../assets/obras/45434.jpg" alt="Sob a onda em Kanagawa, Katsushika Hokusai, c. 1830–32"><div style="flex:1;min-width:0"><div class="row" style="justify-content:space-between"><span class="badge b-live">Ao vivo</span><span class="xs muted">Lote 0003</span></div><b class="serif" style="font-size:15px;display:block;margin-top:4px">Sob a onda em Kanagawa</b><div class="kv" style="margin-top:2px"><span class="xs">Atual · 1 lance</span><b class="num small">R$ 2.000,00</b></div></div></div></div><div class="mbar"><span class="btn p lg" style="width:100%"><svg
+  class="ic  lucide lucide-plus"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="M12 5v14" />
+</svg>Criar lote</span></div></div></div></div></div></body></html>

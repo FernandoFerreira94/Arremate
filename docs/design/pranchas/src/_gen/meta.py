@@ -1,0 +1,5 @@
+from gen import *
+import re
+og=f'''<div style="width:480px;height:252px;background:#6E1E2B;display:flex;overflow:hidden"><div style="flex:1;padding:28px;color:#FFF8F0;display:flex;flex-direction:column;justify-content:space-between"><div class="row">{logoA(36).replace('#6E1E2B','#5A1722')}<span class="serif" style="font-size:22px;font-weight:600">Arremate</span></div><div><div class="serif" style="font-size:26px;font-weight:600;line-height:1.15">Leilões de arte de acervo público</div><div style="font-size:13px;opacity:.85;margin-top:8px">Demonstração com valores simulados</div></div></div><div style="width:180px">{img('wheat','',252).replace('../assets/obras/436535.jpg','../assets/meta/og-art-436535.jpg')}</div></div>'''
+open(B+'/src/meta-og.html','w').write(page('og',f'<div style="zoom:2.5">{og}</div>',1200).replace('<body','<body style="margin:0;background:#6E1E2B"',1))
+open(B+'/src/meta-icon.html','w').write(page('ic',f'<div style="zoom:3.75;width:48px;height:48px">{logoA(48)}</div>',180).replace('<body','<body style="margin:0;background:#6E1E2B"',1))

@@ -1,0 +1,409 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Carteira desktop</title><style>
+:root{--bg:#F6F3EC;--surface:#FFFDF8;--muted:#EEE9DE;--border:#DDD5C4;--ink:#1F1B16;--ink-2:#5C5448;--ink-3:#7A705F;
+--primary:#6E1E2B;--primary-h:#5A1722;--primary-fg:#FFF8F0;--accent:#A9823A;--accent-soft:#F3E8D0;
+--live:#B42318;--live-soft:#FBE9E7;--sched:#2F5D8A;--sched-soft:#E6EEF6;--closed:#5C5448;--closed-soft:#ECE7DD;
+--ok:#1E6B45;--ok-soft:#E3F1E8;--warn:#8A5300;--warn-soft:#FBEFD9;--err:#B42318;--err-soft:#FBE9E7;--info:#2F5D8A;--info-soft:#E6EEF6;
+--ring:#A9823A;--r-sm:4px;--r-md:6px;--r-lg:10px;--r-xl:14px;
+--sh-sm:0 1px 2px rgba(31,27,22,.08);--sh-md:0 2px 8px rgba(31,27,22,.10);--sh-lg:0 12px 32px rgba(31,27,22,.16)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;color:var(--ink);background:#D9D3C6;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.serif{font-family:Fraunces,serif;font-optical-sizing:auto}
+.num{font-variant-numeric:tabular-nums}
+.board{padding:40px;}
+.bh{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:24px}
+.bh h1{font-family:Fraunces,serif;font-size:34px;font-weight:600}
+.bh p{color:var(--ink-2);max-width:760px}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:var(--warn-soft);color:var(--warn);border:1px solid #E9CF9C}
+.frame{background:var(--bg);box-shadow:0 10px 40px rgba(0,0,0,.18);overflow:hidden;position:relative}
+.flabel{font-size:12px;font-weight:600;color:#3d372e;margin:0 0 8px;display:flex;gap:8px;align-items:center}
+.flabel b{background:#1F1B16;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px}
+.note{font-size:12px;color:#3d372e;background:#fff8;border-left:3px solid var(--accent);padding:6px 10px;margin-top:8px;border-radius:0 4px 4px 0}
+.ic{flex:none;vertical-align:middle}
+/* shell */
+.top{height:64px;display:flex;align-items:center;gap:24px;padding:0 40px;background:var(--surface);border-bottom:1px solid var(--border)}
+.top nav{display:flex;gap:4px;margin-left:16px}
+.top nav a{padding:8px 12px;border-radius:var(--r-md);color:var(--ink-2);font-weight:500;text-decoration:none}
+.top nav a.on{color:var(--ink);background:var(--muted)}
+.sp{flex:1}
+.logo{display:flex;align-items:center;gap:10px;font-family:Fraunces,serif;font-weight:600;font-size:20px;letter-spacing:-.01em}
+.sim{font-size:11px;font-weight:600;color:var(--warn);background:var(--warn-soft);border:1px solid #E9CF9C;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:var(--r-md);font-weight:600;font-size:14px;border:1px solid transparent;white-space:nowrap;font-family:Inter}
+.btn.p{background:var(--primary);color:var(--primary-fg);box-shadow:var(--sh-sm)}
+.btn.o{background:var(--surface);border-color:var(--border);color:var(--ink)}
+.btn.g{background:transparent;color:var(--ink)}
+.btn.d{background:var(--err);color:#fff}
+.btn.lg{height:48px;padding:0 22px;font-size:15px}
+.btn.sm{height:32px;padding:0 12px;font-size:13px}
+.btn.dis{opacity:.5}
+.btn.focus{outline:2px solid var(--ring);outline-offset:2px}
+.btn.hov.p{background:var(--primary-h)}
+.input{height:44px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);padding:0 12px;display:flex;align-items:center;gap:8px;font-size:15px}
+.input.err{border-color:var(--err);box-shadow:0 0 0 3px var(--err-soft)}
+.input.focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.lbl{font-size:13px;font-weight:600;margin-bottom:6px;display:block}
+.help{font-size:12px;color:var(--ink-3);margin-top:6px}
+.help.e{color:var(--err);display:flex;gap:6px;align-items:flex-start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-sm)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.b-live{background:var(--live-soft);color:var(--live)}.b-live:before{content:"";width:7px;height:7px;border-radius:9px;background:var(--live)}
+.b-sched{background:var(--sched-soft);color:var(--sched)}.b-closed{background:var(--closed-soft);color:var(--closed)}
+.b-ok{background:var(--ok-soft);color:var(--ok)}.b-warn{background:var(--warn-soft);color:var(--warn)}.b-err{background:var(--err-soft);color:var(--err)}.b-info{background:var(--info-soft);color:var(--info)}
+.b-ext{background:var(--accent-soft);color:#6B5220}
+.alert{display:flex;gap:10px;padding:12px 14px;border-radius:var(--r-md);border:1px solid;font-size:13px;align-items:flex-start}
+.alert b{display:block;font-size:14px;margin-bottom:2px}
+.a-err{background:var(--err-soft);border-color:#F2C4BE;color:#7A1A12}.a-ok{background:var(--ok-soft);border-color:#B9DCC6;color:#14492F}
+.a-warn{background:var(--warn-soft);border-color:#E9CF9C;color:#5E3A00}.a-info{background:var(--info-soft);border-color:#C3D5E8;color:#1E3F60}
+.tabs{display:inline-flex;background:var(--muted);border-radius:var(--r-md);padding:4px;gap:2px}
+.tabs span{padding:7px 14px;border-radius:var(--r-sm);font-weight:600;color:var(--ink-2);font-size:13px;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.tabs span.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh-sm)}
+.tabs .ct{font-size:11px;background:var(--border);border-radius:9px;padding:0 6px}
+.art{width:100%;object-fit:cover;display:block;background:var(--muted)}
+.ph{background:repeating-linear-gradient(45deg,var(--muted),var(--muted) 10px,#E6E0D3 10px,#E6E0D3 20px);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-2);gap:6px;font-size:12px;font-weight:600;text-align:center}
+.sk{background:linear-gradient(90deg,#E9E3D7,#F2EEE5,#E9E3D7);border-radius:4px}
+.muted{color:var(--ink-2)}.small{font-size:12px}.xs{font-size:11px}
+.row{display:flex;gap:12px;align-items:center}.col{display:flex;flex-direction:column}
+.grid{display:grid;gap:24px}
+.lot .meta{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.lot h3{font-family:Fraunces,serif;font-size:18px;font-weight:600;line-height:1.2}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.kv span:first-child{color:var(--ink-2)}
+.price{font-family:Fraunces,serif;font-weight:600;font-variant-numeric:tabular-nums}
+.foot{padding:20px 40px;border-top:1px solid var(--border);color:var(--ink-3);font-size:12px;display:flex;justify-content:space-between;background:var(--surface)}
+table{border-collapse:collapse;width:100%}
+th{font-size:12px;text-align:left;color:var(--ink-2);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid #ECE6DA;font-size:13px}
+.dialog{background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--sh-lg);padding:24px;border:1px solid var(--border)}
+.overlay{position:absolute;inset:0;background:rgba(31,27,22,.45);display:flex;align-items:center;justify-content:center}
+.mtop{height:56px;display:flex;align-items:center;padding:0 16px;gap:10px;background:var(--surface);border-bottom:1px solid var(--border)}
+.mbar{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:12px 16px 20px;box-shadow:0 -4px 16px rgba(31,27,22,.08)}
+h2.s{font-family:Fraunces,serif;font-size:22px;font-weight:600;margin-bottom:12px}
+.sec{background:#F3EFE7;border-radius:12px;padding:24px;margin-bottom:24px}
+.sec>h2{font-family:Fraunces,serif;font-size:24px;margin-bottom:4px}
+.sec>p.d{color:var(--ink-2);margin-bottom:16px;font-size:13px}
+.cred{font-size:11px;color:var(--ink-3)}
+</style></head><body style="width:1520px"><div class="board"><div class="bh"><div><div class="row" style="margin-bottom:6px"><span class="tag">Decisões aprovadas por Fernando em 23/10, segundo o Orquestrador Dev · sem Design Freeze</span><span class="xs muted">Arremate · 23/10/2026</span></div><h1>Carteira · desktop 1440</h1><p>R12/R20–R22: total, comprometido e disponível + depósito simulado. Lei de Miller: 3 números, disponível em destaque.</p></div><div class="row"><svg width="40" height="40" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg><span class="serif" style="font-size:22px;font-weight:600">Arremate</span></div></div>
+<div class="flabel"><b>E1</b>Com saldo e compromissos</div><div class="frame" style="width:1440px"><div class="top"><div class="logo"><svg width="30" height="30" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg>Arremate</div><span class="sim">Demonstração · valores simulados</span><nav><a class="">Vitrine</a><a class="">Meus arremates</a><a class="on">Carteira</a></nav><div class="sp"></div><span class="btn o sm"><svg
+  class="ic  lucide lucide-wallet"
+  xmlns="http://www.w3.org/2000/svg"
+  width="15"
+  height="15"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+</svg><span class="num">Disponível R$ 7.000,00</span></span><span class="row small" style="gap:8px"><span style="width:32px;height:32px;border-radius:50%;background:var(--accent-soft);display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#6B5220">Â</span>Licitante Âmbar-47</span></div><div style="padding:32px 40px 8px"><h1 class="serif" style="font-size:36px;font-weight:600">Minha carteira</h1><p class="muted">Saldo simulado do Licitante Âmbar-47 · atualizado em tempo real</p></div>
+<div style="display:grid;grid-template-columns:8fr 4fr;gap:24px;padding:16px 40px 40px"><div class="col" style="gap:20px"><div><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:20px"><div class="card" style="padding:20px;"><div class="row small muted" style="gap:6px"><svg
+  class="ic  lucide lucide-wallet"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+</svg>Saldo total</div><div class="price" style="font-size:34px;margin-top:6px">R$ 20.000,00</div><div class="small muted" style="margin-top:4px">Tudo o que você depositou, menos arremates pagos</div></div><div class="card" style="padding:20px;"><div class="row small muted" style="gap:6px"><svg
+  class="ic  lucide lucide-lock"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+</svg>Comprometido</div><div class="price" style="font-size:34px;margin-top:6px">R$ 13.000,00</div><div class="small muted" style="margin-top:4px">Reservado nos lotes em que você lidera</div></div><div class="card" style="padding:20px;border:2px solid var(--primary);"><div class="row small muted" style="gap:6px"><svg
+  class="ic  lucide lucide-circle-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>Disponível</div><div class="price" style="font-size:34px;margin-top:6px">R$ 7.000,00</div><div class="small muted" style="margin-top:4px">Total − comprometido · usado para novos lances</div></div></div><div class="alert a-info" style="margin-top:16px"><svg
+  class="ic  lucide lucide-info"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="M12 16v-4" />
+  <path d="M12 8h.01" />
+</svg><div><b>Como funciona o comprometido</b>Ao liderar um lote, o valor integral do seu lance fica reservado. Se alguém cobrir, ele volta na hora ao disponível. Ao arrematar, é debitado do total.</div></div></div><div class="card" style="padding:20px"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 class="serif" style="font-size:18px">Onde seu saldo está comprometido</h3><span class="small muted">2 lotes</span></div><table><tr><th>Lote</th><th>Situação</th><th style="text-align:right">Comprometido</th><th></th></tr><tr><td><div class="row" style="gap:10px"><img style="width:44px;height:44px;border-radius:4px" class="art " style="height:44px" src="../assets/obras/436105.jpg" alt="A morte de Sócrates, Jacques Louis David, 1787"><div><b>A morte de Sócrates</b><div class="xs muted">Lote 0007</div></div></div></td><td><span class="badge b-ok"><svg
+  class="ic  lucide lucide-trophy"
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" />
+  <path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" />
+  <path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" />
+  <path d="M4 22h16" />
+  <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" />
+  <path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" />
+</svg>Liderando</span></td><td class="num" style="text-align:right;font-weight:600">R$ 12.900,00</td><td style="text-align:right"><span class="btn g sm">Abrir sala<svg
+  class="ic  lucide lucide-chevron-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg></span></td></tr><tr><td><div class="row" style="gap:10px"><img style="width:44px;height:44px;border-radius:4px" class="art " style="height:44px" src="../assets/obras/438815.jpg" alt="Madame Georges Charpentier e os filhos, Auguste Renoir, 1878"><div><b>Madame Georges Charpentier e os filhos</b><div class="xs muted">Lote 0009</div></div></div></td><td><span class="badge b-ok"><svg
+  class="ic  lucide lucide-trophy"
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" />
+  <path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" />
+  <path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" />
+  <path d="M4 22h16" />
+  <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" />
+  <path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" />
+</svg>Liderando</span></td><td class="num" style="text-align:right;font-weight:600">R$ 100,00</td><td style="text-align:right"><span class="btn g sm">Abrir sala<svg
+  class="ic  lucide lucide-chevron-right"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg></span></td></tr></table></div><div class="card" style="padding:20px"><h3 class="serif" style="font-size:18px;margin-bottom:8px">Movimentações</h3><table><tr><th>Data (BRT)</th><th>Descrição</th><th style="text-align:right">Valor</th></tr><tr><td class="num muted">23/10 14:31</td><td>Lance comprometido · Lote 0007</td><td class="num" style="text-align:right;font-weight:600;color:var(--ink)">− R$ 12.900,00 disp.</td></tr><tr><td class="num muted">23/10 14:20</td><td>Liberado (superado) · Lote 0007</td><td class="num" style="text-align:right;font-weight:600;color:var(--ok)">+ R$ 11.900,00 disp.</td></tr><tr><td class="num muted">23/10 11:02</td><td>Lance comprometido · Lote 0009</td><td class="num" style="text-align:right;font-weight:600;color:var(--ink)">− R$ 100,00 disp.</td></tr><tr><td class="num muted">23/10 09:15</td><td>Depósito simulado</td><td class="num" style="text-align:right;font-weight:600;color:var(--ok)">+ R$ 20.000,00</td></tr></table></div></div><div class="col" style="gap:20px"><div class="card" style="padding:20px"><div class="row" style="justify-content:space-between"><h3 class="serif" style="font-size:18px">Adicionar saldo</h3><span class="sim">Simulado</span></div><p class="small muted" style="margin:6px 0 14px">Dinheiro fictício para a demonstração. Sem Pix, cartão ou dados bancários.</p><span class="lbl">Valor (R$)</span><div class="input " style="height:48px"><span class="muted">R$</span><b class="num" style="font-size:17px">5.000,00</b></div><div class="help">Entre R$ 1,00 e R$ 100.000,00 por depósito</div><div class="row" style="gap:8px;margin-top:10px"><span class="btn o sm num" style="flex:1">R$ 1.000</span><span class="btn o sm num" style="flex:1">R$ 5.000</span><span class="btn o sm num" style="flex:1">R$ 10.000</span></div><span class="btn p lg" style="width:100%;margin-top:14px"><svg
+  class="ic  lucide lucide-plus"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="M12 5v14" />
+</svg>Adicionar R$ 5.000,00</span></div></div></div><div class="foot"><span>Arremate — demonstração técnica. Obras de acervo público (The Met Open Access, CC0); nenhuma obra está à venda.</span><span>Valores simulados · horário de Brasília (UTC−3)</span></div></div><div class="grid" style="grid-template-columns:repeat(3,1fr);margin-top:28px;align-items:start"><div><div class="flabel"><b>E2</b>Saldo zero</div><div class="frame" style="padding:18px;border-radius:12px"><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px"><div class="card" style="padding:14px"><div class="xs muted">Total</div><div class="price" style="font-size:22px">R$ 0,00</div></div><div class="card" style="padding:14px"><div class="xs muted">Comprometido</div><div class="price" style="font-size:22px">R$ 0,00</div></div><div class="card" style="padding:14px"><div class="xs muted">Disponível</div><div class="price" style="font-size:22px">R$ 0,00</div></div></div><div style="text-align:center;padding:18px 0 4px"><svg
+  class="ic  lucide lucide-wallet"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+</svg><h3 class="serif" style="font-size:18px;margin-top:6px">Você ainda não tem saldo</h3><p class="small muted" style="margin:4px 0 12px">Adicione um valor simulado para começar a dar lances.</p><span class="btn p"><svg
+  class="ic  lucide lucide-plus"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="M12 5v14" />
+</svg>Adicionar saldo simulado</span></div></div></div><div><div class="flabel"><b>E3</b>Depósito inválido</div><div class="frame" style="padding:18px;border-radius:12px"><div class="card" style="padding:20px"><div class="row" style="justify-content:space-between"><h3 class="serif" style="font-size:18px">Adicionar saldo</h3><span class="sim">Simulado</span></div><p class="small muted" style="margin:6px 0 14px">Dinheiro fictício para a demonstração. Sem Pix, cartão ou dados bancários.</p><span class="lbl">Valor (R$)</span><div class="input err" style="height:48px"><span class="muted">R$</span><b class="num" style="font-size:17px">0,50</b></div><div class="help e"><svg
+  class="ic  lucide lucide-circle-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <line x1="12" x2="12" y1="8" y2="12" />
+  <line x1="12" x2="12.01" y1="16" y2="16" />
+</svg><span>Valor mínimo R$ 1,00. Use números, ex.: 1.500 ou 1500,00.</span></div><div class="row" style="gap:8px;margin-top:10px"><span class="btn o sm num" style="flex:1">R$ 1.000</span><span class="btn o sm num" style="flex:1">R$ 5.000</span><span class="btn o sm num" style="flex:1">R$ 10.000</span></div><span class="btn p lg" style="width:100%;margin-top:14px"><svg
+  class="ic  lucide lucide-plus"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="M12 5v14" />
+</svg>Adicionar</span></div></div><div class=note>Postel: aceita “1.500”, “1500,00”, “R$ 1500”.</div></div><div><div class="flabel"><b>E4</b>Confirmação (AlertDialog)</div><div class="frame" style="padding:18px;border-radius:12px"><div style="position:relative;height:300px;border-radius:10px;overflow:hidden;background:var(--bg)"><div class="overlay"><div class="dialog" style="width:380px"><h3 class="serif" style="font-size:20px">Adicionar R$ 5.000,00?</h3><p class="small muted" style="margin:8px 0 12px">Saldo simulado, sem valor real. Disponível passa de R$ 7.000,00 para R$ 12.000,00.</p><div class="row" style="justify-content:flex-end"><span class="btn g">Voltar</span><span class="btn p">Confirmar depósito</span></div></div></div></div></div><div class=note>Chave de idempotência por envio: repetir não duplica (briefing §6).</div></div><div><div class="flabel"><b>E5</b>Pendente</div><div class="frame" style="padding:18px;border-radius:12px"><div class="card" style="padding:20px"><div class="row" style="justify-content:space-between"><h3 class="serif" style="font-size:18px">Adicionar saldo</h3><span class="sim">Simulado</span></div><p class="small muted" style="margin:6px 0 14px">Dinheiro fictício para a demonstração. Sem Pix, cartão ou dados bancários.</p><span class="lbl">Valor (R$)</span><div class="input " style="height:48px"><span class="muted">R$</span><b class="num" style="font-size:17px">5.000,00</b></div><div class="help">Entre R$ 1,00 e R$ 100.000,00 por depósito</div><div class="row" style="gap:8px;margin-top:10px"><span class="btn o sm num" style="flex:1">R$ 1.000</span><span class="btn o sm num" style="flex:1">R$ 5.000</span><span class="btn o sm num" style="flex:1">R$ 10.000</span></div><span class="btn p lg" style="width:100%;margin-top:14px"><svg
+  class="ic  lucide lucide-loader-circle"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+</svg>Adicionando…</span></div></div><div class=note>Números não animam antes da confirmação real.</div></div><div><div class="flabel"><b>E6</b>Sucesso</div><div class="frame" style="padding:18px;border-radius:12px"><div class="alert a-ok"><svg
+  class="ic  lucide lucide-circle-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg><div><b>Depósito simulado confirmado</b>+ R$ 5.000,00 · Disponível agora R$ 12.000,00.</div></div><div class="card row" style="padding:12px 14px;margin-top:12px;box-shadow:var(--sh-lg)"><svg
+  class="ic  lucide lucide-circle-check"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg><b class="small">Toast: Saldo atualizado</b></div></div></div><div><div class="flabel"><b>E7</b>Erro / confirmação indeterminada</div><div class="frame" style="padding:18px;border-radius:12px"><div class="col" style="gap:10px"><div class="alert a-err"><svg
+  class="ic  lucide lucide-circle-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <line x1="12" x2="12" y1="8" y2="12" />
+  <line x1="12" x2="12.01" y1="16" y2="16" />
+</svg><div><b>Não foi possível adicionar saldo</b>Nada foi alterado. Tente novamente.</div></div><div class="alert a-info"><svg
+  class="ic  lucide lucide-info"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="M12 16v-4" />
+  <path d="M12 8h.01" />
+</svg><div><b>Não conseguimos confirmar o depósito</b>Atualize a carteira antes de tentar de novo; repetir não duplica o valor.<div style="margin-top:8px"><span class="btn o sm"><svg
+  class="ic  lucide lucide-refresh-cw"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>Atualizar carteira</span></div></div></div></div></div></div><div><div class="flabel"><b>E8</b>Superado em tempo real (R21)</div><div class="frame" style="padding:18px;border-radius:12px"><div class="alert a-ok"><svg
+  class="ic  lucide lucide-trending-up"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M16 7h6v6" />
+  <path d="m22 7-8.5 8.5-5-5L2 17" />
+</svg><div><b>Você foi superado em “Sob a onda em Kanagawa”</b>R$ 4.200,00 voltou ao disponível.</div></div><div class="grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><div class="card" style="padding:12px"><div class="xs muted">Comprometido</div><div class="price" style="font-size:20px">R$ 13.000,00</div><div class="xs" style="color:var(--ok)">− R$ 4.200,00</div></div><div class="card" style="padding:12px"><div class="xs muted">Disponível</div><div class="price" style="font-size:20px">R$ 7.000,00</div><div class="xs" style="color:var(--ok)">+ R$ 4.200,00</div></div></div></div><div class=note>Destaque breve (2 s), sem animação com reduced-motion.</div></div><div><div class="flabel"><b>E9</b>Após arremate (R24)</div><div class="frame" style="padding:18px;border-radius:12px"><div class="alert a-info"><svg
+  class="ic  lucide lucide-trophy"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" />
+  <path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" />
+  <path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" />
+  <path d="M4 22h16" />
+  <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" />
+  <path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" />
+</svg><div><b>Arremate liquidado · Lote 0007</b>R$ 12.900,00 saiu do comprometido e foi debitado do total. <u>Ver comprovante</u></div></div></div></div><div><div class="flabel"><b>E10</b>Carregando</div><div class="frame" style="padding:18px;border-radius:12px"><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px"><div class="card" style="padding:14px"><div class="sk" style="height:10px;width:60%"></div><div class="sk" style="height:24px;width:90%;margin-top:10px"></div></div><div class="card" style="padding:14px"><div class="sk" style="height:10px;width:60%"></div><div class="sk" style="height:24px;width:90%;margin-top:10px"></div></div><div class="card" style="padding:14px"><div class="sk" style="height:10px;width:60%"></div><div class="sk" style="height:24px;width:90%;margin-top:10px"></div></div></div><div class="sk" style="height:120px;margin-top:12px;border-radius:10px"></div></div></div></div></div></body></html>
