@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, type QueryResult, type QueryResultRow } from "pg";
 import type { OnModuleDestroy } from "@nestjs/common";
 import { Logger } from "@nestjs/common";
 
@@ -15,6 +15,10 @@ export class DatabaseRepository implements OnModuleDestroy {
 
   async ping(): Promise<void> {
     await this.pool.query("SELECT 1");
+  }
+
+  query<T extends QueryResultRow>(text: string, values: readonly unknown[] = []): Promise<QueryResult<T>> {
+    return this.pool.query<T>(text, [...values]);
   }
 
   async onModuleDestroy(): Promise<void> {

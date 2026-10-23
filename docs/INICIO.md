@@ -2,7 +2,7 @@
 
 Pasta de trabalho: `C:/Users/ferna/Desktop/WebCode/Projetos/casadeleilao/docs`.
 
-**Estado:** Tarefa 2 concluída em 23/10/2026 (HMAC encadeado e testemunha fora do banco; ver [operação da integridade](operacao-integridade.md)). Tarefa 1 permanece (dinheiro inteiro, schema e migration local `20261023104706_auction_core`). Design Freeze D01–D12; S6 aceito com HTML/PNG, sem Penpot (D13); S5 aberto como risco; S7 não declarado. Sem push/deploy. Next/Nest/Prisma; shadcn obrigatório por U13; nome **Arremate**.
+**Estado:** Tarefa 3 concluída em 23/10/2026 (sessão opaca, CSRF, papéis e proxy `/api` no site). Tarefas 1 e 2 permanecem. Design Freeze D01–D12; S6 aceito com HTML/PNG, sem Penpot (D13); S5 aberto como risco; S7 não declarado. Sem push/deploy. Next/Nest/Prisma; shadcn obrigatório por U13; nome **Arremate**.
 
 ## Fontes e responsáveis
 

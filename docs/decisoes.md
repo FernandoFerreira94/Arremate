@@ -96,3 +96,16 @@ Contrato de dinheiro e tabelas desta tarefa: [api.md](api.md) e `back-end/prisma
 A08, no recorte local: HMAC-SHA-256 encadeado e testemunha em disco fora do PostgreSQL. A ordem é assinar, gravar `pending`, commit no banco, promover o checkpoint e só então responder. Gap de confirmação fica INDETERMINATE e bloqueia mutação; o banco suspeito não é reassinado. Detalhe: [operacao-integridade.md](operacao-integridade.md).
 
 Continua risco do S5, sem contratação: diretório de produção da testemunha, fsync de diretório no Linux (neste Windows o ensaio devolve EPERM) e a topologia da API. A rota HTTP de auditoria não existe ainda.
+
+## Sessão decidida na Tarefa 3 (23/10/2026)
+
+D13 deixou sessão/CSRF e o proxy para a tarefa que os usa. Ficou assim, só local:
+
+- Senha Argon2id com o mínimo OWASP atual: m=19456, t=2, p=1 (`@node-rs/argon2` 2.2.2). A13 pedia Argon2id; o Node não traz o algoritmo.
+- Sessão de 256 bits, só o SHA-256 no banco, validade absoluta de 8 horas, revogação no logout. Cookie `HttpOnly`, `SameSite=Lax`, `Path=/`, sem `Domain`. Em produção: `Secure` e nomes `__Host-session` / `__Host-csrf`.
+- CSRF é HMAC do segredo da pré-sessão ou do token de sessão. O JSON devolve o HMAC, não o cookie. Mutação exige `Origin` exato (`http://127.0.0.1:3300` e, se existir, `WEB_ORIGIN` sem caminho) e o cabeçalho `X-CSRF-Token`. Origem ausente não autoriza.
+- O IP do limite é o da conexão. `X-Forwarded-For` e `Host` não escolhem cliente nem origem. `trust proxy` fica desligado. Limites na memória de uma instância: login 10/min/IP, mutação 60/min/ator, catálogo 30/min/ator, auditoria 30/min/IP, SSE 3 conexões. Catálogo, auditoria e SSE ainda não têm rota; as tarefas 4 e 9 precisam chamar o limitador.
+- `returnTo` só aceita rota local das nove páginas. A tabela `users` não tem alias; `GET /api/auth/me` devolve só `role`, sem e-mail.
+- O rewrite `/api` do Next não repassou o cookie. O same-origin ficou em `front-end/src/app/api/[...path]/route.ts`, com lista fechada de cabeçalhos. SSE por esse proxy não foi ensaiado.
+
+Contrato: [api.md](api.md). Evidência: [2026-10-23-tarefa-3.md](evidence/2026-10-23-tarefa-3.md).
