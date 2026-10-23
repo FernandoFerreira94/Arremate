@@ -8,6 +8,7 @@ import { BiddingService } from "./bidding.service";
 import { CreateLotDto, PageQuery } from "./dto/create-lot.dto";
 import { PlaceBidDto } from "./dto/place-bid.dto";
 import { LotsService } from "./lots.service";
+import { SettlementService } from "./settlement.service";
 
 type ActorRequest = Request & { actor?: Actor };
 
@@ -16,6 +17,7 @@ export class LotsController {
   constructor(
     private readonly lots: LotsService,
     private readonly bidding: BiddingService,
+    private readonly settlement: SettlementService,
   ) {}
 
   @Get("lots")
@@ -37,6 +39,24 @@ export class LotsController {
   @Roles("AUCTIONEER")
   seller(@Query() query: PageQuery, @Req() request: ActorRequest) {
     return this.lots.sellerLots(actorOf(request), query.page, query.limit);
+  }
+
+  @Get("seller/summary")
+  @Roles("AUCTIONEER")
+  sellerSummary(@Req() request: ActorRequest) {
+    return this.settlement.getSellerSummary(actorOf(request));
+  }
+
+  @Get("me/participations")
+  @Roles("BIDDER")
+  participations(@Query() query: PageQuery, @Req() request: ActorRequest) {
+    return this.settlement.listParticipations(actorOf(request), query.page);
+  }
+
+  @Get("me/awards")
+  @Roles("BIDDER")
+  awards(@Query() query: PageQuery, @Req() request: ActorRequest) {
+    return this.settlement.listAwards(actorOf(request), query.page);
   }
 
   @Post("lots")

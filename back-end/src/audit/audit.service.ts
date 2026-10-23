@@ -31,6 +31,11 @@ export type BidPlan<T> =
   | { kind: "replay"; result: T }
   | { kind: "accept"; draft: BidDraft; finish: (client: PoolClient, accepted: { sequence: number; revision: number }) => Promise<T> };
 
+/** Resultado do passo decisório da liquidação: nada a fazer ou o vínculo a selar na testemunha. */
+export type SettlementPlan<T> =
+  | { kind: "skip"; result: T }
+  | { kind: "settle"; link: SettlementLink; finish: (client: PoolClient, revision: number) => Promise<T> };
+
 export class ConfirmationPendingError extends Error {
   constructor() {
     super("CONFIRMATION_PENDING");
@@ -214,6 +219,42 @@ export class AuditService {
     });
   }
 
+  /**
+   * Liquidação atômica: decide e grava settlement/recibo/lançamentos numa transação, sela o vínculo
+   * (vencedor, recibo, data) no envelope e só então avança a testemunha. Lote não íntegro não liquida.
+   */
+  async settleAtomic<T>(lotId: string, decide: (client: PoolClient, head: BidHead) => Promise<SettlementPlan<T>>): Promise<T> {
+    return this.exclusive(lotId, async () => {
+      await this.assertCanMutate(lotId);
+      const key = this.requireKey();
+      const current = await this.store.read(lotId);
+      if (!current) throw new IntegrityBlockedError("CONFIRMATION_PENDING");
+      const state: { next: Checkpoint | null } = { next: null };
+      let committed = false;
+      try {
+        const result = await this.repository.transaction(async (client) => {
+          const plan = await decide(client, { count: current.count, revision: current.revision });
+          if (plan.kind === "skip") return plan.result;
+          const next = seal({ ...withoutEnvelope(current), revision: current.revision + 1, settlement: plan.link }, key);
+          await this.store.writePending(next);
+          state.next = next;
+          return plan.finish(client, next.revision);
+        });
+        committed = true;
+        const pending = state.next;
+        if (pending) {
+          await this.store.advance(current.revision, pending);
+          await this.store.clearPending(lotId);
+        }
+        return result;
+      } catch (error) {
+        if (committed) throw new ConfirmationPendingError();
+        if (state.next) await this.store.clearPending(lotId);
+        throw error;
+      }
+    });
+  }
+
   async retryCheckpoint(lotId: string): Promise<void> {
     await this.exclusive(lotId, async () => {
       this.requireKey();
@@ -351,6 +392,12 @@ function nextBody(current: Checkpoint, signature: string, endsAt: string): Check
     genesisEndsAt: current.genesisEndsAt,
     settlement: current.settlement,
   };
+}
+
+function withoutEnvelope(checkpoint: Checkpoint): CheckpointBody {
+  const copy: Partial<Checkpoint> = { ...checkpoint };
+  delete copy.envelopeSignature;
+  return copy as CheckpointBody;
 }
 
 function seal(body: CheckpointBody, key: Uint8Array): Checkpoint {

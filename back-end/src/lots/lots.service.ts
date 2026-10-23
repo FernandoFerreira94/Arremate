@@ -15,6 +15,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CREATE_OPERATION = "lot.create";
 
 export type LotState = "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED";
+/** Resultado distinguível na UI: encerrado aguardando liquidação, liquidado ou sem lances. */
+export type LotResult = "OPEN" | "CLOSED_PENDING" | "SETTLED" | "CLOSED_NO_BIDS" | "CANCELLED";
 
 export type LotView = {
   id: string;
@@ -37,6 +39,7 @@ export type LotView = {
   endsAt: string;
   state: LotState;
   settlementPending: boolean;
+  result: LotResult;
   serverNow: string;
 };
 
@@ -191,6 +194,11 @@ export function lotState(status: string, startsAt: Date, endsAt: Date, now: Date
   return "ENDED";
 }
 
+export function lotResult(status: string, endsAt: Date, now: Date): LotResult {
+  if (status === "CANCELLED" || status === "SETTLED" || status === "CLOSED_NO_BIDS") return status;
+  return now.getTime() >= endsAt.getTime() ? "CLOSED_PENDING" : "OPEN";
+}
+
 function toView(row: LotRow): LotView {
   const state = lotState(row.status, row.starts_at, row.ends_at, row.server_now);
   const attributes = row.attributes ?? {};
@@ -217,6 +225,7 @@ function toView(row: LotRow): LotView {
     endsAt: row.ends_at.toISOString(),
     state,
     settlementPending: state === "ENDED" && (row.status === "PUBLISHED" || row.status === "CLOSED_PENDING"),
+    result: lotResult(row.status, row.ends_at, row.server_now),
     serverNow: row.server_now.toISOString(),
   };
 }

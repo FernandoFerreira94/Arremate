@@ -130,12 +130,44 @@ export class BiddingFixture {
     }
   }
 
+  /**
+   * Lance assinado pela cadeia real sem a regra de prorrogação: permite lotes que terminam em segundos
+   * nos testes de liquidação. Reserva e liberação seguem o mesmo ledger do lance de produção.
+   */
+  async seedBid(lotId: string, actor: Actor, amount: bigint): Promise<string> {
+    const repository = new BiddingRepository();
+    const bidId = randomUUID();
+    await this.audit.acceptBidAtomic<void>(lotId, async (client) => {
+      const lot = await repository.lockLot(client, lotId);
+      if (!lot) throw new Error("lote ausente");
+      const leader = await repository.leader(client, lotId);
+      const wallets = await repository.lockWallets(client, leader ? [actor.userId, leader.user_id] : [actor.userId]);
+      const alias = await repository.aliasFor(client, lotId, actor.userId);
+      const acceptedAt = (await repository.clock(client)).toISOString();
+      return {
+        kind: "accept",
+        draft: { bidId, bidderUserId: actor.userId, alias, amountCents: amount, acceptedAt, endsAt: lot.ends_at.toISOString() },
+        finish: async (tx) => {
+          const previous = leader ? wallets.get(leader.user_id) : undefined;
+          if (leader && previous) await repository.moveReservation(tx, previous.id, "RELEASE", BigInt(leader.amount_cents), `release:${leader.id}`);
+          const own = wallets.get(actor.userId);
+          if (!own) throw new Error("carteira ausente");
+          await repository.moveReservation(tx, own.id, "RESERVE", amount, `reserve:${bidId}`);
+        },
+      };
+    });
+    return bidId;
+  }
+
   async cleanup(): Promise<void> {
     const users = `SELECT id FROM users WHERE email LIKE $1`;
     const p = [`${this.prefix}%`];
     await this.pool.query(`DELETE FROM wallet_entries WHERE wallet_id IN (SELECT id FROM wallets WHERE user_id IN (${users}))`, p);
     await this.pool.query(`DELETE FROM wallets WHERE user_id IN (${users})`, p);
     await this.pool.query(`DELETE FROM idempotency_records WHERE user_id IN (${users})`, p);
+    const owned = `SELECT id FROM lots WHERE owner_id IN (${users})`;
+    await this.pool.query(`DELETE FROM receipts WHERE settlement_id IN (SELECT id FROM settlements WHERE lot_id IN (${owned}))`, p);
+    await this.pool.query(`DELETE FROM settlements WHERE lot_id IN (${owned})`, p);
     await this.pool.query(`DELETE FROM bids WHERE lot_id IN (SELECT id FROM lots WHERE owner_id IN (${users}))`, p);
     await this.pool.query(`DELETE FROM lots WHERE owner_id IN (${users})`, p);
     await this.pool.query(`DELETE FROM catalog_item_snapshots WHERE provider = 'teste' AND external_id LIKE $1`, p);

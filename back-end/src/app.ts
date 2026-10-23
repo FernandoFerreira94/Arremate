@@ -22,6 +22,12 @@ import { BiddingService } from "./lots/bidding.service";
 import { LotsController } from "./lots/lots.controller";
 import { LotsRepository } from "./lots/lots.repository";
 import { LotsService } from "./lots/lots.service";
+import { SettlementRepository } from "./lots/settlement.repository";
+import { SettlementRunner } from "./lots/settlement-runner";
+import { SettlementService } from "./lots/settlement.service";
+import { ReceiptsController } from "./receipts/receipts.controller";
+import { ReceiptsRepository } from "./receipts/receipts.repository";
+import { ReceiptsService } from "./receipts/receipts.service";
 import { WalletsController } from "./wallets/wallets.controller";
 import { WalletsRepository } from "./wallets/wallets.repository";
 import { WalletsService } from "./wallets/wallets.service";
@@ -46,6 +52,8 @@ interface ApplicationOptions {
   mediaDir?: string;
   auditKey?: Uint8Array | null;
   witnessDir?: string;
+  /** Intervalo do runner de liquidação; false desliga (padrão em NODE_ENV=test). */
+  settlementIntervalMs?: number | false;
 }
 
 @Module({})
@@ -53,7 +61,7 @@ class ApplicationModule {
   static register(options: ApplicationOptions): DynamicModule {
     return {
       module: ApplicationModule,
-      controllers: [HealthController, AuthController, CatalogController, LotsController, WalletsController],
+      controllers: [HealthController, AuthController, CatalogController, LotsController, WalletsController, ReceiptsController],
       providers: [
         {
           provide: DatabaseRepository,
@@ -103,6 +111,22 @@ class ApplicationModule {
         {
           provide: BiddingService,
           useFactory: (database: DatabaseRepository, audit: AuditService | null) => new BiddingService(database, audit, new BiddingRepository()),
+          inject: [DatabaseRepository, AuditService],
+        },
+        {
+          provide: SettlementService,
+          useFactory: (database: DatabaseRepository, audit: AuditService | null) => new SettlementService(database, audit, new SettlementRepository()),
+          inject: [DatabaseRepository, AuditService],
+        },
+        {
+          provide: SettlementRunner,
+          useFactory: (settlement: SettlementService) =>
+            new SettlementRunner(settlement, options.settlementIntervalMs ?? (process.env.NODE_ENV === "test" ? false : 1000)),
+          inject: [SettlementService],
+        },
+        {
+          provide: ReceiptsService,
+          useFactory: (database: DatabaseRepository, audit: AuditService | null) => new ReceiptsService(new ReceiptsRepository(database), audit),
           inject: [DatabaseRepository, AuditService],
         },
         { provide: WalletsRepository, useFactory: (database: DatabaseRepository) => new WalletsRepository(database), inject: [DatabaseRepository] },
