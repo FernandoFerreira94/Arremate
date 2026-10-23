@@ -115,3 +115,9 @@ Contrato: [api.md](api.md). Evidência: [2026-10-23-tarefa-3.md](evidence/2026-1
 | ID | Decisão | Fonte / detalhe |
 | --- | --- | --- |
 | D15 | Fernando: “Aprovo o @node-rs/argon2”. A dependência `@node-rs/argon2` 2.2.2 (Argon2id m=19456, t=2, p=1), adicionada na Tarefa 3 fora da lista do plano, fica aprovada; A13 resolvida com Argon2id em vez da alternativa scrypt | Commit `92df234`, [api.md](api.md) |
+
+## Dependência de componentes — Fernando, 23/10/2026 20:09 (adição)
+
+| ID | Decisão | Fonte / detalhe |
+| --- | --- | --- |
+| D16 | Fernando: “Aprovo o radix-ui”. O pacote `radix-ui` 1.8.1 (versão exata no lockfile), base das primitivas oficiais do shadcn (Dialog, AlertDialog, Tabs, Slot do Button), fica aprovado para a Tarefa 8 em diante | `front-end/package.json`, `package-lock.json` |
