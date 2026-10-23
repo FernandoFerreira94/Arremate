@@ -19,6 +19,8 @@ import { MediaStore } from "./catalog/image-importer";
 import { MetCatalogClient, type FetchLike, type LookupLike } from "./catalog/met-catalog.client";
 import { BiddingRepository } from "./lots/bidding.repository";
 import { BiddingService } from "./lots/bidding.service";
+import { EventsController } from "./lots/events.controller";
+import { LotEventsService } from "./lots/lot-events.service";
 import { LotsController } from "./lots/lots.controller";
 import { LotsRepository } from "./lots/lots.repository";
 import { LotsService } from "./lots/lots.service";
@@ -61,7 +63,7 @@ class ApplicationModule {
   static register(options: ApplicationOptions): DynamicModule {
     return {
       module: ApplicationModule,
-      controllers: [HealthController, AuthController, CatalogController, LotsController, WalletsController, ReceiptsController],
+      controllers: [HealthController, AuthController, CatalogController, LotsController, WalletsController, ReceiptsController, EventsController],
       providers: [
         {
           provide: DatabaseRepository,
@@ -101,6 +103,7 @@ class ApplicationModule {
           },
           inject: [DatabaseRepository],
         },
+        { provide: LotEventsService, useFactory: () => new LotEventsService() },
         { provide: LotsRepository, useFactory: (database: DatabaseRepository) => new LotsRepository(database), inject: [DatabaseRepository] },
         {
           provide: LotsService,
@@ -120,9 +123,9 @@ class ApplicationModule {
         },
         {
           provide: SettlementRunner,
-          useFactory: (settlement: SettlementService) =>
-            new SettlementRunner(settlement, options.settlementIntervalMs ?? (process.env.NODE_ENV === "test" ? false : 1000)),
-          inject: [SettlementService],
+          useFactory: (settlement: SettlementService, events: LotEventsService) =>
+            new SettlementRunner(settlement, options.settlementIntervalMs ?? (process.env.NODE_ENV === "test" ? false : 1000), events),
+          inject: [SettlementService, LotEventsService],
         },
         {
           provide: ReceiptsService,

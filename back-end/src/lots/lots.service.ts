@@ -72,6 +72,18 @@ export class LotsService {
     return toView(row);
   }
 
+  /** Verificação pública: status, revisão e contagem presos à mesma leitura. Sem chave é INDETERMINATE, nunca íntegro. */
+  async publicAudit(lotId: string) {
+    if (!UUID.test(lotId)) throw new ApiException(404, "NAO_ENCONTRADO");
+    const row = await this.lots.find(lotId);
+    if (!row) throw new ApiException(404, "NAO_ENCONTRADO");
+    if (!this.audit) {
+      return { lotId: row.id, status: "INDETERMINATE" as const, revision: null, count: null, verifiedAt: new Date().toISOString(), reasonCode: "MISSING_KEY", message: "Verificação indisponível." };
+    }
+    const result = await this.audit.verifyLot(row.id);
+    return { lotId: row.id, ...result };
+  }
+
   async bids(lotId: string, page: number, limit: number) {
     if (!UUID.test(lotId)) throw new ApiException(404, "NAO_ENCONTRADO");
     if (!(await this.lots.find(lotId))) throw new ApiException(404, "NAO_ENCONTRADO");

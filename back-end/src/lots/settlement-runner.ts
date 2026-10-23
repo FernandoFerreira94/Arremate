@@ -1,4 +1,5 @@
 import { Logger, type OnApplicationBootstrap, type OnModuleDestroy } from "@nestjs/common";
+import type { LotEventsService } from "./lot-events.service";
 import type { SettlementService } from "./settlement.service";
 
 /**
@@ -14,6 +15,7 @@ export class SettlementRunner implements OnApplicationBootstrap, OnModuleDestroy
   constructor(
     private readonly settlement: SettlementService,
     private readonly intervalMs: number | false,
+    private readonly events?: LotEventsService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -36,7 +38,7 @@ export class SettlementRunner implements OnApplicationBootstrap, OnModuleDestroy
     if (this.busy) return this.running;
     this.busy = true;
     this.running = this.settlement
-      .settleDueLots()
+      .settleDueLots((lotId) => this.events?.publish(lotId))
       .then((summary) => {
         if (summary.failed > 0) this.logger.warn(`Liquidação: ${summary.failed} falha(s) nesta rodada.`);
       })

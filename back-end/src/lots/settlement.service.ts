@@ -97,7 +97,7 @@ export class SettlementService {
   }
 
   /** Varre lotes vencidos; cada um em sua transação. Falha de um não impede os demais. */
-  async settleDueLots(): Promise<ProcessingSummary> {
+  async settleDueLots(onClosed?: (lotId: string) => void): Promise<ProcessingSummary> {
     const summary: ProcessingSummary = { scanned: 0, settled: 0, closedNoBids: 0, blocked: 0, failed: 0 };
     if (!this.audit) return summary;
     for (const lotId of await this.repository.dueLots(this.database, SWEEP_LIMIT)) {
@@ -106,6 +106,7 @@ export class SettlementService {
         const closed = await this.settleLot(lotId);
         if (closed.status === "SETTLED") summary.settled += 1;
         if (closed.status === "CLOSED_NO_BIDS") summary.closedNoBids += 1;
+        if (closed.status === "SETTLED" || closed.status === "CLOSED_NO_BIDS") onClosed?.(closed.lotId);
       } catch (error) {
         if (error instanceof IntegrityBlockedError || error instanceof ConfirmationPendingError) {
           summary.blocked += 1;

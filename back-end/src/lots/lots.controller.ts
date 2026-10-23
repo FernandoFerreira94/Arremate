@@ -7,6 +7,7 @@ import { RejectExtraDto } from "../auth/dto/login.dto";
 import { BiddingService } from "./bidding.service";
 import { CreateLotDto, PageQuery } from "./dto/create-lot.dto";
 import { PlaceBidDto } from "./dto/place-bid.dto";
+import { LotEventsService } from "./lot-events.service";
 import { LotsService } from "./lots.service";
 import { SettlementService } from "./settlement.service";
 
@@ -18,6 +19,7 @@ export class LotsController {
     private readonly lots: LotsService,
     private readonly bidding: BiddingService,
     private readonly settlement: SettlementService,
+    private readonly events: LotEventsService,
   ) {}
 
   @Get("lots")
@@ -28,6 +30,11 @@ export class LotsController {
   @Get("lots/:id")
   detail(@Param("id") id: string) {
     return this.lots.detail(id);
+  }
+
+  @Get("lots/:id/audit")
+  audit(@Param("id") id: string) {
+    return this.lots.publicAudit(id);
   }
 
   @Get("lots/:id/bids")
@@ -69,15 +76,19 @@ export class LotsController {
   @Post("lots/:id/bids")
   @Roles("BIDDER")
   @HttpCode(201)
-  bid(@Param("id") id: string, @Body() body: PlaceBidDto, @Headers("idempotency-key") key: string | undefined, @Req() request: ActorRequest) {
-    return this.bidding.placeBid(actorOf(request), id, body.amountCents, key);
+  async bid(@Param("id") id: string, @Body() body: PlaceBidDto, @Headers("idempotency-key") key: string | undefined, @Req() request: ActorRequest) {
+    const accepted = await this.bidding.placeBid(actorOf(request), id, body.amountCents, key);
+    this.events.publish(id.toLowerCase());
+    return accepted;
   }
 
   @Post("lots/:id/cancel")
   @Roles("AUCTIONEER")
   @HttpCode(200)
-  cancel(@Param("id") id: string, @Body() _body: RejectExtraDto, @Req() request: ActorRequest) {
-    return this.lots.cancelLot(actorOf(request), id);
+  async cancel(@Param("id") id: string, @Body() _body: RejectExtraDto, @Req() request: ActorRequest) {
+    const view = await this.lots.cancelLot(actorOf(request), id);
+    this.events.publish(id.toLowerCase());
+    return view;
   }
 }
 
