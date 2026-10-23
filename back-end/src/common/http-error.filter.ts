@@ -16,6 +16,7 @@ const codes: Record<string, { status: number; message: string }> = {
   DATAS_INVALIDAS: { status: 400, message: "Confira as datas: o início não pode estar no passado e o fim deve vir depois do início." },
   OBRA_NAO_ENCONTRADA: { status: 404, message: "Obra não encontrada no acervo." },
   IDEMPOTENCIA_CONFLITO: { status: 409, message: "Esta chave já foi usada com outros dados." },
+  CAPACIDADE_EXCEDIDA: { status: 409, message: "O saldo chegou ao limite técnico da carteira." },
   LOTE_NAO_CANCELAVEL: { status: 409, message: "Este lote não pode mais ser cancelado." },
   LOTE_COM_LANCES: { status: 409, message: "Lotes com lances não podem ser cancelados." },
   LICENCA_RECUSADA: { status: 422, message: "Esta obra não está em domínio público." },

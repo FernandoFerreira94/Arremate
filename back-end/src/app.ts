@@ -21,6 +21,9 @@ import { MetCatalogClient, type FetchLike, type LookupLike } from "./catalog/met
 import { LotsController } from "./lots/lots.controller";
 import { LotsRepository } from "./lots/lots.repository";
 import { LotsService } from "./lots/lots.service";
+import { WalletsController } from "./wallets/wallets.controller";
+import { WalletsRepository } from "./wallets/wallets.repository";
+import { WalletsService } from "./wallets/wallets.service";
 import { CsrfGuard } from "./auth/csrf.guard";
 import { MutationRateLimitGuard } from "./auth/mutation-rate-limit.guard";
 import { RateLimiter } from "./auth/rate-limit";
@@ -49,7 +52,7 @@ class ApplicationModule {
   static register(options: ApplicationOptions): DynamicModule {
     return {
       module: ApplicationModule,
-      controllers: [HealthController, AuthController, AuthorizationController, CatalogController, LotsController],
+      controllers: [HealthController, AuthController, AuthorizationController, CatalogController, LotsController, WalletsController],
       providers: [
         {
           provide: DatabaseRepository,
@@ -95,6 +98,12 @@ class ApplicationModule {
           useFactory: (database: DatabaseRepository, lots: LotsRepository, catalog: CatalogService, audit: AuditService | null) =>
             new LotsService(database, lots, catalog, audit),
           inject: [DatabaseRepository, LotsRepository, CatalogService, AuditService],
+        },
+        { provide: WalletsRepository, useFactory: (database: DatabaseRepository) => new WalletsRepository(database), inject: [DatabaseRepository] },
+        {
+          provide: WalletsService,
+          useFactory: (database: DatabaseRepository, wallets: WalletsRepository) => new WalletsService(database, wallets),
+          inject: [DatabaseRepository, WalletsRepository],
         },
         { provide: APP_GUARD, useClass: CsrfGuard },
         { provide: APP_GUARD, useClass: SessionGuard },

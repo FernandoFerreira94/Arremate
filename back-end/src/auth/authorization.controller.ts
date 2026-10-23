@@ -4,12 +4,6 @@ import { Roles } from "./roles.guard";
 
 @Controller()
 export class AuthorizationController {
-  @Post("wallet/deposits")
-  @Roles("BIDDER")
-  deposit(@Body() _body: RejectExtraDto): never {
-    throw unavailable();
-  }
-
   @Post("lots/:id/bids")
   @Roles("BIDDER")
   bid(@Body() _body: RejectExtraDto): never {
