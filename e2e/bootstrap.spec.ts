@@ -2,7 +2,8 @@ import { test, expect } from "@playwright/test";
 
 test("início com a identidade aprovada e acesso à entrada", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Arremate", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Leilões de arte de acervo público", level: 1 })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Arremate, página inicial" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Entrar" }).first()).toBeVisible();
 });
 

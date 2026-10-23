@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { SiteFooter } from "@/components/app/site-footer";
 import { SiteHeader } from "@/components/app/site-header";
+import { siteUrl } from "@/lib/page-metadata";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -9,6 +10,8 @@ const fraunces = Fraunces({ subsets: ["latin"], weight: ["600", "700"], variable
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
+  applicationName: "Arremate",
   title: { default: "Arremate — demonstração", template: "%s · Arremate" },
   description: "Demonstração de leilões de arte de acervo público com valores simulados.",
   robots: { index: false, follow: false },

@@ -21,6 +21,8 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
     body: hasBody ? await request.arrayBuffer() : undefined,
     redirect: "manual",
     cache: "no-store",
+    // SSE: cliente fecha a aba, a conexão com a API fecha junto.
+    signal: request.signal,
   });
   const headers = new Headers();
   const contentType = upstream.headers.get("content-type");

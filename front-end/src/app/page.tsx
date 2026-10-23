@@ -1,15 +1,19 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Suspense } from "react";
+import { ShowcasePage } from "@/features/lots/showcase-page";
+import { pageMetadata } from "@/lib/page-metadata";
 
-/** Vitrine definitiva entra na Tarefa 9. Aqui só a entrada da demonstração. */
+const base = pageMetadata({
+  title: "Arremate — demonstração",
+  description: "Leilões simulados de obras de acervo público do The Met: lotes ao vivo, agendados e encerrados.",
+  path: "/",
+});
+// Na raiz o template do layout não se aplica; título absoluto para não duplicar a marca.
+export const metadata = { ...base, title: { absolute: "Arremate — demonstração" } };
+
 export default function HomePage() {
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
-      <h1 className="text-4xl">Arremate</h1>
-      <p className="text-muted-foreground">Leilões simulados de obras de acervo público. A vitrine e a sala ao vivo entram na próxima etapa.</p>
-      <div>
-        <Button asChild size="lg"><Link href="/entrar">Entrar</Link></Button>
-      </div>
-    </div>
+    <Suspense>
+      <ShowcasePage />
+    </Suspense>
   );
 }
