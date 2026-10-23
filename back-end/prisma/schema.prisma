@@ -1,0 +1,193 @@
+// CHECK de saldo, valores positivos, prazo e e-mail normalizado ficam na migration:
+// Prisma 7 não representa CHECK no schema nem no migrate diff.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  AUCTIONEER
+  BIDDER
+
+  @@map("user_role")
+}
+
+enum LotStatus {
+  PUBLISHED
+  CANCELLED
+  CLOSED_PENDING
+  SETTLED
+  CLOSED_NO_BIDS
+
+  @@map("lot_status")
+}
+
+enum WalletEntryKind {
+  DEPOSIT
+  RESERVE
+  RELEASE
+  SETTLEMENT_DEBIT
+  SETTLEMENT_CREDIT
+
+  @@map("wallet_entry_kind")
+}
+
+model User {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String   @unique @db.Text
+  role         UserRole
+  passwordHash String   @map("password_hash") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  sessions    Session[]
+  lots        Lot[]
+  bids        Bid[]
+  wallet      Wallet?
+  idempotency IdempotencyRecord[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  tokenHash String    @unique @map("token_hash") @db.Text
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model CatalogItemSnapshot {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider   String   @db.Text
+  externalId String   @map("external_id") @db.Text
+  title      String   @db.Text
+  attributes Json     @db.JsonB
+  credit     String   @db.Text
+  license    String   @db.Text
+  mediaKey   String   @map("media_key") @db.Text
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  lots Lot[]
+
+  @@unique([provider, externalId])
+  @@map("catalog_item_snapshots")
+}
+
+model Lot {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId        String    @map("owner_id") @db.Uuid
+  owner          User      @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  snapshotId     String    @map("snapshot_id") @db.Uuid
+  snapshot       CatalogItemSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Restrict)
+  initialCents   BigInt    @map("initial_cents")
+  incrementCents BigInt    @map("increment_cents")
+  startsAt       DateTime  @map("starts_at") @db.Timestamptz(3)
+  endsAt         DateTime  @map("ends_at") @db.Timestamptz(3)
+  revision       Int       @default(0)
+  status         LotStatus @default(PUBLISHED)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  bids       Bid[]
+  settlement Settlement?
+
+  @@index([status, endsAt])
+  @@index([ownerId])
+  @@index([snapshotId])
+  @@map("lots")
+}
+
+model Bid {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lotId       String   @map("lot_id") @db.Uuid
+  lot         Lot      @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  userId      String   @map("user_id") @db.Uuid
+  user        User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  alias       String   @db.Text
+  sequence    Int
+  amountCents BigInt   @map("amount_cents")
+  acceptedAt  DateTime @map("accepted_at") @db.Timestamptz(3)
+  signature   String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  settlement Settlement?
+
+  @@unique([lotId, sequence])
+  @@index([userId, lotId])
+  @@map("bids")
+}
+
+model Wallet {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  user           User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  totalCents     Decimal  @default(0) @map("total_cents") @db.Decimal(38, 0)
+  committedCents Decimal  @default(0) @map("committed_cents") @db.Decimal(38, 0)
+  revision       Int      @default(0)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  entries WalletEntry[]
+
+  @@map("wallets")
+}
+
+model WalletEntry {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  walletId    String          @map("wallet_id") @db.Uuid
+  wallet      Wallet          @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  kind        WalletEntryKind
+  amountCents BigInt          @map("amount_cents")
+  reference   String          @unique @db.Text
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([walletId])
+  @@map("wallet_entries")
+}
+
+model Settlement {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lotId       String   @unique @map("lot_id") @db.Uuid
+  lot         Lot      @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  winnerBidId String?  @unique @map("winner_bid_id") @db.Uuid
+  winnerBid   Bid?     @relation(fields: [winnerBidId], references: [id], onDelete: Restrict)
+  settledAt   DateTime @map("settled_at") @db.Timestamptz(3)
+
+  receipt Receipt?
+
+  @@map("settlements")
+}
+
+model Receipt {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  settlementId String     @unique @map("settlement_id") @db.Uuid
+  settlement   Settlement @relation(fields: [settlementId], references: [id], onDelete: Restrict)
+  publicToken  String     @unique @map("public_token") @db.Text
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("receipts")
+}
+
+model IdempotencyRecord {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  user           User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  operation      String   @db.Text
+  resourceKey    String   @map("resource_key") @db.Text
+  idempotencyKey String   @map("idempotency_key") @db.Uuid
+  requestHash    String   @map("request_hash") @db.Text
+  response       Json     @db.JsonB
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([userId, operation, resourceKey, idempotencyKey], map: "idempotency_scope")
+  @@map("idempotency_records")
+}
