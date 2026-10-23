@@ -1,0 +1,367 @@
+import { signBid, signCheckpoint, signGenesis, signaturesMatch, verifyBidSignature } from "./audit-chain";
+import type { AuditRepository } from "./audit.repository";
+import type { CheckpointStore } from "./checkpoint-store";
+import type {
+  AuditResult,
+  CanonicalBid,
+  Checkpoint,
+  CheckpointBody,
+  GenesisRecord,
+  LotHistory,
+  LotSnapshot,
+  SettlementLink,
+} from "./audit.types";
+
+export type AcceptBidInput = {
+  lotId: string;
+  bidId: string;
+  bidderUserId: string;
+  alias: string;
+  sequence: number;
+  amountCents: bigint;
+  acceptedAt: string;
+  endsAt: string;
+};
+
+export class IntegrityBlockedError extends Error {
+  readonly code: string;
+
+  constructor(code: string) {
+    super(code);
+    this.name = "IntegrityBlockedError";
+    this.code = code;
+  }
+}
+
+export class AuditService {
+  private readonly tails = new Map<string, Promise<void>>();
+
+  constructor(
+    private readonly repository: AuditRepository,
+    private readonly store: CheckpointStore,
+    private readonly key: Uint8Array | null,
+    private readonly clock: () => string = () => new Date().toISOString(),
+  ) {}
+
+  async openGenesis(lotId: string): Promise<void> {
+    await this.exclusive(lotId, async () => {
+      const key = this.requireKey();
+      const history = await this.repository.loadHistory(lotId);
+      if (!history.lot || history.bids.length > 0 || history.lot.revision !== 0) {
+        throw new Error("lote não aceita gênese");
+      }
+      if (await this.store.read(lotId)) {
+        throw new Error("gênese já existe");
+      }
+      const record = genesisFromLot(history.lot);
+      const genesisSignature = signGenesis(record, key);
+      const body: CheckpointBody = {
+        lotId,
+        revision: 0,
+        count: 0,
+        headSignature: genesisSignature,
+        genesisSignature,
+        keyVersion: 1,
+        endsAt: history.lot.endsAt,
+        ownerId: record.ownerId,
+        snapshotId: record.snapshotId,
+        initialCents: record.initialCents,
+        incrementCents: record.incrementCents,
+        startsAt: record.startsAt,
+        genesisEndsAt: record.endsAt,
+        settlement: null,
+      };
+      await this.store.advance(0, seal(body, key));
+    });
+  }
+
+  async acceptBid(input: AcceptBidInput): Promise<void> {
+    await this.exclusive(input.lotId, async () => {
+      await this.assertCanMutate(input.lotId);
+      const key = this.requireKey();
+      const current = await this.store.read(input.lotId);
+      if (!current || input.sequence !== current.count + 1) {
+        throw new Error("sequence divergente");
+      }
+      const event: CanonicalBid = {
+        lotId: input.lotId,
+        bidId: input.bidId,
+        bidderUserId: input.bidderUserId,
+        alias: input.alias,
+        sequence: input.sequence,
+        amountCents: input.amountCents,
+        acceptedAt: input.acceptedAt,
+        previousSignature: current.headSignature,
+        keyVersion: 1,
+      };
+      const signature = signBid(event, event.previousSignature, key);
+      const body: CheckpointBody = {
+        lotId: current.lotId,
+        revision: current.revision + 1,
+        count: current.count + 1,
+        headSignature: signature,
+        genesisSignature: current.genesisSignature,
+        keyVersion: current.keyVersion,
+        endsAt: input.endsAt,
+        ownerId: current.ownerId,
+        snapshotId: current.snapshotId,
+        initialCents: current.initialCents,
+        incrementCents: current.incrementCents,
+        startsAt: current.startsAt,
+        genesisEndsAt: current.genesisEndsAt,
+        settlement: current.settlement,
+      };
+      const next = seal(body, key);
+      await this.store.writePending(next);
+      try {
+        await this.repository.commitBid({
+          lotId: input.lotId,
+          expectedRevision: current.revision,
+          nextRevision: next.revision,
+          endsAt: input.endsAt,
+          bidId: input.bidId,
+          bidderUserId: input.bidderUserId,
+          alias: input.alias,
+          sequence: input.sequence,
+          amountCents: input.amountCents,
+          acceptedAt: input.acceptedAt,
+          signature,
+        });
+      } catch (error) {
+        await this.store.clearPending(input.lotId);
+        throw error;
+      }
+      await this.store.advance(current.revision, next);
+      await this.store.clearPending(input.lotId);
+    });
+  }
+
+  async retryCheckpoint(lotId: string): Promise<void> {
+    await this.exclusive(lotId, async () => {
+      this.requireKey();
+      const pending = await this.store.readPending(lotId);
+      if (!pending) {
+        throw new Error("sem intenção pendente; não reassinar o banco");
+      }
+      const history = await this.repository.loadHistory(lotId);
+      if (this.classify(history, pending, null, this.clock()).status !== "INTACT") {
+        throw new Error("banco não confere com a intenção; não reassinar o banco");
+      }
+      const committed = await this.store.read(lotId);
+      if (committed && committed.revision === pending.revision && committed.envelopeSignature === pending.envelopeSignature) {
+        await this.store.clearPending(lotId);
+        return;
+      }
+      await this.store.advance(committed ? committed.revision : 0, pending);
+      await this.store.clearPending(lotId);
+    });
+  }
+
+  async verifyLot(lotId: string): Promise<AuditResult> {
+    const verifiedAt = this.clock();
+    if (!this.key || this.key.byteLength < 32) {
+      return indeterminate("MISSING_KEY", "Chave de verificação ausente.", verifiedAt);
+    }
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const before = await this.store.read(lotId);
+        const pendingBefore = await this.store.readPending(lotId);
+        const history = await this.repository.loadHistory(lotId);
+        const after = await this.store.read(lotId);
+        const pendingAfter = await this.store.readPending(lotId);
+        if (!sameCheckpoint(before, after) || !sameCheckpoint(pendingBefore, pendingAfter)) {
+          continue;
+        }
+        return this.classify(history, before, pendingBefore, verifiedAt);
+      } catch (error) {
+        if (error instanceof Error && error.message === "testemunha ilegível") {
+          return indeterminate("WITNESS_UNREADABLE", "Testemunha ilegível.", verifiedAt);
+        }
+        throw error;
+      }
+    }
+    return indeterminate("CONCURRENT_READ", "Leitura cruzou uma atualização; o resultado não foi fechado.", verifiedAt);
+  }
+
+  async assertCanMutate(lotId: string): Promise<void> {
+    const verified = await this.verifyLot(lotId);
+    if (verified.status !== "INTACT") {
+      throw new IntegrityBlockedError(verified.status === "INDETERMINATE" ? "CONFIRMATION_PENDING" : verified.reasonCode);
+    }
+  }
+
+  private classify(history: LotHistory, checkpoint: Checkpoint | null, pending: Checkpoint | null, verifiedAt: string): AuditResult {
+    const key = this.requireKey();
+    if (!checkpoint) {
+      return indeterminate("MISSING_WITNESS", "Testemunha do lote ausente.", verifiedAt);
+    }
+    if (!envelopeValid(checkpoint, key)) {
+      return indeterminate("WITNESS_UNREADABLE", "Testemunha ilegível.", verifiedAt);
+    }
+    if (history.ambiguous) {
+      return tampered("DUPLICATE_ROW", "Há mais de uma linha para o mesmo lote ou liquidação.", checkpoint, verifiedAt);
+    }
+    if (pending && pending.revision > checkpoint.revision) {
+      return indeterminate("CONFIRMATION_GAP", "Confirmação do lote incompleta.", verifiedAt, checkpoint.revision, null);
+    }
+    if (!history.lot) {
+      return tampered("LOT_REMOVED", "Lote ausente com testemunha remanescente.", checkpoint, verifiedAt);
+    }
+    if (!genesisValid(checkpoint, key) || !metadataMatches(history.lot, checkpoint)) {
+      return tampered("LOT_METADATA_MISMATCH", "Metadados do lote não conferem com a gênese.", checkpoint, verifiedAt);
+    }
+    const chain = walkChain(history, checkpoint, key);
+    if (chain === "broken") {
+      return tampered("CHAIN_MISMATCH", "Assinatura ou encadeamento não confere.", checkpoint, verifiedAt);
+    }
+    if (chain.count < checkpoint.count) {
+      return tampered("HISTORY_TRUNCATED", "Histórico menor que a testemunha.", checkpoint, verifiedAt);
+    }
+    if (chain.count > checkpoint.count || chain.head !== checkpoint.headSignature) {
+      return indeterminate("CONFIRMATION_GAP", "Confirmação do lote incompleta.", verifiedAt, checkpoint.revision, null);
+    }
+    if (history.lot.endsAt !== checkpoint.endsAt || history.lot.revision !== checkpoint.revision || !settlementMatches(history.settlement, checkpoint.settlement)) {
+      return tampered("ENVELOPE_MISMATCH", "Extensão ou resultado não conferem com o envelope.", checkpoint, verifiedAt);
+    }
+    return {
+      status: "INTACT",
+      revision: checkpoint.revision,
+      count: checkpoint.count,
+      verifiedAt,
+      reasonCode: "INTACT",
+      message: "O histórico confere com a testemunha.",
+    };
+  }
+
+  private requireKey(): Uint8Array {
+    if (!this.key || this.key.byteLength < 32) {
+      throw new Error("chave de auditoria ausente");
+    }
+    return this.key;
+  }
+
+  private async exclusive<T>(lotId: string, action: () => Promise<T>): Promise<T> {
+    const previous = this.tails.get(lotId) ?? Promise.resolve();
+    let release = (): void => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    this.tails.set(lotId, previous.then(() => gate));
+    await previous;
+    try {
+      return await action();
+    } finally {
+      release();
+    }
+  }
+}
+
+function seal(body: CheckpointBody, key: Uint8Array): Checkpoint {
+  return { ...body, envelopeSignature: signCheckpoint(body, key) };
+}
+
+function genesisFromLot(lot: LotSnapshot): GenesisRecord {
+  return {
+    lotId: lot.lotId,
+    ownerId: lot.ownerId,
+    snapshotId: lot.snapshotId,
+    initialCents: lot.initialCents,
+    incrementCents: lot.incrementCents,
+    startsAt: lot.startsAt,
+    endsAt: lot.endsAt,
+    keyVersion: 1,
+  };
+}
+
+function envelopeValid(checkpoint: Checkpoint, key: Uint8Array): boolean {
+  const { envelopeSignature, ...body } = checkpoint;
+  return signaturesMatch(signCheckpoint(body, key), envelopeSignature);
+}
+
+function genesisValid(checkpoint: Checkpoint, key: Uint8Array): boolean {
+  const record: GenesisRecord = {
+    lotId: checkpoint.lotId,
+    ownerId: checkpoint.ownerId,
+    snapshotId: checkpoint.snapshotId,
+    initialCents: checkpoint.initialCents,
+    incrementCents: checkpoint.incrementCents,
+    startsAt: checkpoint.startsAt,
+    endsAt: checkpoint.genesisEndsAt,
+    keyVersion: checkpoint.keyVersion,
+  };
+  return signaturesMatch(signGenesis(record, key), checkpoint.genesisSignature);
+}
+
+function metadataMatches(lot: LotSnapshot, checkpoint: Checkpoint): boolean {
+  return (
+    lot.lotId === checkpoint.lotId &&
+    lot.ownerId === checkpoint.ownerId &&
+    lot.snapshotId === checkpoint.snapshotId &&
+    lot.initialCents === checkpoint.initialCents &&
+    lot.incrementCents === checkpoint.incrementCents &&
+    lot.startsAt === checkpoint.startsAt
+  );
+}
+
+function settlementMatches(actual: SettlementLink | null, expected: SettlementLink | null): boolean {
+  if (!actual && !expected) {
+    return true;
+  }
+  if (!actual || !expected) {
+    return false;
+  }
+  return (
+    actual.settlementId === expected.settlementId &&
+    actual.winnerBidId === expected.winnerBidId &&
+    actual.receiptToken === expected.receiptToken &&
+    actual.settledAt === expected.settledAt
+  );
+}
+
+function walkChain(history: LotHistory, checkpoint: Checkpoint, key: Uint8Array): { count: number; head: string } | "broken" {
+  let previous = checkpoint.genesisSignature;
+  for (let index = 0; index < history.bids.length; index += 1) {
+    const stored = history.bids[index];
+    if (!stored || stored.sequence !== index + 1 || stored.lotId !== checkpoint.lotId) {
+      return "broken";
+    }
+    const event: CanonicalBid = {
+      lotId: stored.lotId,
+      bidId: stored.bidId,
+      bidderUserId: stored.bidderUserId,
+      alias: stored.alias,
+      sequence: stored.sequence,
+      amountCents: stored.amountCents,
+      acceptedAt: stored.acceptedAt,
+      previousSignature: previous,
+      keyVersion: checkpoint.keyVersion,
+    };
+    if (!verifyBidSignature(event, stored.signature, key)) {
+      return "broken";
+    }
+    previous = stored.signature;
+  }
+  return { count: history.bids.length, head: previous };
+}
+
+function sameCheckpoint(left: Checkpoint | null, right: Checkpoint | null): boolean {
+  if (!left || !right) {
+    return left === right;
+  }
+  return left.revision === right.revision && left.envelopeSignature === right.envelopeSignature && left.count === right.count;
+}
+
+function indeterminate(reasonCode: string, message: string, verifiedAt: string, revision: number | null = null, count: number | null = null): AuditResult {
+  return { status: "INDETERMINATE", revision, count, verifiedAt, reasonCode, message };
+}
+
+function tampered(reasonCode: string, message: string, checkpoint: Checkpoint, verifiedAt: string): AuditResult {
+  return {
+    status: "TAMPERED",
+    revision: checkpoint.revision,
+    count: checkpoint.count,
+    verifiedAt,
+    reasonCode,
+    message,
+  };
+}
