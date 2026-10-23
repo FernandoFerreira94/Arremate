@@ -1,6 +1,15 @@
 # Progresso — Casa de Leilões
 
-Atualizado em 23/10/2026. Tarefa 7 concluída no código e nos testes. As revisões independentes de auth, catálogo, carteira, lance e liquidação continuam abertas. Tarefa 8 é a próxima.
+Atualizado em 23/10/2026. Tarefa 8 concluída no local (telas privadas e entrar). As revisões independentes de auth, catálogo, carteira, lance, liquidação e componentes continuam abertas. Tarefa 9 é a próxima.
+
+## Tarefa 8 — concluída no local
+
+- Design system: componentes shadcn escritos sobre `radix-ui` (D16), tokens do HANDOFF §2, só tema claro (D08), Fraunces + Inter.
+- Telas: `/entrar`, `/carteira`, `/painel/lotes`, `/painel/lotes/novo`, `/meus-arremates`; header por papel, menu móvel (folha), estados de carregando/vazio/erro/acesso negado.
+- Dinheiro em BigInt sem float, horário BRT → UTC, depósito/publicação com uma `Idempotency-Key` por intenção.
+- Testes: Vitest do front 36; E2E 5 (incluindo `private-journeys` 3).
+- Limitações: sem tabela de movimentações (sem API); header sem apelido; publicação real NÃO VERIFICADA sem `AUDIT_HMAC_KEY`; links para `/lotes/:id` e comprovantes dão 404 até a Tarefa 9; `DESIGN.md`/`.design-system/` e screenshots pendentes.
+- Evidência: `docs/evidence/2026-10-23-tarefa-8.md`.
 
 ## Tarefa 7 — concluída no local
 
@@ -63,7 +72,7 @@ Atualizado em 23/10/2026. Tarefa 7 concluída no código e nos testes. As revis�
 
 ## Comandos (exit 0, Node v24.22.1)
 
-Tarefa 7: `npm run lint`, `npm run typecheck`, `npm test` (53), `npm run test:integration` (88), `npm run build`. Tarefa 6: `npm run lint`, `npm run typecheck`, `npm test` (51), `npm run test:integration` (74), `npm run build`. Tarefa 5: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (62), `npm run build`. Tarefa 4: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (41), `npm run build`. Tarefa 3: `npm test` (22), `npm run test:integration` (25), `npm run db:validate`. Vitest do front: 7 testes.
+Tarefa 8: `npm run lint`, `npm run typecheck`, `npm test` (53), `npm run test:integration` (88), `npm run build`, Vitest do front (36), `npx playwright test` (5). Tarefa 7: `npm run lint`, `npm run typecheck`, `npm test` (53), `npm run test:integration` (88), `npm run build`. Tarefa 6: `npm run lint`, `npm run typecheck`, `npm test` (51), `npm run test:integration` (74), `npm run build`. Tarefa 5: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (62), `npm run build`. Tarefa 4: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (41), `npm run build`. Tarefa 3: `npm test` (22), `npm run test:integration` (25), `npm run db:validate`. Vitest do front: 7 testes.
 
 `GET /api/health/live` e `GET /api/health/ready` em 127.0.0.1:4300 responderam 200. `GET /api/auth/csrf` pelo site em 3300 respondeu 200; login inválido respondeu 401.
 
@@ -77,5 +86,4 @@ Tarefa 7: `npm run lint`, `npm run typecheck`, `npm test` (53), `npm run test:in
 - Topologia de produção e o diretório real da testemunha não foram escolhidos nem contratados.
 - Fsync de diretório no Linux não foi executado.
 - SSE pelo proxy não foi medido.
-- Tela de entrar e formatação BRL ficam na Tarefa 8.
-- E2E e CI do GitHub não foram executados.
+- CI do GitHub não foi executado (E2E local verde na Tarefa 8).

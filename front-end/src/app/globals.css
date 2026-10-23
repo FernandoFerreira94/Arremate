@@ -1,3 +1,88 @@
 @import "tailwindcss";
 
-/* Tokens visuais serão derivados do design system aprovado pelo Grok/Fernando. */
+/* Tokens do HANDOFF-GROK §2 (Design Freeze, D12). Só tema claro (D08). */
+:root {
+  --radius: 6px;
+  --background: #f6f3ec;
+  --foreground: #1f1b16;
+  --card: #fffdf8;
+  --card-foreground: #1f1b16;
+  --popover: #fffdf8;
+  --popover-foreground: #1f1b16;
+  --primary: #6e1e2b;
+  --primary-hover: #5a1722;
+  --primary-foreground: #fff8f0;
+  --secondary: #eee9de;
+  --secondary-foreground: #1f1b16;
+  --muted: #eee9de;
+  --muted-foreground: #5c5448;
+  --accent: #a9823a;
+  --accent-foreground: #1f1b16;
+  --destructive: #b42318;
+  --border: #ddd5c4;
+  --input: #ddd5c4;
+  --ring: #a9823a;
+  --live: #b42318;
+  --live-soft: #fdecea;
+  --scheduled: #2f5d8a;
+  --scheduled-soft: #e7eef6;
+  --ended: #5c5448;
+  --ended-soft: #eee9de;
+  --success: #1e6b45;
+  --success-soft: #e6f2ea;
+  --warning: #8a5300;
+  --warning-soft: #fbf0dc;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-live: var(--live);
+  --color-live-soft: var(--live-soft);
+  --color-scheduled: var(--scheduled);
+  --color-scheduled-soft: var(--scheduled-soft);
+  --color-ended: var(--ended);
+  --color-ended-soft: var(--ended-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --radius-sm: 4px;
+  --radius-md: var(--radius);
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+}
+
+@layer base {
+  * { border-color: var(--border); }
+  html { color-scheme: light; }
+  body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); }
+  h1, h2, h3 { font-family: var(--font-serif); font-weight: 600; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}

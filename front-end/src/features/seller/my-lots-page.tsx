@@ -1,0 +1,199 @@
+"use client";
+
+import Link from "next/link";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { CheckCircle2Icon, InfoIcon, PlusIcon } from "lucide-react";
+import { LotStateBadge, type LotState } from "@/components/app/lot-state-badge";
+import { EmptyState, ErrorState, LoadingRows } from "@/components/app/page-states";
+import { PageShell } from "@/components/app/page-shell";
+import { Alert } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatBrl } from "@/lib/money";
+import { cancelWithRefresh } from "./cancel-lot";
+import { cancelLot, getSellerSummary, listSellerLots, type LotView } from "./seller-api";
+
+type Filter = "ALL" | LotState;
+const FILTERS: { value: Filter; label: string }[] = [
+  { value: "ALL", label: "Todos" },
+  { value: "LIVE", label: "Ao vivo" },
+  { value: "SCHEDULED", label: "Agendados" },
+  { value: "ENDED", label: "Encerrados" },
+  { value: "CANCELLED", label: "Cancelados" },
+];
+
+export function MyLotsPage() {
+  const client = useQueryClient();
+  const lots = useQuery({ queryKey: ["seller", "lots"], queryFn: () => listSellerLots(1) });
+  const summary = useQuery({ queryKey: ["seller", "summary"], queryFn: getSellerSummary });
+  const [filter, setFilter] = useState<Filter>("ALL");
+  const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
+  const items = lots.data?.items ?? [];
+  const visible = filter === "ALL" ? items : items.filter((lot) => lot.state === filter);
+
+  async function onCancel(lot: LotView) {
+    const outcome = await cancelWithRefresh(client, cancelLot, lot.id);
+    setNotice(outcome.ok ? { ok: true, message: `“${lot.title}” foi cancelado e saiu da vitrine.` } : { ok: false, message: outcome.message });
+  }
+
+  return (
+    <PageShell
+      title="Meus lotes"
+      description="Lotes próprios, inclusive cancelados."
+      action={<Button asChild size="lg"><Link href="/painel/lotes/novo"><PlusIcon /> Criar lote</Link></Button>}
+    >
+      <div className="flex flex-col gap-6">
+        {summary.isError ? (
+          <ErrorState message="Não foi possível carregar o resumo." onRetry={() => void summary.refetch()} />
+        ) : summary.isPending ? (
+          <LoadingRows label="Carregando resumo" rows={1} />
+        ) : (
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="border-primary ring-1 ring-primary">
+              <CardContent className="flex flex-col gap-1">
+                <p className="text-xs text-muted-foreground">Total recebido</p>
+                <p className="font-serif text-[28px] font-semibold tabular-nums" data-testid="total-recebido">{formatBrl(summary.data.settledCreditCents)}</p>
+                <p className="text-xs text-muted-foreground">Só liquidações concluídas · não soma disputas abertas</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex flex-col gap-1">
+                <p className="text-xs text-muted-foreground">Lotes arrematados</p>
+                <p className="font-serif text-2xl font-semibold">{summary.data.settled} de {summary.data.settled + summary.data.closedNoBids} encerrados</p>
+                <p className="text-xs text-muted-foreground">{summary.data.closedNoBids} encerrado(s) sem lances{summary.data.pending > 0 ? ` · ${summary.data.pending} processando` : ""}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex flex-col gap-1">
+                <p className="text-xs text-muted-foreground">Em andamento</p>
+                <p className="font-serif text-2xl font-semibold">{summary.data.open} aberto(s)</p>
+                <p className="text-xs text-muted-foreground">{summary.data.cancelled} cancelado(s)</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {notice ? (
+          <Alert variant={notice.ok ? "success" : "warning"}>
+            {notice.ok ? <CheckCircle2Icon /> : <InfoIcon />}
+            <p>{notice.message}</p>
+          </Alert>
+        ) : null}
+        <Tabs value={filter} onValueChange={(value) => setFilter(value as Filter)}>
+          <TabsList aria-label="Filtrar lotes">
+            {FILTERS.map((item) => {
+              const count = item.value === "ALL" ? items.length : items.filter((lot) => lot.state === item.value).length;
+              return (
+                <TabsTrigger key={item.value} value={item.value}>
+                  {item.label} <span className="rounded-full bg-muted px-1.5 text-xs">{count}</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </Tabs>
+        <Card>
+          <CardContent>
+            {lots.isPending ? (
+              <LoadingRows label="Carregando lotes" />
+            ) : lots.isError ? (
+              <ErrorState message="Não foi possível carregar seus lotes." onRetry={() => void lots.refetch()} />
+            ) : visible.length === 0 ? (
+              <EmptyState
+                title={items.length === 0 ? "Você ainda não criou lotes" : "Nenhum lote neste filtro"}
+                description={items.length === 0 ? "Busque uma obra de domínio público no The Met e configure o leilão." : "Escolha outro filtro para ver os demais lotes."}
+                action={items.length === 0 ? <Button asChild><Link href="/painel/lotes/novo"><PlusIcon /> Criar lote</Link></Button> : undefined}
+              />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Lote</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Inicial</TableHead>
+                    <TableHead>Atual / final</TableHead>
+                    <TableHead className="text-right">Lances</TableHead>
+                    <TableHead>Resultado</TableHead>
+                    <TableHead><span className="sr-only">Ação</span></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visible.map((lot) => (
+                    <TableRow key={lot.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- mídia local persistida pela API */}
+                          <img src={lot.imageUrl} alt="" className="size-10 rounded-sm object-cover" />
+                          <span className="font-medium">{lot.title}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell><LotStateBadge state={lot.state} /></TableCell>
+                      <TableCell>{formatBrl(lot.initialCents)}</TableCell>
+                      <TableCell>{lot.currentCents ? `${formatBrl(lot.currentCents)}${lot.state === "LIVE" ? " (atual)" : ""}` : "—"}</TableCell>
+                      <TableCell className="text-right">{lot.bidCount}</TableCell>
+                      <TableCell><Result lot={lot} /></TableCell>
+                      <TableCell className="text-right"><RowAction lot={lot} onCancel={onCancel} /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </PageShell>
+  );
+}
+
+function Result({ lot }: { lot: LotView }) {
+  if (lot.state === "CANCELLED") return <span className="text-xs text-muted-foreground">Fora da vitrine</span>;
+  if (lot.state !== "ENDED") return <span aria-label="Sem resultado ainda">—</span>;
+  if (lot.settlementPending) return <Badge variant="warning">Processando resultado</Badge>;
+  if (lot.bidCount === 0) return <Badge variant="neutral">Sem lances</Badge>;
+  return <Badge variant="success">Arrematado · recebido</Badge>;
+}
+
+function RowAction({ lot, onCancel }: { lot: LotView; onCancel: (lot: LotView) => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const cancellable = lot.bidCount === 0 && (lot.state === "LIVE" || lot.state === "SCHEDULED");
+  if (cancellable) {
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive" size="sm" disabled={busy}>{busy ? "Cancelando…" : "Cancelar"}</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogTitle>Cancelar “{lot.title}”?</AlertDialogTitle>
+          <AlertDialogDescription>O lote sai da vitrine e não pode ser reaberto. Só é possível enquanto não houver lances.</AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Manter lote</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-danger hover:bg-danger/90"
+              onClick={() => {
+                setBusy(true);
+                void onCancel(lot).finally(() => setBusy(false));
+              }}
+            >
+              Cancelar lote
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
+  if (lot.state === "LIVE" || lot.state === "SCHEDULED") return <Link href={`/lotes/${lot.id}`} className="inline-flex min-h-11 items-center text-sm font-medium">Abrir sala</Link>;
+  if (lot.state === "ENDED") return <Link href={`/lotes/${lot.id}/auditoria`} className="inline-flex min-h-11 items-center text-sm font-medium">Auditoria</Link>;
+  return null;
+}

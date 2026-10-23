@@ -7,5 +7,5 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: "list",
   use: { baseURL: "http://127.0.0.1:3300", trace: "retain-on-failure" },
-  webServer: { command: "npm run dev:web", url: "http://127.0.0.1:3300", reuseExistingServer: false, timeout: 120000 },
+  webServer: { command: "npm run dev:web", url: "http://127.0.0.1:3300", reuseExistingServer: !process.env.CI, timeout: 120000 },
 });
