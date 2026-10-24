@@ -33,6 +33,7 @@ const codes: Record<string, { status: number; message: string }> = {
   LOT_CANCELLED: { status: 409, message: "Este lote foi cancelado." },
   LOTE_BLOQUEADO: { status: 409, message: "Lote bloqueado: a auditoria não confere." },
   CONFIRMATION_PENDING: { status: 503, message: "Confirmação pendente. Repita com a mesma chave para saber o resultado." },
+  CORPO_GRANDE_DEMAIS: { status: 413, message: "O conteúdo enviado é grande demais." },
   ERRO_INTERNO: { status: 500, message: "Não foi possível concluir a operação." },
 };
 
@@ -42,7 +43,7 @@ export class HttpErrorFilter implements ExceptionFilter {
 
   catch(error: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
-    const statusCode = error instanceof HttpException ? error.getStatus() : 500;
+    const statusCode = error instanceof HttpException ? error.getStatus() : isTooLarge(error) ? 413 : 500;
     const safe = this.safeBody(error, statusCode);
     const header = response.getHeader("x-request-id");
     const requestId = typeof header === "string" ? header : undefined;
@@ -51,6 +52,7 @@ export class HttpErrorFilter implements ExceptionFilter {
   }
 
   private safeBody(error: unknown, statusCode: number): { code: string; message: string } {
+    if (statusCode === 413) return { code: "CORPO_GRANDE_DEMAIS", message: codes.CORPO_GRANDE_DEMAIS.message };
     const fallback = statusCode === 404
       ? { code: "NAO_ENCONTRADO", message: codes.NAO_ENCONTRADO.message }
       : statusCode === 400
@@ -71,4 +73,9 @@ export class HttpErrorFilter implements ExceptionFilter {
     if (!known || known.status !== statusCode) return fallback;
     return { code: body.code, message: known.message };
   }
+}
+
+/** Erro do body-parser (limite do corpo JSON), que não é HttpException. */
+function isTooLarge(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "type" in error && error.type === "entity.too.large";
 }

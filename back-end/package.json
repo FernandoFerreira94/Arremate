@@ -11,7 +11,8 @@
     "test:unit": "node --experimental-vm-modules ../node_modules/jest/bin/jest.js --runInBand --testPathIgnorePatterns=integration",
     "test:integration": "node --experimental-vm-modules ../node_modules/jest/bin/jest.js --runInBand --testPathPatterns=integration",
     "db:validate": "prisma validate",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "db:seed": "node --env-file-if-exists=../.env -r ts-node/register prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",
