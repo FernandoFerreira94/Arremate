@@ -28,7 +28,7 @@ export async function apiAs(role: Role): Promise<ApiSession> {
 
 function withPost(ctx: APIRequestContext): ApiSession {
   const csrf = async () => ((await (await ctx.get("/api/auth/csrf")).json()) as { csrfToken: string }).csrfToken;
-  const post = async (path: string, data: unknown, key = randomUUID()) => {
+  const post = async (path: string, data: unknown, key: string = randomUUID()) => {
     const response = await ctx.post(path, { data, headers: { "X-CSRF-Token": await csrf(), "Idempotency-Key": key } });
     const text = await response.text();
     if (!response.ok()) throw new Error(`${path} -> ${response.status()} ${text}`);
