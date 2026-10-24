@@ -3,16 +3,16 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { hash, Algorithm } from "@node-rs/argon2";
 import { Pool } from "pg";
+import { e2eDatabaseUrl } from "./e2e-env";
 
-/** Contas só do E2E, no banco LOCAL de desenvolvimento (o mesmo da API em 4300). Seed de demo é a Tarefa 10. */
+/** Contas só do E2E, no banco LOCAL de teste (5463), o mesmo da API própria do E2E em 4310. */
 export type E2eUser = { email: string; password: string };
 export type E2eUsers = { bidder: E2eUser; bidder2: E2eUser; auctioneer: E2eUser };
 
 export async function ensureE2eUsers(): Promise<E2eUsers> {
   const envFile = resolve(__dirname, "../../.env");
-  if (!process.env.DATABASE_URL && existsSync(envFile)) process.loadEnvFile(envFile);
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL ausente para preparar as contas do E2E");
+  if (!process.env.TEST_DATABASE_URL && existsSync(envFile)) process.loadEnvFile(envFile);
+  const url = e2eDatabaseUrl(process.env.TEST_DATABASE_URL);
   const host = new URL(url).hostname;
   if (host !== "127.0.0.1" && host !== "localhost") throw new Error("E2E só prepara contas em banco local");
   // Uma senha por execução (definida no global-setup) para workers paralelos não se sobrescreverem.

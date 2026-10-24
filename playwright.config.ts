@@ -1,4 +1,11 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { defineConfig } from "@playwright/test";
+import { E2E_API, E2E_API_PORT, E2E_BASE, E2E_WEB_PORT, e2eDatabaseUrl } from "./e2e/support/e2e-env";
+
+const envFile = resolve(__dirname, ".env");
+if (!process.env.TEST_DATABASE_URL && existsSync(envFile)) process.loadEnvFile(envFile);
+const testDatabaseUrl = e2eDatabaseUrl(process.env.TEST_DATABASE_URL);
 
 export default defineConfig({
   testDir: "./e2e",
@@ -7,6 +14,29 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: "list",
   globalSetup: "./e2e/support/global-setup.ts",
-  use: { baseURL: "http://127.0.0.1:3300", trace: "retain-on-failure" },
-  webServer: { command: "npm run dev:web", url: "http://127.0.0.1:3300", reuseExistingServer: !process.env.CI, timeout: 120000 },
+  use: { baseURL: E2E_BASE, trace: "retain-on-failure" },
+  webServer: [
+    {
+      command: "node --env-file-if-exists=../.env -r ts-node/register src/main.ts",
+      cwd: resolve(__dirname, "back-end"),
+      url: `${E2E_API}/api/health/ready`,
+      reuseExistingServer: false,
+      timeout: 120000,
+      env: {
+        DATABASE_URL: testDatabaseUrl,
+        API_PORT: String(E2E_API_PORT),
+        API_HOST: "127.0.0.1",
+        WEB_ORIGIN: E2E_BASE,
+        AUDIT_WITNESS_DIR: resolve(__dirname, ".data/witness-e2e"),
+      },
+    },
+    {
+      command: `npx next build && npx next start --hostname 127.0.0.1 --port ${E2E_WEB_PORT}`,
+      cwd: resolve(__dirname, "front-end"),
+      url: E2E_BASE,
+      reuseExistingServer: false,
+      timeout: 300000,
+      env: { NEXT_DIST_DIR: ".next-e2e", API_PROXY_TARGET: E2E_API, SITE_URL: E2E_BASE },
+    },
+  ],
 });

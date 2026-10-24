@@ -10,7 +10,7 @@ test.beforeAll(async () => {
 async function loginUi(page: Page, user: E2eUser, from = "/entrar") {
   await page.goto(from);
   await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Senha").fill(user.password);
+  await page.getByLabel("Senha", { exact: true }).fill(user.password);
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
 }
 
@@ -26,13 +26,13 @@ test("licitante: redireciona, preserva email, deposita uma vez, não vê painel 
   await expect(page).toHaveURL(/\/entrar\?returnTo=%2Fcarteira/);
 
   await page.getByLabel("Email").fill(users.bidder.email);
-  await page.getByLabel("Senha").fill("senha-errada");
+  await page.getByLabel("Senha", { exact: true }).fill("senha-errada");
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
   await expect(page.getByText("Email ou senha incorretos.")).toBeVisible();
   await expect(page.getByLabel("Email")).toHaveValue(users.bidder.email);
-  await expect(page.getByLabel("Senha")).toHaveValue("");
+  await expect(page.getByLabel("Senha", { exact: true })).toHaveValue("");
 
-  await page.getByLabel("Senha").fill(users.bidder.password);
+  await page.getByLabel("Senha", { exact: true }).fill(users.bidder.password);
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
   await expect(page).toHaveURL(/\/carteira$/);
   await expect(page.getByRole("heading", { name: "Minha carteira" })).toBeVisible();

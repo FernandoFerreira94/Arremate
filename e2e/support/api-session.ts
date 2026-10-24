@@ -2,8 +2,9 @@ import { randomUUID } from "node:crypto";
 import { expect, request, type APIRequestContext } from "@playwright/test";
 import { resolve } from "node:path";
 import type { E2eUser, E2eUsers } from "./demo-users";
+import { E2E_BASE } from "./e2e-env";
 
-const BASE = "http://127.0.0.1:3300";
+const BASE = E2E_BASE;
 /** Obras CC0 do The Met já usadas nas pranchas (docs/design/pranchas/assets/obras). */
 export const MET_IDS = ["436535", "437329", "436105", "437984", "10481"] as const;
 

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { E2E_BASE } from "./support/e2e-env";
 
 /** Metadados via HTTP puro (sem JS): o que um crawler ou preview social lê. */
 function head(html: string) {
@@ -19,7 +20,7 @@ test("vitrine tem título, descrição, canonical, OG e noindex próprios", asyn
   const meta = head(await response.text());
   expect(meta.title).toBe("Arremate — demonstração");
   expect(meta.description).toContain("Leilões simulados");
-  expect(meta.canonical).toBe("http://127.0.0.1:3300");
+  expect(meta.canonical).toBe(E2E_BASE);
   expect(meta.robots).toContain("noindex");
   expect(meta.ogTitle).toBe("Arremate — demonstração");
   expect(meta.ogImage).toMatch(/\/opengraph-image/);
@@ -28,7 +29,7 @@ test("vitrine tem título, descrição, canonical, OG e noindex próprios", asyn
 test("Host e query forjados não mudam a origem do canonical nem entram no head", async ({ request }) => {
   const response = await request.get("/?page=%22%3E%3Cscript%3Ealert(1)%3C/script%3E", { headers: { Host: "evil.example", "X-Forwarded-Host": "evil.example" } });
   const html = await response.text();
-  expect(head(html).canonical).toBe("http://127.0.0.1:3300");
+  expect(head(html).canonical).toBe(E2E_BASE);
   expect(html).not.toContain("evil.example");
   expect(html).not.toContain("<script>alert(1)</script>");
 });

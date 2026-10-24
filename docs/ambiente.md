@@ -54,3 +54,7 @@ Shadcn é obrigatório por U13. Vite é peer do Vitest somente, não outro app w
 - D18 (24/10): o seed também cria `licitante3@arremate.demo` e `licitante4@arremate.demo`, deposita valores simulados com chaves estáveis e publica o catálogo de 24 obras CC0 (abertos, encerrando, agendados, liquidados e sem lances), com estimativa e laudo marcados como simulados. Reexecutar cria 0 lotes; `--preparar-lote` só recria lotes vencidos do catálogo; `-- --sem-catalogo` pula o catálogo.
 - Reexecutar não troca senha, não zera saldo, não apaga lance e não reabre lote. `npm run db:seed --workspace back-end -- --preparar-lote` cria um lote NOVO.
 - Exige `AUDIT_HMAC_KEY` (hex) e banco em 127.0.0.1/localhost. Usa `AUDIT_WITNESS_DIR` e `MEDIA_DIR` (padrão `.data/`), os mesmos da API.
+
+## E2E isolado (24/10/2026)
+
+`npm run test:e2e` sobe API própria em 4310 (`DATABASE_URL` = `TEST_DATABASE_URL`, banco 5463) e web própria em 3310 (build em `front-end/.next-e2e`), e zera os dados de domínio do banco de teste no início (mantém usuários e snapshots). A vitrine de desenvolvimento (3300/4300/5462) não recebe mais lotes de E2E.
