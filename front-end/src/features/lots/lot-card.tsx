@@ -8,18 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatBrt } from "@/lib/datetime";
 import { formatBrl } from "@/lib/money";
+import { cn } from "@/lib/utils";
 import { LotDetailsDialog } from "./lot-details";
+import { FavoriteButton } from "../favorites/favorite-button";
 import type { PublicLot } from "./lots-api";
 import { RecentBidsTrigger } from "./recent-bids";
 import { formatCountdown, remainingMs } from "./room-logic";
 
 /** R2: altura fixa (452 px) e imagem inteira (contain) sobre --muted. Os detalhes ficam no Dialog (R3). */
-export function LotCard({ lot, now, offset }: { lot: PublicLot; now: number; offset: number }) {
+export function LotCard({ lot, now, offset, dimmed = false }: { lot: PublicLot; now: number; offset: number; dimmed?: boolean }) {
   const live = lot.state === "LIVE";
   const [imageFailed, setImageFailed] = useState(false);
   return (
-    <Card className="flex h-[452px] flex-col gap-0 overflow-hidden p-0">
-      <div className="flex h-[220px] shrink-0 items-center justify-center bg-muted">
+    <Card className="flex h-[452px] flex-col gap-0 overflow-hidden p-0" data-tour="card">
+      <div className={cn("relative flex h-[220px] shrink-0 items-center justify-center bg-muted", dimmed && "[&_img]:opacity-75")}>
+        <FavoriteButton lotId={lot.id} title={lot.title} className="absolute right-1 top-1 z-10" />
         {imageFailed ? (
           <span className="flex flex-col items-center gap-1 text-xs text-muted-foreground"><ImageOffIcon className="size-6" /> Imagem indisponível</span>
         ) : (
@@ -42,11 +45,11 @@ export function LotCard({ lot, now, offset }: { lot: PublicLot; now: number; off
           </dd>
         </dl>
         <div className="flex items-center justify-between gap-1 border-t pt-2">
-          <RecentBidsTrigger lotId={lot.id} bidCount={lot.bidCount} title={lot.title} />
+          <span data-tour="bids" className="inline-flex"><RecentBidsTrigger lotId={lot.id} bidCount={lot.bidCount} title={lot.title} /></span>
           <div className="flex items-center gap-1">
             <LotDetailsDialog lot={lot} compact />
             <Button asChild size="sm">
-              <Link href={`/lotes/${lot.id}`}>Abrir sala <ChevronRightIcon /></Link>
+              <Link href={`/lotes/${lot.id}`} data-tour={live ? "room" : undefined}>Abrir sala <ChevronRightIcon /></Link>
             </Button>
           </div>
         </div>

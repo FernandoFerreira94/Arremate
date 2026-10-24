@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { apiAs, publishLot } from "./support/api-session";
+import { markTourSeen } from "./support/tour";
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
+});
 
 /**
  * O navegador nunca fala com o The Met: imagem e ficha vêm do snapshot local.

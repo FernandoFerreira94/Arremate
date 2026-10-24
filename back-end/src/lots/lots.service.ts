@@ -76,6 +76,23 @@ export class LotsService {
     return toView(row);
   }
 
+  /** D21: lista privada de favoritos; `lotIds` alimenta o estado do coração sem tocar no cache público da vitrine. */
+  async favorites(actor: Actor): Promise<{ items: LotView[]; lotIds: string[]; serverNow: string }> {
+    const rows = await this.lots.favorites(actor.userId);
+    const serverNow = rows[0]?.server_now ?? (await this.lots.clock());
+    return { items: rows.map(toView), lotIds: rows.map((row) => row.id), serverNow: serverNow.toISOString() };
+  }
+
+  async setFavorite(actor: Actor, lotId: string, favorite: boolean): Promise<{ lotId: string; favorite: boolean }> {
+    if (!UUID.test(lotId)) throw new ApiException(404, "NAO_ENCONTRADO");
+    if (favorite) {
+      if (!(await this.lots.addFavorite(actor.userId, lotId))) throw new ApiException(404, "NAO_ENCONTRADO");
+    } else {
+      await this.lots.removeFavorite(actor.userId, lotId);
+    }
+    return { lotId, favorite };
+  }
+
   /** Verificação pública: status, revisão e contagem presos à mesma leitura. Sem chave é INDETERMINATE, nunca íntegro. */
   async publicAudit(lotId: string) {
     if (!UUID.test(lotId)) throw new ApiException(404, "NAO_ENCONTRADO");

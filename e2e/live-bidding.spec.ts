@@ -1,5 +1,10 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { apiAs, authFile, deposit, publishLot, type ApiSession, type Role } from "./support/api-session";
+import { markTourSeen } from "./support/tour";
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
+});
 
 let seller: ApiSession;
 
@@ -11,6 +16,7 @@ test.beforeAll(async () => {
 /** Login pela tela já é coberto em private-journeys; aqui a aba abre com a sessão salva. */
 async function bidderPage(browser: Browser, role: Role, lotId: string): Promise<Page> {
   const page = await (await browser.newContext({ storageState: authFile(role) })).newPage();
+  await markTourSeen(page);
   await page.goto(`/lotes/${lotId}`);
   await expect(page.getByRole("button", { name: "Dar lance" })).toBeVisible();
   return page;

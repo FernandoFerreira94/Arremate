@@ -1,10 +1,15 @@
 import { expect, test } from "@playwright/test";
 import { ensureE2eUsers, type E2eUsers } from "./support/demo-users";
+import { markTourSeen } from "./support/tour";
 
 let users: E2eUsers;
 
 test.beforeAll(async () => {
   users = await ensureE2eUsers();
+});
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
 });
 
 test.describe("rodada 3 (D19)", () => {

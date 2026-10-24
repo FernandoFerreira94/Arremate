@@ -17,6 +17,7 @@ Base de componentes do repo (`/workspace/arremate-w/repo/front-end/src`): `compo
 | `R9-faq.png` | Suporte/FAQ com busca, filtros e Accordion | Input, Tabs, Card, `EmptyState` | **accordion** (pedido não listou; também vem do radix-ui) | desktop · mobile · busca vazia |
 | `R10-como-funciona.png` | 5 passos + regras essenciais + CTA | Card, Button | — | estático |
 | `R11-favoritos.png` | Botão Heart no card (36 px, canto da imagem) e na sala (outline “Favoritar/Favoritado”); página Meus favoritos no menu do perfil; lote encerrado favoritado | `lcard`/grid da vitrine (R2), Tabs, `page-states`, DropdownMenu (R5), Sheet Entrar (R1) | — (gerador `src/gen_r11.py` importa `gen_r3.py`) | botão: normal · ativo (`--primary`, aria-pressed) · carregando (otimista) · não logado → Sheet R1; página: com itens · vazio (CTA vitrine) · carregando · erro · encerrado (imagem 75%, no fim). aria-label por estado; 44 px no mobile |
+| `R12-tour.png` | Tour do 1º login (inclui login de teste): overlay black/70 + recorte circular + balão; 7 passos (nav, saldo, card/Detalhes, favoritar, últimos lances, sala/lance, perfil); Pular/Voltar/Próximo, 1/7, “Concluir”; “Ver tour de novo” no menu do perfil | header R5, lcard/fav R11, sala R11, Button, DropdownMenu | — sem lib (Portal + getBoundingClientRect, gerador `src/gen_r12.py`) | 7 passos desktop · mobile (balão ancorado embaixo, passos 1/2/7 no ☰) · foco preso, Esc/←/→ · reduced-motion sem animação |
 
 ## Pacotes
 - **Nenhum pacote novo exigido.** Sheet, Dialog, HoverCard, NavigationMenu, DropdownMenu e Accordion estão todos no `radix-ui` 1.8.1 (D16); entram como arquivos shadcn em `components/ui/`.
@@ -45,3 +46,10 @@ Base de componentes do repo (`/workspace/arremate-w/repo/front-end/src`): `compo
 - Contradiz a recomendação da R5 (“Favoritos: médio custo, pós-entrega”) e amplia escopo do briefing → precisa D17+.
 - Não logado: favoritar após login exige “intenção pendente” além do returnTo.
 - Sem notificações: favoritar não avisa quando encerra (seria a feature de Notificações).
+
+## R12 Tour — conflitos
+- **Onde guardar “já viu”:** recomendo `localStorage` (`arremate.tour.v1=done`), sem migration, mas o tour reaparece em outro navegador e após limpar dados, e os logins de teste compartilhados (E2E) vão ver o tour sempre → testes E2E precisam setar a chave. Alternativa `User.tourSeenAt DateTime?`: persistente entre aparelhos, mas migration + endpoint `PATCH /me` (mesmo bloqueio de C7). Decisão do Fernando.
+- Overlay bloqueia a vitrine no primeiro acesso do avaliador: Esc/Pular precisam ser evidentes (ok na prancha).
+- Passo 6 navega para a sala de um lote ao vivo: se não houver lote ao vivo, pular o passo (6 vira “sala” estática da R11).
+- Passos 4 e 5 dependem de R11 (Favoritos) e R4 (hover) aprovados; se reprovados, o tour cai para 5 passos.
+- `black/70` é utilitário do Tailwind, não token novo; recorte em `box-shadow` não depende de pacote.

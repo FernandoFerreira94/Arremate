@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Post, Put, Query, Req } from "@nestjs/common";
 import type { Request } from "express";
 import { ApiException } from "../auth/api.exception";
 import type { Actor } from "../auth/auth.service";
 import { Roles } from "../auth/roles.guard";
+import { Authenticated } from "../auth/session.guard";
 import { RejectExtraDto } from "../auth/dto/login.dto";
 import { BiddingService } from "./bidding.service";
 import { CreateLotDto, PageQuery } from "./dto/create-lot.dto";
@@ -64,6 +65,33 @@ export class LotsController {
   @Roles("BIDDER")
   awards(@Query() query: PageQuery, @Req() request: ActorRequest) {
     return this.settlement.listAwards(actorOf(request), query.page);
+  }
+
+  /** D21 (R12): id do usuário para a chave local do tour (arremate.tour.v1.<id>). TODO(integração Codex): mover para /auth/me. */
+  @Get("me/id")
+  @Authenticated()
+  me(@Req() request: ActorRequest) {
+    return { userId: actorOf(request).userId };
+  }
+
+  @Get("me/favorites")
+  @Authenticated()
+  favorites(@Req() request: ActorRequest) {
+    return this.lots.favorites(actorOf(request));
+  }
+
+  @Put("lots/:id/favorite")
+  @Authenticated()
+  @HttpCode(200)
+  favorite(@Param("id") id: string, @Req() request: ActorRequest) {
+    return this.lots.setFavorite(actorOf(request), id, true);
+  }
+
+  @Delete("lots/:id/favorite")
+  @Authenticated()
+  @HttpCode(200)
+  unfavorite(@Param("id") id: string, @Req() request: ActorRequest) {
+    return this.lots.setFavorite(actorOf(request), id, false);
   }
 
   @Post("lots")

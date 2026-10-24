@@ -78,6 +78,32 @@ export class LotsRepository {
     return { rows: rows.rows, total: total.rows[0]?.n ?? 0 };
   }
 
+  /** D21: favoritos do usuário; abertos/agendados primeiro (mais recentes antes), encerrados no fim. Cancelados ficam de fora. */
+  async favorites(userId: string): Promise<LotRow[]> {
+    const result = await this.database.query<LotRow>(
+      `SELECT ${LOT_COLUMNS} ${LOT_FROM} JOIN favorites f ON f.lot_id = l.id AND f.user_id = $1
+       WHERE l.status <> 'CANCELLED'
+       ORDER BY CASE WHEN l.ends_at > clock_timestamp() AND l.status = 'PUBLISHED' THEN 0 ELSE 1 END, f.created_at DESC, l.id`,
+      [userId],
+    );
+    return result.rows;
+  }
+
+  async addFavorite(userId: string, lotId: string): Promise<boolean> {
+    const result = await this.database.query(
+      `INSERT INTO favorites (user_id, lot_id) SELECT $1, l.id FROM lots l WHERE l.id = $2 AND l.status <> 'CANCELLED'
+       ON CONFLICT (user_id, lot_id) DO NOTHING RETURNING lot_id`,
+      [userId, lotId],
+    );
+    if ((result.rowCount ?? 0) > 0) return true;
+    const exists = await this.database.query(`SELECT 1 FROM lots WHERE id = $1 AND status <> 'CANCELLED'`, [lotId]);
+    return (exists.rowCount ?? 0) > 0;
+  }
+
+  async removeFavorite(userId: string, lotId: string): Promise<void> {
+    await this.database.query(`DELETE FROM favorites WHERE user_id = $1 AND lot_id = $2`, [userId, lotId]);
+  }
+
   async clock(): Promise<Date> {
     const result = await this.database.query<{ now: Date }>(`SELECT clock_timestamp() AS now`);
     const now = result.rows[0]?.now;

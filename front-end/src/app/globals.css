@@ -101,3 +101,23 @@
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 }
+
+/* R12 (tour): recorte acompanha a forma do alvo; mesma curva das animações data-[state] do shadcn. */
+.tour-cutout {
+  box-shadow: 0 0 0 9999px rgb(0 0 0 / 0.7);
+  transition: top 250ms ease, left 250ms ease, width 250ms ease, height 250ms ease, border-radius 250ms ease;
+}
+@keyframes tour-tip-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes tour-tip-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+.tour-tip[data-state="open"] { animation: tour-tip-in 150ms ease-out; }
+.tour-tip[data-state="closed"] { animation: tour-tip-out 150ms ease-in forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .tour-cutout { transition: none; }
+  .tour-tip[data-state] { animation: none; }
+}

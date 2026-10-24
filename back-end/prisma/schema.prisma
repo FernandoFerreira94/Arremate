@@ -50,6 +50,7 @@ model User {
   bids        Bid[]
   wallet      Wallet?
   idempotency IdempotencyRecord[]
+  favorites   Favorite[]
 
   @@map("users")
 }
@@ -194,4 +195,17 @@ model IdempotencyRecord {
 
   @@unique([userId, operation, resourceKey, idempotencyKey], map: "idempotency_scope")
   @@map("idempotency_records")
+}
+
+/// D21 (R11): favoritos por usuário. Sem FK para lots de propósito: o reset do E2E faz TRUNCATE em lots
+/// sem listar tabelas dependentes; a API valida o lote no PUT e a leitura junta só lotes existentes.
+model Favorite {
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lotId     String   @map("lot_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@id([userId, lotId])
+  @@index([userId, createdAt])
+  @@map("favorites")
 }

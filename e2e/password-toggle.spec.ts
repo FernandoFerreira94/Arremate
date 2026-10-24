@@ -1,4 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { markTourSeen } from "./support/tour";
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
+});
 
 test("senha pode ser mostrada e ocultada pelo botão de olho, com rótulo acessível", async ({ page }) => {
   await page.goto("/entrar");

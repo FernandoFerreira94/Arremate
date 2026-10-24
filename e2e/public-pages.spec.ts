@@ -1,4 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { markTourSeen } from "./support/tour";
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
+});
 
 test("vitrine pública: título, abas e estado vazio ou cartões, sem login", async ({ page }) => {
   await page.goto("/");

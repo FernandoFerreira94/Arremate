@@ -1,4 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { markTourSeen } from "./support/tour";
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
+});
 
 test("início com a identidade aprovada e acesso à entrada", async ({ page }) => {
   await page.goto("/");

@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { ensureE2eUsers, type E2eUser, type E2eUsers } from "./support/demo-users";
+import { markTourSeen } from "./support/tour";
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
+});
 
 let users: E2eUsers;
 

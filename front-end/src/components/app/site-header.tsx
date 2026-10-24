@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   BookOpenIcon,
+  CompassIcon,
+  HeartIcon,
   CalendarClockIcon,
   CreditCardIcon,
   GavelIcon,
@@ -35,6 +37,7 @@ import {
   NavigationMenuTrigger,
   navItemClass,
 } from "@/components/ui/navigation-menu";
+import { useTour } from "@/features/tour/tour";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuthSheet } from "@/features/auth/auth-sheet";
 import { useLogout, useSession } from "@/features/auth/use-session";
@@ -69,6 +72,7 @@ export function navFor(role: Role | null): NavItem[] {
       { href: "/perfil", label: "Perfil", icon: UserIcon },
       { href: "/painel/lotes", label: "Meus lotes", icon: LayoutListIcon },
       { href: "/painel/lotes/novo", label: "Novo lote", icon: PlusCircleIcon },
+      { href: "/favoritos", label: "Meus favoritos", icon: HeartIcon },
     ];
   }
   if (role === "BIDDER") {
@@ -79,6 +83,7 @@ export function navFor(role: Role | null): NavItem[] {
       { href: "/carteira#depositar", label: "Creditar saldo", icon: PlusCircleIcon },
       { href: "/carteira#cartoes", label: "Cartões", icon: CreditCardIcon },
       { href: "/meus-arremates", label: "Meus lances e arremates", icon: GavelIcon },
+      { href: "/favoritos", label: "Meus favoritos", icon: HeartIcon },
     ];
   }
   return [];
@@ -90,7 +95,7 @@ function BalanceChip() {
   const wallet = useQuery({ queryKey: ["wallet"], queryFn: getWallet, staleTime: 15_000 });
   if (!wallet.data) return null;
   return (
-    <Link href="/carteira" className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm tabular-nums hover:bg-muted" aria-label={`Saldo disponível ${formatBrl(wallet.data.availableCents)}`}>
+    <Link href="/carteira" data-tour="balance" className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm tabular-nums hover:bg-muted" aria-label={`Saldo disponível ${formatBrl(wallet.data.availableCents)}`}>
       <WalletIcon className="size-4 text-muted-foreground" /> {formatBrl(wallet.data.availableCents)}
     </Link>
   );
@@ -101,6 +106,7 @@ export function SiteHeader() {
   const session = useSession();
   const logout = useLogout();
   const authSheet = useAuthSheet();
+  const tour = useTour();
   const role = session.data?.role ?? null;
   const accountItems = navFor(role);
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href.split(/[?#]/)[0]));
@@ -116,7 +122,7 @@ export function SiteHeader() {
   const profile = role ? (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" aria-label="Menu da conta">
+        <Button variant="ghost" size="sm" aria-label="Menu da conta" data-tour="profile">
           <span className="inline-flex size-7 items-center justify-center rounded-full bg-muted font-serif text-sm" aria-hidden>{ROLE_LABEL[role][0]}</span>
           {ROLE_LABEL[role]}
         </Button>
@@ -128,6 +134,9 @@ export function SiteHeader() {
             <Link href={item.href}><item.icon /> {item.label}</Link>
           </DropdownMenuItem>
         ))}
+        <DropdownMenuItem onSelect={() => tour.start()}>
+          <CompassIcon /> Ver tour de novo
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onSelect={() => void logout()}>
           <LogOutIcon /> Sair
@@ -153,7 +162,7 @@ export function SiteHeader() {
           <Logo />
           <Badge variant="warning" className="hidden xl:inline-flex">Demonstração · valores simulados</Badge>
         </div>
-        <NavigationMenu aria-label="Principal" className="hidden md:flex">
+        <NavigationMenu aria-label="Principal" className="hidden md:flex" data-tour="nav">
           <NavigationMenuList>
             <NavigationMenuItem>
               <NavigationMenuTrigger><GavelIcon /> Leilões</NavigationMenuTrigger>
@@ -197,7 +206,7 @@ export function SiteHeader() {
           </div>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Abrir menu">
+              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Abrir menu" data-tour="menu">
                 <MenuIcon />
               </Button>
             </SheetTrigger>
@@ -213,6 +222,11 @@ export function SiteHeader() {
                   <>
                     <p className="px-3 pt-3 text-xs uppercase tracking-wide text-muted-foreground">Minha conta · {role ? ROLE_LABEL[role] : ""}</p>
                     {accountItems.map(mobileLink)}
+                    <SheetClose asChild>
+                      <button type="button" onClick={() => tour.start()} className="flex items-center gap-3 rounded-md px-3 py-2.5 text-left hover:bg-muted [&_svg]:size-4 [&_svg]:text-muted-foreground">
+                        <CompassIcon /> Ver tour de novo
+                      </button>
+                    </SheetClose>
                   </>
                 ) : null}
               </nav>

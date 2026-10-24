@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useId, useMemo, useState } from "react";
 import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon, FlaskConicalIcon, GavelIcon, ShieldCheckIcon, WifiOffIcon } from "lucide-react";
 import { LotStateBadge } from "@/components/app/lot-state-badge";
+import { FavoriteButton } from "../favorites/favorite-button";
 import { MoneyInput } from "@/components/app/money-input";
 import { ErrorState, LoadingRows } from "@/components/app/page-states";
 import { Alert } from "@/components/ui/alert";
@@ -87,7 +88,10 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
         </div>
         <div className="flex flex-col gap-6 lg:col-span-5">
           <div>
-            <LotStateBadge state={data.state} />
+            <div className="flex items-start justify-between gap-2">
+              <LotStateBadge state={data.state} />
+              <FavoriteButton lotId={data.id} title={data.title} variant="outline" />
+            </div>
             <h1 className="mt-2 text-3xl lg:text-[40px] lg:leading-tight">{data.title}</h1>
             <p className="text-sm text-muted-foreground">{[data.artist, data.date].filter(Boolean).join(" · ")}</p>
           </div>
