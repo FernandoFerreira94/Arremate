@@ -7,5 +7,5 @@ config({ path: resolve(__dirname, "../.env"), quiet: true });
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: { path: "prisma/migrations" },
-  datasource: { url: env("DATABASE_URL") },
+  datasource: { url: process.env.DIRECT_URL?.trim() || env("DATABASE_URL") },
 });

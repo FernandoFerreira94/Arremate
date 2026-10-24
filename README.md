@@ -126,3 +126,9 @@ Testes automatizados são opcionais no PDF, mas **obrigatórios neste projeto po
 ## Processo de documentação
 
 `README.md` e a página Notion “README — em elaboração” têm o mesmo conteúdo e são atualizados a cada tarefa concluída (D14, supera U10). Não preencher execução/deploy/testes com resultados presumidos. A pasta docs/ contém decisões, requisitos, arquitetura, plano, qualidade, metadados e briefing do Grok.
+
+## Preparação do Supabase — D20 (24/10/2026)
+
+Etapa independente das novas pranchas: Supabase escolhido somente como PostgreSQL. A API Nest mantém as regras/autorização e `DATABASE_URL`; o CLI Prisma prefere `DIRECT_URL` (nova, vazia em `.env.example`), com fallback local para `DATABASE_URL`. Na hospedagem, a conexão de migração pertence só ao runner e deve ser definida explicitamente. Nenhuma configuração privada local mudou.
+
+[Guia de hospedagem](docs/hospedagem.md#supabase-somente-postgresql--d20-preparação-local-24102026): Session pooler 5432, TLS/CA, papéis separados, Data API desativada e passos condicionados a autorização. Nenhum banco hospedado foi conectado/migrado/semeado; deploy não executado. Projeto/credenciais Supabase, ensaio TLS/roles/backup e OK para migration/seed/deploy dependem de Fernando. Etapas de telas, cadastro, Pix, histórico, cartão e Google continuam pendentes. Validação desta preparação: [evidência](docs/evidence/2026-10-24-auth-pagamentos.md). Prazo operacional: **29/10/2026 às 18h (America/Sao_Paulo)**.

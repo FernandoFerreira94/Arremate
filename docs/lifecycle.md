@@ -125,3 +125,7 @@ Tarefa 1 concluída em 23/10/2026: handoff D01–D14 registrado, `parseMoney`/`f
 Tarefa 2 concluída em 23/10/2026: cadeia HMAC e testemunha fora do banco, com falha de checkpoint INDETERMINATE. Evidência em [docs/evidence/2026-10-23-tarefa-2.md](evidence/2026-10-23-tarefa-2.md). S7 e release continuam não declarados. Topologia de produção e fsync de diretório no Linux seguem em aberto; nada foi contratado.
 
 Tarefa 3 concluída em 23/10/2026: sessão opaca, CSRF, papéis e proxy same-origin. Evidência em [docs/evidence/2026-10-23-tarefa-3.md](evidence/2026-10-23-tarefa-3.md). O rewrite externo do Next não encaminhou o cookie; o caminho `/api` ficou no Route Handler. Produção da API continua sem fornecedor. Nada foi contratado.
+
+## D20 — Preparação do Supabase — 24/10/2026
+
+Executada a preparação local da etapa 7, independente das pranchas solicitadas ao Fred: seleção de DIRECT_URL no Prisma CLI, exemplo vazio, guia de pooler/TLS/permissões e Data API desligada. Sem acesso/migration/seed/deploy hospedado e sem mudança de UI/schema/dependências. S5/S7/release permanecem conforme os gates existentes. Evidência: docs/evidence/2026-10-24-auth-pagamentos.md. Etapas 1–6 de auth/pagamentos seguem abertas; uso real do Supabase aguarda projeto/credenciais/OK de Fernando.

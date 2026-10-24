@@ -121,3 +121,9 @@ Contrato: [api.md](api.md). Evidência: [2026-10-23-tarefa-3.md](evidence/2026-1
 | ID | Decisão | Fonte / detalhe |
 | --- | --- | --- |
 | D16 | Fernando: “Aprovo o radix-ui”. O pacote `radix-ui` 1.8.1 (versão exata no lockfile), base das primitivas oficiais do shadcn (Dialog, AlertDialog, Tabs, Slot do Button), fica aprovado para a Tarefa 8 em diante | `front-end/package.json`, `package-lock.json` |
+
+## D20 — Supabase somente PostgreSQL — 24/10/2026
+
+Fernando definiu Supabase como banco, com Prisma e duas conexões (`DATABASE_URL` runtime, `DIRECT_URL` para CLI/migrations). Sem Supabase Auth, PostgREST, Storage nem RLS como regra de negócio; autorização no Nest. API persistente com Session pooler 5432 e papel `auction_app` sem DDL; migrations por papel separado/conexão direta ou Session. Data API desativada antes das tabelas. TLS com validação de certificado; guia e limitações em [hospedagem](hospedagem.md#supabase-somente-postgresql--d20-preparação-local-24102026).
+
+Retomada de Fernando autoriza adiantar esta etapa independente das pranchas do Fred. D19 já pertence à calibragem da entrada e foi preservada. Esta é a preparação da etapa 7; etapas 1–6 de auth/pagamentos não são declaradas concluídas. Nenhuma conexão, migration, seed ou deploy hospedado autorizado/executado. [Plano](superpowers/plans/2026-10-24-preparacao-supabase.md) e [evidência](evidence/2026-10-24-auth-pagamentos.md).

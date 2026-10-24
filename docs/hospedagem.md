@@ -46,3 +46,36 @@ CI agora migra um Postgres vazio, roda o seed duas vezes, audita dependências e
 5. Criar repositório remoto e autorizar push (o CI só roda no GitHub; ainda NÃO VERIFICADO).
 6. OK explícito para migração no banco hospedado, seed de demo e deploy.
 7. Depois do deploy: repetir anônimo/login/duas contas, SSE pelo proxy, metadados no HTML, Met fora, restart do worker, backup/restore de banco + mídia + testemunha; conferir lote aberto antes do envio de 29/10 ~18h17.
+## Supabase somente PostgreSQL — D20, preparação local (24/10/2026)
+
+Banco escolhido por Fernando: Supabase PostgreSQL. NestJS continua responsável por login, sessão, autorização, carteira, lances e auditoria. Prisma mantém schema/migrations; os repositórios e o pool `pg` atuais da API permanecem. Não instalar SDK Supabase nem usar Supabase Auth, PostgREST, Storage ou RLS como regra de negócio.
+
+### Conexões separadas
+
+| Variável | Processo | Conexão / papel |
+| --- | --- | --- |
+| `DATABASE_URL` | API Nest persistente | Session pooler Supavisor, porta 5432, usuário `auction_app.<PROJECT_REF>` sem DDL |
+| `DIRECT_URL` | Runner do Prisma CLI | Direta `db.<PROJECT_REF>.supabase.co:5432` com papel de migração; se o host só tiver IPv4, Session pooler 5432 com esse papel |
+| `TEST_DATABASE_URL` | Integração e E2E | Exclusivamente loopback:5463/casadeleilao_test |
+
+O host/região e a sintaxe do usuário vêm de **Connect** no projeto real; nada foi criado/copied do painel. Session pooler foi escolhido porque a API é um processo persistente, com pool de no máximo 5 conexões já implementado. Não substituir por Transaction pooler 6543 sem ensaio próprio de compatibilidade. [Conexões Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres) e [Prisma no Supabase](https://supabase.com/docs/guides/database/prisma).
+
+`back-end/prisma.config.ts` prefere `DIRECT_URL` não vazia; ausente/vazia usa `DATABASE_URL`, preservando o local. Na hospedagem, o runner deve receber `DIRECT_URL` explicitamente e parar se ela estiver ausente; não usar o fallback runtime para DDL. A API não lê `DIRECT_URL`. Guardar a URL de migração só no runner, nunca no ambiente do site/API nem no `.env` local de desenvolvimento. [Prisma 7](https://www.prisma.io/docs/orm/v7/core-concepts/supported-databases/postgresql).
+
+### TLS e credenciais
+
+Para a API (`pg`), exigir validação de certificado e hostname: URL com `sslmode=verify-full` e `sslrootcert` apontando para o certificado raiz fornecido no painel. Para o CLI Prisma, usar os parâmetros suportados pelo conector de migração: `sslmode=require`, `sslcert` com o caminho da CA e `sslaccept=strict`. Os formatos diferem; não copiar opções de `pg` para o CLI indiscriminadamente. Certificado/host precisam de ensaio no projeto real antes da liberação.
+
+Montar a CA fora do repositório, em caminho absoluto legível pelo processo. Não usar `rejectUnauthorized:false`, `sslaccept=accept_invalid_certs` ou `NODE_TLS_REJECT_UNAUTHORIZED=0`. Não combinar parâmetros TLS da URL com outro objeto `ssl` em `pg`, pois a URL pode sobrescrevê-lo. Habilitar a exigência de SSL no painel. Credenciais devem ser URL-encoded e ficar somente no gerenciador de segredos; nenhuma chave `anon`/`service_role` ou variável `NEXT_PUBLIC_*` é necessária. [TLS Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres#ssl), [TLS pg](https://node-postgres.com/features/ssl) e [parâmetros Prisma](https://www.prisma.io/docs/orm/v6/overview/databases/postgresql#configuring-an-ssl-connection).
+
+### Passos no projeto hospedado — NÃO EXECUTADOS; exigem OK específico
+
+1. Fernando cria/escolhe um projeto dedicado, região/plano/custo e versão PostgreSQL; validar compatibilidade das migrations com essa versão (local usa PostgreSQL 18). Não presumir disponibilidade, backup ou retenção de plano gratuito.
+2. **Antes de qualquer tabela**, em Data API integration overview, desligar **Enable Data API**; confirmar endpoints REST/GraphQL indisponíveis. Não basta deixar de instalar o SDK: tabelas em `public` podem ter grants automáticos. Manter essa API desativada durante toda a operação. [Procedimento oficial](https://supabase.com/docs/guides/api/securing-your-api#disable-the-data-api).
+3. Com autorização própria, provisionar um papel dono/migração separado e o papel `auction_app` (nome esperado pelas migrations existentes). Runtime: LOGIN sem SUPERUSER/CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS, sem pertencer ao dono, sem propriedade de objetos e sem CREATE no schema. Conceder CONNECT/USAGE e apenas SELECT/INSERT/UPDATE/DELETE nas tabelas de domínio; USAGE/SELECT nas sequências e USAGE nos enums necessários. Configurar privilégios padrão do papel migrador para objetos futuros. Não conceder TRUNCATE. A revogação efetiva de `_prisma_migrations` será feita após as migrations (passo 5), que podem conceder privilégios novamente. Configurar senhas por canal seguro, sem SQL com senha em documentação/logs. [Papéis PostgreSQL](https://supabase.com/docs/guides/database/postgres/roles).
+4. Após revisar migrations, fazer backup/snapshot e validar CA/TLS com conexão autorizada. Confirmar que runtime não pode DDL/TRUNCATE e que nenhum papel da Data API tem acesso ao domínio. Toda autorização por usuário continua no Nest; RLS não é usada para aplicar essas regras.
+5. **Somente com OK explícito para migration hospedada**, o runner com `DIRECT_URL` e CA provisionadas executará, da raiz, `npm exec --workspace back-end -- prisma migrate deploy`. Não usar `migrate dev`, `db push`, reset ou seed automático. Conferir status das migrations. **Depois do deploy e antes de liberar o runtime**, executar como dono `REVOKE ALL PRIVILEGES ON TABLE public._prisma_migrations FROM auction_app` e verificar as permissões efetivas, inclusive herdadas. A migration inicial concede DML em todas as tabelas e pode restaurar esse acesso; repetir essa conferência/revogação após cada migration futura. Retirar a credencial administrativa do runtime.
+6. Seed hospedado depende de outro OK. Quando autorizado, usar o serviço normal/idempotente com conexão runtime e conferir saldo/ledger/testemunha. Nunca apontar `TEST_DATABASE_URL`, integração ou Playwright para Supabase.
+7. Deploy requer novo OK, API persistente escolhida e volumes duráveis para mídia e testemunha HMAC fora do banco. Validar login, CSRF, SSE/proxy, concorrência, liquidação, restart e restauração conjunta de PostgreSQL + mídia + testemunha. Backup só do banco não comprova integridade recuperável.
+
+**NÃO VERIFICADO:** conexão/TLS/CA reais, configuração Data API, papéis/grants, versão e migrations no Supabase, seed, backup/restore, custo e deploy. Esta etapa prepara código/documentação; nenhum recurso hospedado foi consultado ou alterado. Prazo de trabalho vigente: **29/10/2026 às 18h (America/Sao_Paulo)**, conforme pedido atual de Fernando.
