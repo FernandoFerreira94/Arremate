@@ -6,6 +6,7 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: "list",
+  globalSetup: "./e2e/support/global-setup.ts",
   use: { baseURL: "http://127.0.0.1:3300", trace: "retain-on-failure" },
   webServer: { command: "npm run dev:web", url: "http://127.0.0.1:3300", reuseExistingServer: !process.env.CI, timeout: 120000 },
 });
