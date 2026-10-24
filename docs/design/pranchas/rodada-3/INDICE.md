@@ -16,6 +16,7 @@ Base de componentes do repo (`/workspace/arremate-w/repo/front-end/src`): `compo
 | `R8-perfil.png` | Perfil: dados, segurança, resumo (carteira, lances, arremates, cartões) | Card, Input, Button | — | desktop · carregando · sucesso ao salvar · erro |
 | `R9-faq.png` | Suporte/FAQ com busca, filtros e Accordion | Input, Tabs, Card, `EmptyState` | **accordion** (pedido não listou; também vem do radix-ui) | desktop · mobile · busca vazia |
 | `R10-como-funciona.png` | 5 passos + regras essenciais + CTA | Card, Button | — | estático |
+| `R11-favoritos.png` | Botão Heart no card (36 px, canto da imagem) e na sala (outline “Favoritar/Favoritado”); página Meus favoritos no menu do perfil; lote encerrado favoritado | `lcard`/grid da vitrine (R2), Tabs, `page-states`, DropdownMenu (R5), Sheet Entrar (R1) | — (gerador `src/gen_r11.py` importa `gen_r3.py`) | botão: normal · ativo (`--primary`, aria-pressed) · carregando (otimista) · não logado → Sheet R1; página: com itens · vazio (CTA vitrine) · carregando · erro · encerrado (imagem 75%, no fim). aria-label por estado; 44 px no mobile |
 
 ## Pacotes
 - **Nenhum pacote novo exigido.** Sheet, Dialog, HoverCard, NavigationMenu, DropdownMenu e Accordion estão todos no `radix-ui` 1.8.1 (D16); entram como arquivos shadcn em `components/ui/`.
@@ -38,3 +39,9 @@ Base de componentes do repo (`/workspace/arremate-w/repo/front-end/src`): `compo
 - **Mobile Leilões:** abas da vitrine rolam na horizontal em 390.
 - **Prazo 29/10:** rodada grande. Ordem sugerida: R2+R7 (correções visuais) → R5 header → R3 → R1 → R4 → R8–R10.
 - **Pendências anteriores:** `PROPOSTA-CONTEUDO.md` e pranchas `auth-pagamentos/` ainda sem aprovação; divergência entre `/workspace/casa-de-leilao/docs` (sem Freeze) e o repo (D12).
+
+## R11 Favoritos — conflitos
+- **Tabela nova no banco:** `Favorite(userId, lotId, createdAt)` com PK composta, migration Prisma + endpoints `POST/DELETE /lots/:id/favorite` e `GET /me/favorites`; e o card precisa de `isFavorite` por usuário (quebra cache público da vitrine).
+- Contradiz a recomendação da R5 (“Favoritos: médio custo, pós-entrega”) e amplia escopo do briefing → precisa D17+.
+- Não logado: favoritar após login exige “intenção pendente” além do returnTo.
+- Sem notificações: favoritar não avisa quando encerra (seria a feature de Notificações).

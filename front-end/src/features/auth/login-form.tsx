@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { AlertCircleIcon, InfoIcon, LogInIcon } from "lucide-react";
+import { AlertCircleIcon, FlaskConicalIcon, GavelIcon, InfoIcon, LogInIcon, UserIcon } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +14,14 @@ import { Label } from "@/components/ui/label";
 import { login } from "./auth-api";
 import { afterLoginFailure, safeReturnTo, type LoginValues } from "./login-state";
 import { SESSION_KEY } from "./use-session";
+
+/** Login rápido de teste: contas fictícias do seed com a senha pública de demo (docs/ambiente.md). Usa o login normal (mesmo limite de tentativas); ligado só por flag pública. */
+export const DEMO_LOGIN_ENABLED = process.env.NEXT_PUBLIC_DEMO_LOGIN === "true";
+const DEMO_PASSWORD = "arremate-demo-2026";
+const DEMO_ACCOUNTS = [
+  { email: "licitante1@arremate.demo", label: "Entrar como licitante de teste", Icon: UserIcon },
+  { email: "leiloeiro@arremate.demo", label: "Entrar como leiloeiro de teste", Icon: GavelIcon },
+] as const;
 
 type LoginFormProps = {
   /** "sheet" (R1): só o formulário, dentro da Sheet de autenticação. "page": a página /entrar (alternativa). */
@@ -34,15 +42,19 @@ export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormPr
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    await doLogin(values, false);
+  }
+
+  async function doLogin(creds: LoginValues, demo: boolean) {
     if (sending) return;
     setSending(true);
     setError(null);
     let session: Awaited<ReturnType<typeof login>>;
     try {
-      session = await login({ email: values.email.trim(), password: values.password, returnTo: variant === "sheet" ? undefined : safeReturnTo(returnTo ?? params.get("returnTo")) });
+      session = await login({ email: creds.email.trim(), password: creds.password, returnTo: variant === "sheet" ? undefined : safeReturnTo(returnTo ?? params.get("returnTo")) });
     } catch (failure) {
-      const next = afterLoginFailure(values, failure);
-      setValues(next.values);
+      const next = afterLoginFailure(creds, failure);
+      if (!demo) setValues(next.values);
       setError(next.message);
       setSending(false);
       return;
@@ -72,6 +84,7 @@ export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormPr
                 id={`${variant}-email`}
                 type="email"
                 autoComplete="username"
+                placeholder="voce@email.com"
                 required
                 value={values.email}
                 onChange={(event) => setValues({ ...values, email: event.target.value })}
@@ -83,6 +96,7 @@ export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormPr
               <PasswordInput
                 id={`${variant}-password`}
                 autoComplete="current-password"
+                placeholder="Sua senha"
                 required
                 value={values.password}
                 onChange={(event) => setValues({ ...values, password: event.target.value })}
@@ -92,6 +106,18 @@ export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormPr
             <Button type="submit" size="lg" disabled={sending || !values.email || !values.password}>
               <LogInIcon /> {sending ? "Entrando…" : "Entrar"}
             </Button>
+            {DEMO_LOGIN_ENABLED ? (
+              <div className="flex flex-col gap-2 rounded-lg border border-dashed p-3" role="group" aria-labelledby={`${variant}-demo-login`}>
+                <p id={`${variant}-demo-login`} className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <FlaskConicalIcon className="size-3.5" /> Ambiente de demonstração
+                </p>
+                {DEMO_ACCOUNTS.map(({ email, label, Icon }) => (
+                  <Button key={email} type="button" variant="outline" disabled={sending} onClick={() => void doLogin({ email, password: DEMO_PASSWORD }, true)}>
+                    <Icon /> {label}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
           </form>
   );
 

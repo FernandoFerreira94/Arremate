@@ -46,4 +46,18 @@ test.describe("rodada 3 (D19)", () => {
     await page.goto("/?aba=agendados");
     await expect(page.getByRole("tab", { name: /Agendados/ })).toHaveAttribute("data-state", "active");
   });
+
+  test("login rápido de teste usa o login normal com a conta de demo", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Entrar" }).first().click();
+    const sheet = page.getByRole("dialog");
+    await expect(sheet.getByText("Ambiente de demonstração", { exact: true })).toBeVisible();
+    await expect(sheet.getByRole("button", { name: "Entrar como leiloeiro de teste" })).toBeVisible();
+    const request = page.waitForRequest((r) => r.method() === "POST" && /\/auth\/login/.test(r.url()));
+    await sheet.getByRole("button", { name: "Entrar como licitante de teste" }).click();
+    const body = (await request).postDataJSON() as { email: string; password: string };
+    expect(body).toMatchObject({ email: "licitante1@arremate.demo", password: "arremate-demo-2026" });
+    await page.goto("/entrar");
+    await expect(page.getByRole("button", { name: "Entrar como licitante de teste" })).toBeVisible();
+  });
 });

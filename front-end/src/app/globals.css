@@ -76,6 +76,21 @@
   --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
 }
 
+/* Transições do Sheet equivalentes ao shadcn (tw-animate-css não instalado): fade do overlay, slide do conteúdo; 500ms abrir / 300ms fechar. */
+@keyframes sheet-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes sheet-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes sheet-out-right { from { transform: translateX(0); } to { transform: translateX(100%); } }
+@keyframes sheet-in-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheet-out-bottom { from { transform: translateY(0); } to { transform: translateY(100%); } }
+.sheet-overlay[data-state="open"] { animation: sheet-fade-in 500ms ease-in-out; }
+.sheet-overlay[data-state="closed"] { animation: sheet-fade-out 300ms ease-in-out forwards; }
+.sheet-content { transition: transform 300ms ease-in-out; }
+.sheet-content[data-side="right"][data-state="open"] { animation: sheet-in-right 500ms ease-in-out; }
+.sheet-content[data-side="right"][data-state="closed"] { animation: sheet-out-right 300ms ease-in-out forwards; }
+.sheet-content[data-side="bottom"][data-state="open"] { animation: sheet-in-bottom 500ms ease-in-out; }
+.sheet-content[data-side="bottom"][data-state="closed"] { animation: sheet-out-bottom 300ms ease-in-out forwards; }
+
 @layer base {
   * { border-color: var(--border); }
   html { color-scheme: light; }

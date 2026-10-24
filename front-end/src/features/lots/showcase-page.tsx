@@ -90,12 +90,12 @@ export function ShowcasePage() {
       )}
       {pages > 1 ? (
         <nav aria-label="Paginação" className="flex items-center justify-center gap-2">
-          <Button asChild={page > 1} variant="outline" size="sm" disabled={page <= 1}>
-            {page > 1 ? <Link href={`/?aba=${TAB_PARAM[tab]}&page=${page - 1}`}><ChevronLeftIcon /> Anterior</Link> : <span><ChevronLeftIcon /> Anterior</span>}
+          <Button asChild={page > 1} variant="outline" size="sm" className="whitespace-nowrap" disabled={page <= 1}>
+            {page > 1 ? <Link href={`/?aba=${TAB_PARAM[tab]}&page=${page - 1}`} className="inline-flex items-center gap-2 whitespace-nowrap"><ChevronLeftIcon /> Anterior</Link> : <span className="inline-flex items-center gap-2 whitespace-nowrap"><ChevronLeftIcon /> Anterior</span>}
           </Button>
           <span className="text-sm tabular-nums" aria-current="page">{page} de {pages}</span>
-          <Button asChild={page < pages} variant="outline" size="sm" disabled={page >= pages}>
-            {page < pages ? <Link href={`/?aba=${TAB_PARAM[tab]}&page=${page + 1}`}>Próxima <ChevronRightIcon /></Link> : <span>Próxima <ChevronRightIcon /></span>}
+          <Button asChild={page < pages} variant="outline" size="sm" className="whitespace-nowrap" disabled={page >= pages}>
+            {page < pages ? <Link href={`/?aba=${TAB_PARAM[tab]}&page=${page + 1}`} className="inline-flex items-center gap-2 whitespace-nowrap">Próxima <ChevronRightIcon /></Link> : <span className="inline-flex items-center gap-2 whitespace-nowrap">Próxima <ChevronRightIcon /></span>}
           </Button>
         </nav>
       ) : null}

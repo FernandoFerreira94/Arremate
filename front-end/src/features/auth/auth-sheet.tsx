@@ -91,15 +91,15 @@ function RegisterShell({ onGoToLogin }: { onGoToLogin: () => void }) {
       ) : null}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="register-name">Nome</Label>
-        <Input id="register-name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input id="register-name" placeholder="Seu nome completo" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="register-email">E-mail</Label>
-        <Input id="register-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input id="register-email" placeholder="voce@email.com" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="register-password">Senha</Label>
-        <PasswordInput id="register-password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput id="register-password" placeholder="Mínimo de 8 caracteres" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <div className="grid grid-cols-4 gap-1" aria-hidden>
           {[1, 2, 3, 4].map((i) => <span key={i} className={cn("h-1 rounded-full bg-muted", strength >= i && "bg-primary")} />)}
         </div>
@@ -139,7 +139,7 @@ function ResetSimulated({ onGoToLogin }: { onGoToLogin: () => void }) {
       <p className="text-sm text-muted-foreground">Informe o e-mail da conta. Por segurança, a resposta é sempre a mesma.</p>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="reset-email">E-mail</Label>
-        <Input id="reset-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input id="reset-email" placeholder="voce@email.com" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <Button type="submit" size="lg" disabled={!isPlausibleEmail(email)}><MailIcon /> Enviar link</Button>
     </form>
