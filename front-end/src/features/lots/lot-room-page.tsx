@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useId, useMemo, useState } from "react";
-import { AlertTriangleIcon, CheckCircle2Icon, GavelIcon, ShieldCheckIcon, WifiOffIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon, GavelIcon, ShieldCheckIcon, WifiOffIcon } from "lucide-react";
 import { LotStateBadge } from "@/components/app/lot-state-badge";
 import { MoneyInput } from "@/components/app/money-input";
 import { ErrorState, LoadingRows } from "@/components/app/page-states";
@@ -29,7 +29,7 @@ import { formatBrt } from "@/lib/datetime";
 import { createIdempotentAction } from "@/lib/idempotent-action";
 import { formatBrl, parseBrlInput } from "@/lib/money";
 import { useLotChannel } from "@/lib/realtime";
-import { bidsKey, getBids, getLot, lotKey, placeBid, type PublicLot } from "./lots-api";
+import { bidsKey, getBids, getLot, lotKey, placeBid, SIMULATED_LABEL, type PublicLot } from "./lots-api";
 import { bidShortcuts, clockOffset, formatCountdown, rankByBidder, remainingMs } from "./room-logic";
 import { useNow } from "./showcase-page";
 
@@ -81,6 +81,7 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
             <figcaption className="mt-2 text-xs text-muted-foreground">{data.credit} · {data.license}</figcaption>
           </figure>
           <AboutCard lot={data} />
+          <ConditionCard lot={data} />
         </div>
         <div className="flex flex-col gap-6 lg:col-span-5">
           <div>
@@ -171,12 +172,15 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
 function AboutCard({ lot }: { lot: PublicLot }) {
   const rows: Array<[string, string]> = [
     ["Artista", lot.artist],
+    ["Nota do artista", lot.artistBio ?? ""],
     ["Data", lot.date],
     ["Técnica", lot.medium],
     ["Dimensões", lot.dimensions],
+    ["Proveniência", lot.credit],
     ["Licença da imagem", lot.license],
     ["Lance inicial", formatBrl(lot.initialCents)],
     ["Incremento mínimo", formatBrl(lot.incrementCents)],
+    ["Estimativa", lot.estimate ? `${formatBrl(lot.estimate.lowCents)} – ${formatBrl(lot.estimate.highCents)} (${SIMULATED_LABEL.toLowerCase()})` : ""],
     ["Início", formatBrt(lot.startsAt)],
     ["Fim previsto", formatBrt(lot.endsAt)],
   ];
@@ -189,6 +193,26 @@ function AboutCard({ lot }: { lot: PublicLot }) {
             <div key={label} className="contents"><dt className="text-muted-foreground">{label}</dt><dd>{value}</dd></div>
           ))}
         </dl>
+        {lot.sourceUrl ? (
+          <Button asChild variant="outline" size="sm" className="mt-4">
+            <a href={lot.sourceUrl} target="_blank" rel="noopener noreferrer"><ExternalLinkIcon /> Ver no The Met</a>
+          </Button>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ConditionCard({ lot }: { lot: PublicLot }) {
+  if (!lot.conditionReport) return null;
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <CardTitle>Laudo de conservação</CardTitle>
+        <Badge variant="warning">{SIMULATED_LABEL}</Badge>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm">{lot.conditionReport.text}</p>
       </CardContent>
     </Card>
   );

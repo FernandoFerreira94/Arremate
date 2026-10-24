@@ -5,6 +5,7 @@
  * - 1 lote aberto na primeira execucao. Reexecutar nunca zera saldo, apaga lance nem reabre lote;
  *   lote novo so com o comando explicito `--preparar-lote` (datas relativas a agora).
  * - So roda em banco local (127.0.0.1/localhost).
+ * - Depois roda o catalogo de 24 obras (D17, `seed-catalog.ts`); `--sem-catalogo` pula essa etapa.
  */
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -13,6 +14,7 @@ import { Pool } from "pg";
 import type { AuditService } from "../src/audit/audit.service";
 import { MediaStore } from "../src/catalog/image-importer";
 import { MET_LICENSE, MET_PROVIDER } from "../src/catalog/catalog.service";
+import { runCatalogSeed } from "./seed-catalog";
 
 export const DEMO_PASSWORD_DEFAULT = "arremate-demo-2026";
 export const DEMO_EXTERNAL_ID = "437329";
@@ -52,16 +54,9 @@ export async function runSeed(o: SeedOptions): Promise<SeedResult> {
     { email: `${prefix}licitante1@arremate.demo`, role: "BIDDER" as const },
     { email: `${prefix}licitante2@arremate.demo`, role: "BIDDER" as const },
   ];
-  const passwordHash = await hash(o.password, { algorithm: Algorithm.Argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 });
+  const passwordHash = await demoPasswordHash(o.password);
   const ids = new Map<string, string>();
-  for (const u of users) {
-    // ON CONFLICT DO NOTHING: reexecutar nao troca senha de quem ja existe.
-    await o.pool.query(`INSERT INTO users (email, role, password_hash) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING`, [u.email, u.role, passwordHash]);
-    const row = await o.pool.query<{ id: string; role: string }>(`SELECT id, role::text AS role FROM users WHERE email = $1`, [u.email]);
-    const found = row.rows[0];
-    if (!found || found.role !== u.role) throw new Error(`Conta ${u.email} existe com outro papel; seed nao altera.`);
-    ids.set(u.email, found.id);
-  }
+  for (const u of users) ids.set(u.email, await ensureUser(o.pool, u.email, u.role, passwordHash));
   for (const u of users.filter((x) => x.role === "BIDDER")) {
     const userId = ids.get(u.email) as string;
     const created = await o.pool.query<{ id: string }>(
@@ -105,6 +100,19 @@ export async function runSeed(o: SeedOptions): Promise<SeedResult> {
   return { users, lotId, lotCreated, warnings };
 }
 
+export function demoPasswordHash(password: string): Promise<string> {
+  return hash(password, { algorithm: Algorithm.Argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 });
+}
+
+/** ON CONFLICT DO NOTHING: reexecutar nao troca senha de quem ja existe. */
+export async function ensureUser(pool: Pool, email: string, role: "AUCTIONEER" | "BIDDER", passwordHash: string): Promise<string> {
+  await pool.query(`INSERT INTO users (email, role, password_hash) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING`, [email, role, passwordHash]);
+  const row = await pool.query<{ id: string; role: string }>(`SELECT id, role::text AS role FROM users WHERE email = $1`, [email]);
+  const found = row.rows[0];
+  if (!found || found.role !== role) throw new Error(`Conta ${email} existe com outro papel; seed nao altera.`);
+  return found.id;
+}
+
 async function ensureSnapshot(o: SeedOptions): Promise<string> {
   const existing = await o.pool.query<{ id: string }>(`SELECT id FROM catalog_item_snapshots WHERE provider = $1 AND external_id = $2`, [MET_PROVIDER, DEMO_EXTERNAL_ID]);
   if (existing.rows[0]) return existing.rows[0].id;
@@ -142,6 +150,16 @@ async function main(): Promise<void> {
   const { AuditService } = await import("../src/audit/audit.service");
   const { FileCheckpointStore } = await import("../src/audit/checkpoint-store");
   const { DatabaseRepository } = await import("../src/database/database.repository");
+  const { CatalogService } = await import("../src/catalog/catalog.service");
+  const { MetCatalogClient } = await import("../src/catalog/met-catalog.client");
+  const { LotsRepository } = await import("../src/lots/lots.repository");
+  const { LotsService } = await import("../src/lots/lots.service");
+  const { BiddingRepository } = await import("../src/lots/bidding.repository");
+  const { BiddingService } = await import("../src/lots/bidding.service");
+  const { SettlementRepository } = await import("../src/lots/settlement.repository");
+  const { SettlementService } = await import("../src/lots/settlement.service");
+  const { WalletsRepository } = await import("../src/wallets/wallets.repository");
+  const { WalletsService } = await import("../src/wallets/wallets.service");
   const root = resolve(__dirname, "../..");
   const database = new DatabaseRepository(url);
   const pool = new Pool({ connectionString: url, max: 2 });
@@ -151,18 +169,41 @@ async function main(): Promise<void> {
       new FileCheckpointStore(process.env.AUDIT_WITNESS_DIR ?? join(root, ".data/witness")),
       Buffer.from(raw, "hex"),
     );
+    const media = new MediaStore(process.env.MEDIA_DIR ?? join(root, ".data/media"));
+    const password = process.env.SEED_DEMO_PASSWORD ?? DEMO_PASSWORD_DEFAULT;
     const result = await runSeed({
       pool,
       audit,
-      media: new MediaStore(process.env.MEDIA_DIR ?? join(root, ".data/media")),
+      media,
       assetsDir: join(root, "docs/design/pranchas/assets/obras"),
-      password: process.env.SEED_DEMO_PASSWORD ?? DEMO_PASSWORD_DEFAULT,
+      password,
       prepareLot: process.argv.includes("--preparar-lote"),
       databaseUrl: url,
     });
     console.log(`Contas de demo: ${result.users.map((u) => `${u.email} (${u.role})`).join(", ")}`);
     console.log(result.lotCreated ? `Lote de demo criado: ${result.lotId}` : "Nenhum lote novo criado.");
     for (const w of result.warnings) console.warn(w);
+    if (!process.argv.includes("--sem-catalogo")) {
+      const hashed = await demoPasswordHash(password);
+      const ownerId = await ensureUser(pool, "leiloeiro@arremate.demo", "AUCTIONEER", hashed);
+      const bidderIds: string[] = [];
+      for (const n of [1, 2, 3, 4]) bidderIds.push(await ensureUser(pool, `licitante${n}@arremate.demo`, "BIDDER", hashed));
+      const catalog = new CatalogService(new MetCatalogClient(), database, media);
+      const catalogResult = await runCatalogSeed({
+        pool,
+        catalog,
+        lots: new LotsService(database, new LotsRepository(database), catalog, audit),
+        bidding: new BiddingService(database, audit, new BiddingRepository()),
+        wallets: new WalletsService(database, new WalletsRepository(database)),
+        settlement: new SettlementService(database, audit, new SettlementRepository()),
+        ownerId,
+        bidderIds,
+        prepare: process.argv.includes("--preparar-lote"),
+        log: (line) => console.log(line),
+      });
+      console.log(`Catalogo: ${catalogResult.created.length} lote(s) criado(s), ${catalogResult.skipped.length} ja existente(s).`);
+      for (const w of catalogResult.warnings) console.warn(w);
+    }
   } finally {
     await pool.end();
     await database.onModuleDestroy();

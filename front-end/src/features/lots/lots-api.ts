@@ -2,7 +2,17 @@ import { apiFetch } from "../../lib/api";
 import type { LotView } from "../seller/seller-api";
 import type { PublicBid } from "./room-logic";
 
-export type PublicLot = LotView & { dimensions: string; sourceUrl: string | null; result: "OPEN" | "CLOSED_PENDING" | "SETTLED" | "CLOSED_NO_BIDS" | "CANCELLED" };
+export type PublicLot = LotView & {
+  dimensions: string;
+  sourceUrl: string | null;
+  result: "OPEN" | "CLOSED_PENDING" | "SETTLED" | "CLOSED_NO_BIDS" | "CANCELLED";
+  artistBio?: string;
+  /** D17: sempre simulado para demonstração; nunca vem do Met. */
+  estimate?: { lowCents: string; highCents: string; simulated: true } | null;
+  conditionReport?: { text: string; simulated: true } | null;
+};
+
+export const SIMULATED_LABEL = "Simulado para demonstração";
 export type ShowcasePage = { items: PublicLot[]; page: number; pageSize: number; total: number; serverNow: string };
 export type BidsPage = { items: PublicBid[]; page: number; pageSize: number; total: number };
 export type AuditView = { lotId: string; status: "INTACT" | "TAMPERED" | "INDETERMINATE"; revision: number | null; count: number | null; verifiedAt: string; reasonCode: string; message: string };

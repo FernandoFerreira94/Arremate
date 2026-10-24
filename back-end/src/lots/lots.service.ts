@@ -23,6 +23,7 @@ export type LotView = {
   externalId: string;
   title: string;
   artist: string;
+  artistBio: string;
   date: string;
   medium: string;
   dimensions: string;
@@ -35,6 +36,9 @@ export type LotView = {
   currentCents: string | null;
   minimumNextCents: string;
   bidCount: number;
+  /** D17: faixa e laudo simulados para demonstração (`simulated: true` sempre). */
+  estimate: { lowCents: string; highCents: string; simulated: true } | null;
+  conditionReport: { text: string; simulated: true } | null;
   startsAt: string;
   endsAt: string;
   state: LotState;
@@ -221,6 +225,7 @@ function toView(row: LotRow): LotView {
     externalId: row.external_id,
     title: row.title,
     artist: textOf("artist"),
+    artistBio: textOf("artistBio"),
     date: textOf("date"),
     medium: textOf("medium"),
     dimensions: textOf("dimensions"),
@@ -233,6 +238,11 @@ function toView(row: LotRow): LotView {
     currentCents: current,
     minimumNextCents: current === null ? row.initial_cents : (BigInt(current) + BigInt(row.increment_cents)).toString(),
     bidCount: row.bid_count,
+    estimate:
+      row.estimate_low_cents !== null && row.estimate_high_cents !== null
+        ? { lowCents: row.estimate_low_cents, highCents: row.estimate_high_cents, simulated: true }
+        : null,
+    conditionReport: row.condition_report ? { text: row.condition_report, simulated: true } : null,
     startsAt: row.starts_at.toISOString(),
     endsAt: row.ends_at.toISOString(),
     state,

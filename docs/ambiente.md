@@ -51,5 +51,6 @@ Shadcn é obrigatório por U13. Vite é peer do Vitest somente, não outro app w
 ## Seed de demonstração (Tarefa 10)
 
 - `npm run db:seed --workspace back-end`: cria `leiloeiro@arremate.demo`, `licitante1@arremate.demo` e `licitante2@arremate.demo` (fictícios), senha de demo `arremate-demo-2026` ou `SEED_DEMO_PASSWORD`; R$ 10.000 simulados por licitante; obra 437329 do snapshot local; 1 lote aberto por 7 dias.
+- D18 (24/10): o seed também cria `licitante3@arremate.demo` e `licitante4@arremate.demo`, deposita valores simulados com chaves estáveis e publica o catálogo de 24 obras CC0 (abertos, encerrando, agendados, liquidados e sem lances), com estimativa e laudo marcados como simulados. Reexecutar cria 0 lotes; `--preparar-lote` só recria lotes vencidos do catálogo; `-- --sem-catalogo` pula o catálogo.
 - Reexecutar não troca senha, não zera saldo, não apaga lance e não reabre lote. `npm run db:seed --workspace back-end -- --preparar-lote` cria um lote NOVO.
 - Exige `AUDIT_HMAC_KEY` (hex) e banco em 127.0.0.1/localhost. Usa `AUDIT_WITNESS_DIR` e `MEDIA_DIR` (padrão `.data/`), os mesmos da API.

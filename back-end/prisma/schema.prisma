@@ -96,6 +96,10 @@ model Lot {
   endsAt         DateTime  @map("ends_at") @db.Timestamptz(3)
   revision       Int       @default(0)
   status         LotStatus @default(PUBLISHED)
+  /// D17: estimativa e laudo são SIMULADOS para demonstração; nunca vêm do Met.
+  estimateLowCents  BigInt? @map("estimate_low_cents")
+  estimateHighCents BigInt? @map("estimate_high_cents")
+  conditionReport   String? @map("condition_report") @db.Text
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
   bids       Bid[]

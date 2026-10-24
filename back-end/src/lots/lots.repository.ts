@@ -3,6 +3,7 @@ import { DatabaseRepository } from "../database/database.repository";
 export const LOT_COLUMNS = `
   l.id, l.initial_cents::text AS initial_cents, l.increment_cents::text AS increment_cents,
   l.starts_at, l.ends_at, l.status::text AS status,
+  l.estimate_low_cents::text AS estimate_low_cents, l.estimate_high_cents::text AS estimate_high_cents, l.condition_report,
   s.external_id, s.title, s.attributes, s.credit, s.license, s.media_key,
   b.top::text AS current_cents, COALESCE(b.n, 0)::int AS bid_count,
   clock_timestamp() AS server_now`;
@@ -26,6 +27,9 @@ export type LotRow = {
   starts_at: Date;
   ends_at: Date;
   status: string;
+  estimate_low_cents: string | null;
+  estimate_high_cents: string | null;
+  condition_report: string | null;
   external_id: string;
   title: string;
   attributes: Record<string, unknown>;
