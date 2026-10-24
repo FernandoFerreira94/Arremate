@@ -20,6 +20,11 @@ jobs:
       TEST_DATABASE_URL: postgresql://auction_app:ci-only-app-password@127.0.0.1:5463/casadeleilao_test
       DB_OWNER_PASSWORD: ci-only-password
       NEXT_TELEMETRY_DISABLED: 1
+      API_PORT: 4300
+      API_HOST: 127.0.0.1
+      SITE_URL: http://127.0.0.1:3300
+      AUDIT_WITNESS_DIR: ${{ runner.temp }}/witness
+      MEDIA_DIR: ${{ runner.temp }}/media
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,6 +32,10 @@ jobs:
           node-version: 24.22.1
           cache: npm
       - run: npm ci
+      - name: Chave de auditoria efemera (so CI, nunca reutilizada)
+        run: echo "AUDIT_HMAC_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+      - name: Auditoria de dependencias de runtime (falha em High/Critical)
+        run: npm audit --omit=dev --audit-level=high
       - name: Papel de runtime isolado do owner
         env:
           PGPASSWORD: ci-only-password
@@ -38,10 +47,22 @@ jobs:
         run: sh infra/postgres/init-app-user.sh
       - run: npm run db:validate
       - run: npm run db:generate
+      - name: Migracao no PostgreSQL vazio com o owner
+        working-directory: back-end
+        env:
+          DATABASE_URL: postgresql://auction_owner:ci-only-password@127.0.0.1:5463/casadeleilao_test
+        run: npx prisma migrate deploy
+      - name: Seed de demo (e reexecucao idempotente)
+        run: npm run db:seed --workspace back-end && npm run db:seed --workspace back-end
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:integration
       - run: npm run build
       - run: npx playwright install --with-deps chromium
+      - name: Subir a API compilada
+        run: |
+          npm run start --workspace back-end > api.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:4300/api/health/ready && exit 0; sleep 1; done
+          cat api.log; exit 1
       - run: npm run test:e2e
