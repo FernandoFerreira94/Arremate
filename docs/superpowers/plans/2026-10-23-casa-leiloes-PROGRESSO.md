@@ -112,3 +112,10 @@ Tarefa 9: `npm run lint`, `npm run typecheck`, `npm test` (57), `npm run test:in
 - Etapa 7 preparada localmente: variável de exemplo vazia e guia de Session pooler/TLS/roles/Data API. Validação e revisão em docs/evidence/2026-10-24-auth-pagamentos.md.
 - Etapas 1–6 (faixa/imagens/estados, cadastro, Pix, histórico/extrato, cartão, Google) continuam pendentes. Novas pranchas com Fred.
 - Nenhum banco hospedado acessado/migrado/semeado; sem deploy/push. Projeto/credenciais/validação Supabase e OK para migration/seed/deploy dependem de Fernando.
+
+## Rodada 3 — pranchas R1–R10 (24/10/2026)
+
+- D21: adendo ao Freeze D12. Implementado em `feat/rodada-3` (worktree separado, commits locais, sem push).
+- Sheet de auth, cabeçalho novo, últimos lances, abas `?aba=`, card fixo, Detalhes, confirmação R7, Perfil, Suporte/FAQ, Como funciona; seed 0025–0036.
+- Verde: lint, typecheck, vitest 64, unit 65, integração 99, Playwright 21. Evidência: docs/evidence/2026-10-24-rodada-3.md.
+- Pendente de integração (Codex): botão Google, cadastro real, nome/e-mail/cartões no Perfil, links Carteira `?aba`, Termos/Privacidade.

@@ -132,3 +132,7 @@ Testes automatizados são opcionais no PDF, mas **obrigatórios neste projeto po
 Etapa independente das novas pranchas: Supabase escolhido somente como PostgreSQL. A API Nest mantém as regras/autorização e `DATABASE_URL`; o CLI Prisma prefere `DIRECT_URL` (nova, vazia em `.env.example`), com fallback local para `DATABASE_URL`. Na hospedagem, a conexão de migração pertence só ao runner e deve ser definida explicitamente. Nenhuma configuração privada local mudou.
 
 [Guia de hospedagem](docs/hospedagem.md#supabase-somente-postgresql--d20-preparação-local-24102026): Session pooler 5432, TLS/CA, papéis separados, Data API desativada e passos condicionados a autorização. Nenhum banco hospedado foi conectado/migrado/semeado; deploy não executado. Projeto/credenciais Supabase, ensaio TLS/roles/backup e OK para migration/seed/deploy dependem de Fernando. Etapas de telas, cadastro, Pix, histórico, cartão e Google continuam pendentes. Validação desta preparação: [evidência](docs/evidence/2026-10-24-auth-pagamentos.md). Prazo operacional: **29/10/2026 às 18h (America/Sao_Paulo)**.
+
+## Rodada 3 de pranchas — D21 (24/10/2026)
+
+Branch `feat/rodada-3`: Sheet de entrar/cadastrar/redefinir (redefinição simulada), menu "Leilões" com abas `/?aba=ao-vivo|agendados|encerrados|encerrando-hoje`, últimos lances no card, Detalhes do lote, novas páginas `/perfil`, `/suporte` e `/como-funciona`, e 12 lotes extras no seed. Ver [evidência](docs/evidence/2026-10-24-rodada-3.md).

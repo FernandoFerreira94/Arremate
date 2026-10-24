@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { AuthSheetProvider } from "@/features/auth/auth-sheet";
 
 /** Um QueryClient por aba. Sessão e saldo não são compartilhados entre usuários nem guardados fora dele. */
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -11,5 +12,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         defaultOptions: { queries: { retry: false, refetchOnWindowFocus: true, staleTime: 0 }, mutations: { retry: false } },
       }),
   );
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={client}>
+      <AuthSheetProvider>{children}</AuthSheetProvider>
+    </QueryClientProvider>
+  );
 }

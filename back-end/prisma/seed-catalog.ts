@@ -1,5 +1,6 @@
 /**
- * Catalogo de demonstracao (D17, Fernando 24/10/2026): 24 obras do The Met (CC0), proposta do Fred
+ * Catalogo de demonstracao (D17, Fernando 24/10/2026): 24 obras do The Met (CC0), proposta do Fred;
+ * rodada 3 (D19) soma 6 agendados e 6 encerrados (36 obras, nenhuma repetida)
  * em docs/design/PROPOSTA-CONTEUDO.md.
  * - Obra e imagem pelo CatalogService.importItem (cliente + importador do Met que ja existem).
  * - Lote, lance, deposito e liquidacao SO pelos servicos normais (HMAC, carteira, recibo, auditoria).
@@ -69,6 +70,19 @@ export const DEMO_CATALOG: readonly CatalogEntry[] = [
   { lot: "0022", externalId: "436535", initial: 18000, estimate: [35000, 55000], state: "ENDING", offsetMs: 50 * MIN, bids: { n: 10, final: 41000, winner: 3, with: [2, 3] }, condition: PAINT },
   { lot: "0023", externalId: "435882", initial: 8000, estimate: [16000, 24000], state: "CLOSED", bids: { n: 8, final: 18200, winner: 2, with: [1, 2] }, condition: PAINT },
   { lot: "0024", externalId: "11122", initial: 10000, estimate: [20000, 30000], state: "ENDING", offsetMs: 55 * MIN, bids: { n: 2, final: 10500, winner: 4, with: [4, 1] }, condition: PAINT },
+  // Rodada 3 (D19, Fernando 24/10/2026): mais agendados e encerrados, obras CC0 do Met verificadas na API, sem repetir.
+  { lot: "0025", externalId: "436532", initial: 20000, estimate: [40000, 60000], state: "SCHEDULED", offsetMs: 6 * HOUR, condition: PAINT },
+  { lot: "0026", externalId: "436528", initial: 25000, estimate: [50000, 80000], state: "SCHEDULED", offsetMs: 1 * DAY + 3 * HOUR, condition: PAINT },
+  { lot: "0027", externalId: "436965", initial: 12000, estimate: [24000, 36000], state: "SCHEDULED", offsetMs: 2 * DAY + 6 * HOUR, condition: PAINT },
+  { lot: "0028", externalId: "437397", initial: 18000, estimate: [36000, 50000], state: "SCHEDULED", offsetMs: 3 * DAY, condition: PANEL },
+  { lot: "0029", externalId: "436838", initial: 15000, estimate: [30000, 45000], state: "SCHEDULED", offsetMs: 4 * DAY, condition: PAINT },
+  { lot: "0030", externalId: "435868", initial: 22000, estimate: [45000, 65000], state: "SCHEDULED", offsetMs: 5 * DAY, condition: PAINT },
+  { lot: "0031", externalId: "436944", initial: 6000, estimate: [12000, 18000], state: "CLOSED", bids: { n: 7, final: 9400, winner: 3, with: [3, 4] }, condition: PAINT },
+  { lot: "0032", externalId: "459123", initial: 7000, estimate: [14000, 20000], state: "CLOSED", bids: { n: 6, final: 10200, winner: 4, with: [4, 2] }, condition: PAINT },
+  { lot: "0033", externalId: "436896", initial: 4000, estimate: [9000, 14000], state: "CLOSED", bids: { n: 5, final: 6100, winner: 2, with: [2, 3] }, condition: PANEL },
+  { lot: "0034", externalId: "437790", initial: 3000, estimate: [7000, 10000], state: "CLOSED", bids: { n: 8, final: 5600, winner: 3, with: [1, 3, 4] }, condition: PAINT },
+  { lot: "0035", externalId: "436155", initial: 5000, estimate: [10000, 15000], state: "CLOSED", bids: { n: 6, final: 7800, winner: 4, with: [4, 1] }, condition: PAINT },
+  { lot: "0036", externalId: "438012", initial: 4000, estimate: [8000, 12000], state: "CLOSED", condition: PAINT },
 ];
 
 /** Depositos simulados por licitante (D05: R$ 1 a R$ 100 mil por deposito). */

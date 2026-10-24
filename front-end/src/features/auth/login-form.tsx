@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { AlertCircleIcon, InfoIcon } from "lucide-react";
+import { AlertCircleIcon, InfoIcon, LogInIcon } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,15 @@ import { login } from "./auth-api";
 import { afterLoginFailure, safeReturnTo, type LoginValues } from "./login-state";
 import { SESSION_KEY } from "./use-session";
 
-export function LoginForm() {
+type LoginFormProps = {
+  /** "sheet" (R1): só o formulário, dentro da Sheet de autenticação. "page": a página /entrar (alternativa). */
+  variant?: "page" | "sheet";
+  /** Na Sheet, fica na página atual em vez de navegar (o back só aceita returnTo da lista dele, então a Sheet não envia). */
+  onSuccess?: () => void;
+  returnTo?: string;
+};
+
+export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormProps = {}) {
   const router = useRouter();
   const params = useSearchParams();
   const client = useQueryClient();
@@ -31,7 +39,7 @@ export function LoginForm() {
     setError(null);
     let session: Awaited<ReturnType<typeof login>>;
     try {
-      session = await login({ email: values.email.trim(), password: values.password, returnTo: safeReturnTo(params.get("returnTo")) });
+      session = await login({ email: values.email.trim(), password: values.password, returnTo: variant === "sheet" ? undefined : safeReturnTo(returnTo ?? params.get("returnTo")) });
     } catch (failure) {
       const next = afterLoginFailure(values, failure);
       setValues(next.values);
@@ -39,25 +47,17 @@ export function LoginForm() {
       setSending(false);
       return;
     }
-    client.removeQueries({ predicate: (query) => query.queryKey[0] !== "public" });
+    // Na Sheet a página não navega: a query da sessão fica no cache (é atualizada abaixo) para o header ser notificado.
+    client.removeQueries({ predicate: (query) => query.queryKey[0] !== "public" && (variant === "page" || query.queryKey[0] !== SESSION_KEY[0]) });
     client.setQueryData(SESSION_KEY, { role: session.role });
+    if (onSuccess) {
+      setSending(false);
+      return onSuccess();
+    }
     router.replace(session.returnTo);
   }
 
-  return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-      <div>
-        <h1 className="text-3xl">Entrar</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Use uma das contas da demonstração. Não há cadastro nem recuperação de senha.</p>
-      </div>
-      {expired ? (
-        <Alert variant="warning">
-          <InfoIcon />
-          <p>Sua sessão expirou. Entre de novo para continuar.</p>
-        </Alert>
-      ) : null}
-      <Card>
-        <CardContent>
+  const form = (
           <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
             {error ? (
               <Alert variant="destructive">
@@ -65,10 +65,11 @@ export function LoginForm() {
                 <p id="login-error">{error}</p>
               </Alert>
             ) : null}
+            {/* TODO(integração Codex): botão "Continuar com Google" + divisor "ou com e-mail" (R1 / A1). */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor={`${variant}-email`}>Email</Label>
               <Input
-                id="email"
+                id={`${variant}-email`}
                 type="email"
                 autoComplete="username"
                 required
@@ -78,9 +79,9 @@ export function LoginForm() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor={`${variant}-password`}>Senha</Label>
               <PasswordInput
-                id="password"
+                id={`${variant}-password`}
                 autoComplete="current-password"
                 required
                 value={values.password}
@@ -89,9 +90,28 @@ export function LoginForm() {
               />
             </div>
             <Button type="submit" size="lg" disabled={sending || !values.email || !values.password}>
-              {sending ? "Entrando…" : "Entrar"}
+              <LogInIcon /> {sending ? "Entrando…" : "Entrar"}
             </Button>
           </form>
+  );
+
+  if (variant === "sheet") return form;
+
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col gap-6">
+      <div>
+        <h1 className="text-3xl">Entrar</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Use uma das contas da demonstração. Você também pode entrar pelo botão Entrar do topo de qualquer página.</p>
+      </div>
+      {expired ? (
+        <Alert variant="warning">
+          <InfoIcon />
+          <p>Sua sessão expirou. Entre de novo para continuar.</p>
+        </Alert>
+      ) : null}
+      <Card>
+        <CardContent>
+          {form}
         </CardContent>
       </Card>
       <p className="text-center text-sm text-muted-foreground">

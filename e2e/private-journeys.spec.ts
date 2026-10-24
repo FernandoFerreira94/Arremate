@@ -64,7 +64,8 @@ test("licitante: redireciona, preserva email, deposita uma vez, não vê painel 
 
   await page.goto("/carteira");
   await expect(page.getByTestId("saldo-total")).toBeVisible();
-  await page.getByRole("button", { name: "Sair" }).click();
+  await page.getByRole("button", { name: "Menu da conta" }).click();
+  await page.getByRole("menuitem", { name: "Sair" }).click();
   await expect(page).toHaveURL(/\/entrar/);
   await page.goBack();
   await expect(page).toHaveURL(/\/entrar/);
