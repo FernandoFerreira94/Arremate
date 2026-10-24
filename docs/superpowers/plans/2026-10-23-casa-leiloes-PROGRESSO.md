@@ -1,13 +1,13 @@
 # Progresso — Casa de Leilões
 
-Atualizado em 23/10/2026. Tarefa 8 concluída no local (telas privadas e entrar). As revisões independentes de auth, catálogo, carteira, lance, liquidação e componentes continuam abertas. Tarefa 9 parcial (páginas públicas, SSE, auditoria, metadados); sala com dados reais e duas suítes E2E aguardam `AUDIT_HMAC_KEY`.
+Atualizado em 23/10/2026. Tarefa 8 concluída no local (telas privadas e entrar). As revisões independentes de auth, catálogo, carteira, lance, liquidação e componentes continuam abertas. Tarefa 9 concluída no local. Tarefa 10 (parte local) é a próxima.
 
-## Tarefa 9 — parcial no local
+## Tarefa 9 — concluída no local
 
 - API: SSE `GET /api/events?lotId=` e `GET /api/lots/:id/audit`; eventos após lance, cancelamento e encerramento.
 - Telas: `/`, `/lotes/:id`, `/lotes/:id/auditoria`, `/comprovantes/:token`, 404 real, OG/ícones/robots.
-- Testes: unit 57, integração 91, Vitest 49, E2E 13.
-- Bloqueado por `AUDIT_HMAC_KEY`: `live-bidding` e `provider-outage`, sala com lote real, comprovante válido no navegador.
+- Testes: unit 57, integração 91, Vitest 49, E2E 16 (inclui `live-bidding` 2 e `provider-outage` 1 com lotes reais).
+- `DESIGN.md` criado; `.design-system/` não.
 - Evidência: `docs/evidence/2026-10-23-tarefa-9.md`.
 
 ## Tarefa 8 — concluída no local
@@ -80,7 +80,7 @@ Atualizado em 23/10/2026. Tarefa 8 concluída no local (telas privadas e entrar)
 
 ## Comandos (exit 0, Node v24.22.1)
 
-Tarefa 9: `npm run lint`, `npm run typecheck`, `npm test` (57), `npm run test:integration` (91), `npm run build`, Vitest do front (49), `npx playwright test` (13). Tarefa 8: `npm run lint`, `npm run typecheck`, `npm test` (53), `npm run test:integration` (88), `npm run build`, Vitest do front (36), `npx playwright test` (5). Tarefa 7: `npm run lint`, `npm run typecheck`, `npm test` (53), `npm run test:integration` (88), `npm run build`. Tarefa 6: `npm run lint`, `npm run typecheck`, `npm test` (51), `npm run test:integration` (74), `npm run build`. Tarefa 5: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (62), `npm run build`. Tarefa 4: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (41), `npm run build`. Tarefa 3: `npm test` (22), `npm run test:integration` (25), `npm run db:validate`. Vitest do front: 7 testes.
+Tarefa 9: `npm run lint`, `npm run typecheck`, `npm test` (57), `npm run test:integration` (91), `npm run build`, Vitest do front (49), `npx playwright test` (16). Tarefa 8: `npm run lint`, `npm run typecheck`, `npm test` (53), `npm run test:integration` (88), `npm run build`, Vitest do front (36), `npx playwright test` (5). Tarefa 7: `npm run lint`, `npm run typecheck`, `npm test` (53), `npm run test:integration` (88), `npm run build`. Tarefa 6: `npm run lint`, `npm run typecheck`, `npm test` (51), `npm run test:integration` (74), `npm run build`. Tarefa 5: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (62), `npm run build`. Tarefa 4: `npm run lint`, `npm run typecheck`, `npm test` (43), `npm run test:integration` (41), `npm run build`. Tarefa 3: `npm test` (22), `npm run test:integration` (25), `npm run db:validate`. Vitest do front: 7 testes.
 
 `GET /api/health/live` e `GET /api/health/ready` em 127.0.0.1:4300 responderam 200. `GET /api/auth/csrf` pelo site em 3300 respondeu 200; login inválido respondeu 401.
 
