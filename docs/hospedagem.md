@@ -32,3 +32,17 @@ Nenhum fornecedor adicional, plano pago ou integração está contratado. O cami
 O plano atualizado tem dez tarefas: 1 fecha handoff/dados; 2/6/7 provam integridade/durabilidade/concorrência; 3 valida proxy/cookies; 9/10 validam SSE/cache/metadados e a fronteira publicada. Sem esses testes não há declaração de release pronto.
 
 As 9 páginas e seus comportamentos permanecem os mesmos. Grok pode iniciar exploração visual lendo o briefing; essas opções não autorizam novas telas ou mudanças no produto. S5 segue WAITING_USER até reconciliação/aprovação.
+
+## Checklist de deploy (Tarefa 10, parte local feita em 23/10)
+
+CI agora migra um Postgres vazio, roda o seed duas vezes, audita dependências e sobe a API antes do E2E (NÃO VERIFICADO no GitHub). Evidência: `docs/evidence/2026-10-23-tarefa-10.md`.
+
+**Falta para o deploy (precisa de OK, conta ou segredo do Fernando):**
+
+1. Decidir a vulnerabilidade High do `multer` 2.4.0 (fixado por `@nestjs/platform-express` 12.2.0; a API não tem rota de upload). Opções: `overrides` para `multer` 2.5.0 (mudança de dependência, precisa de OK) ou aceitar o risco registrado. Até lá o passo `npm audit --audit-level=high` do CI falha.
+2. Escolher fornecedor e custo da API Node persistente, do PostgreSQL gerenciado e do disco durável para mídia e testemunha (`MEDIA_DIR`, `AUDIT_WITNESS_DIR`). Nada contratado.
+3. Criar conta/projeto na Vercel e no fornecedor da API e do banco (só o Fernando).
+4. Segredos de produção, gerados no painel do fornecedor e nunca no repo: `AUDIT_HMAC_KEY` nova (hex, 32+ bytes), senha do owner (só migração) e do `auction_app` (runtime), `DATABASE_URL`, `API_PROXY_TARGET`, `WEB_ORIGIN`/`SITE_URL` com o domínio real, `SEED_DEMO_PASSWORD` se não quiser a senha padrão de demo.
+5. Criar repositório remoto e autorizar push (o CI só roda no GitHub; ainda NÃO VERIFICADO).
+6. OK explícito para migração no banco hospedado, seed de demo e deploy.
+7. Depois do deploy: repetir anônimo/login/duas contas, SSE pelo proxy, metadados no HTML, Met fora, restart do worker, backup/restore de banco + mídia + testemunha; conferir lote aberto antes do envio de 29/10 ~18h17.

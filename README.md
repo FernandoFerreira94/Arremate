@@ -11,6 +11,7 @@ README e página do Notion ([README — em elaboração](https://app.notion.com/
 - **Nome:** Arremate (“Casa de Leilões”/`casadeleilao` fica como nome interno do repositório).
 - **Stack:** monorepo npm (Node 24 LTS); `front-end` Next.js App Router + React + Tailwind 4 + shadcn; `back-end` NestJS 12 + Prisma 7; PostgreSQL 18 via Docker Compose. Site na Vercel e API Node persistente separada.
 - **Design:** congelado (Design Freeze D12); fonte visual = pranchas HTML/PNG em `docs/design/pranchas/` e `docs/design/HANDOFF-GROK.md` (S6 aceito sem Penpot, D13).
+- **Tarefa 10, parte local, concluída:** seed de demo (`npm run db:seed --workspace back-end`: `leiloeiro@arremate.demo`, `licitante1@arremate.demo` e `licitante2@arremate.demo`, senha fictícia de demo `arremate-demo-2026`; obra 437329 CC0; 1 lote aberto; `--preparar-lote` cria lote novo), corpo JSON grande agora responde 413, ensaio de 20 licitantes simultâneos (p95 237 ms, invariantes ok) e CI com migração em banco vazio, seed, audit e E2E (CI ainda não rodou: sem remote). Testes: unit 59, integração 96, Vitest 49, E2E 16. Sem push e sem deploy. Evidência: `docs/evidence/2026-10-23-tarefa-10.md`.
 - **Tarefa 3 concluída, só local:** sessão opaca, CSRF e papéis. O site em 3300 encaminha `/api` para a API em 4300. `GET /api/auth/csrf`, `POST /api/auth/login`, `POST /api/auth/logout` e `GET /api/auth/me` existem. Não há tela de entrar (Tarefa 8). As tarefas 1 e 2 permanecem. Sem push e sem deploy.
 - **Tarefa 9 concluída, só local:** vitrine pública em `/`, sala do lote `/lotes/:id` com lance, contador e tempo real (SSE `GET /api/events?lotId=`, polling de 10 s se o canal cair), auditoria pública `/lotes/:id/auditoria` (`GET /api/lots/:id/audit`), comprovante `/comprovantes/:token`, metadados/OG/ícones e 404 real. Testes: unit 57, integração 91, Vitest 49, E2E 16 (duas abas disputando, reta final até comprovante, provider fora). Design implementado resumido em `DESIGN.md`.
 - **Tarefa 8 concluída, só local:** telas `/entrar`, `/carteira`, `/painel/lotes`, `/painel/lotes/novo` e `/meus-arremates` com design system shadcn (tokens do HANDOFF, só tema claro), navegação por papel e menu móvel. Vitest do front 36 testes e E2E Playwright 5 testes verdes. Publicar de verdade ainda exige `AUDIT_HMAC_KEY`. Vitrine e sala ao vivo ficam na Tarefa 9.
@@ -27,9 +28,21 @@ README e página do Notion ([README — em elaboração](https://app.notion.com/
 3. `npm run db:up` — PostgreSQL dev em 127.0.0.1:5462 e teste em 5463.
 4. `npm run dev:api` (API, porta 4300) e `npm run dev:web` (site em http://127.0.0.1:3300).
 5. Verificação: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run db:validate`, `npm run build`. O Vitest do front (`npm run test:unit --workspace front-end`) cobre o cliente de API. E2E: `npm run test:e2e` (não faz parte da Tarefa 3; o Playwright sobe outro site na 3300).
+5b. Dados de demo: `npm run db:seed --workspace back-end` (só banco local; reexecutar não zera nada; `-- --preparar-lote` cria um lote novo aberto).
 6. Saúde da API, com ela no ar na porta 4300: `GET http://127.0.0.1:4300/api/health/live` e `GET http://127.0.0.1:4300/api/health/ready`. O mesmo health responde em `http://127.0.0.1:3300/api/health/live` porque o site encaminha `/api`. A resposta não traz senha nem URL de banco.
 7. A API usa `DATABASE_URL` com o papel `auction_app`, sem DDL. A migration local usa o owner só no runner, nos bancos 5462 e 5463. Não apontar a API para o owner e não aplicar migration fora do loopback. A chave `AUDIT_HMAC_KEY` e o diretório `AUDIT_WITNESS_DIR` ficam fora do banco e do Git; a API ainda não lê esses nomes porque a rota de auditoria entra depois. Sessão e CSRF não usam segredo novo no `.env`. `API_PROXY_TARGET` (padrão `http://127.0.0.1:4300`) e `WEB_ORIGIN` (origem extra, se houver) são opcionais.
 
+## Deploy (pendente)
+
+**Falta para o deploy (precisa de OK, conta ou segredo do Fernando):**
+
+1. Decidir a vulnerabilidade High do `multer` 2.4.0 (fixado por `@nestjs/platform-express` 12.2.0; a API não tem rota de upload). Opções: `overrides` para `multer` 2.5.0 (mudança de dependência, precisa de OK) ou aceitar o risco registrado. Até lá o passo `npm audit --audit-level=high` do CI falha.
+2. Escolher fornecedor e custo da API Node persistente, do PostgreSQL gerenciado e do disco durável para mídia e testemunha (`MEDIA_DIR`, `AUDIT_WITNESS_DIR`). Nada contratado.
+3. Criar conta/projeto na Vercel e no fornecedor da API e do banco (só o Fernando).
+4. Segredos de produção, gerados no painel do fornecedor e nunca no repo: `AUDIT_HMAC_KEY` nova (hex, 32+ bytes), senha do owner (só migração) e do `auction_app` (runtime), `DATABASE_URL`, `API_PROXY_TARGET`, `WEB_ORIGIN`/`SITE_URL` com o domínio real, `SEED_DEMO_PASSWORD` se não quiser a senha padrão de demo.
+5. Criar repositório remoto e autorizar push (o CI só roda no GitHub; ainda NÃO VERIFICADO).
+6. OK explícito para migração no banco hospedado, seed de demo e deploy.
+7. Depois do deploy: repetir anônimo/login/duas contas, SSE pelo proxy, metadados no HTML, Met fora, restart do worker, backup/restore de banco + mídia + testemunha; conferir lote aberto antes do envio de 29/10 ~18h17.
 ## Fontes e documentação
 
 - [Índice completo da pasta de decisões](docs/INICIO.md).

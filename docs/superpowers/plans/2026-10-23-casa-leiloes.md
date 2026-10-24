@@ -216,6 +216,8 @@ Nota 23/10/2026: feita sem cursor-agent. Smoke real do Met OK (busca 153 resulta
 - [ ] Atualizar README no Notion com comandos executados, `.env.example` por nomes, migrações/seed, credenciais **somente fictícias da demo**, regras/limitações/recuperação/testes/URLs e uso factual de Codex/Grok. Copiar bloco final para README.md local quando validado. PDF original privado não vai para repo público.
 - [ ] Verificar lote realmente aberto antes do envio de29/10/2026~18h17; repository/link públicos e sem segredos. Fernando revisa; push/publicação de repo/formulário somente com autorização. Registrar estado real de entrega.
 
+Nota 23/10 (parte local, commits `b68ca12` e `fe3c17f`): seed com teste vermelho/verde e reexecução segura; carga proporcional medida (p95 237 ms); sondas de segurança e correção do 413; CI ampliado (não executado, sem remote); `npm audit` com 2 High do multer aguardando decisão. Fornecedor, backup/restore, review independente, deploy e entrega continuam abertos e dependem de autorização. Evidência: `docs/evidence/2026-10-23-tarefa-10.md`.
+
 ## Cobertura e ordem
 
 | Requisitos | Tarefas responsáveis |

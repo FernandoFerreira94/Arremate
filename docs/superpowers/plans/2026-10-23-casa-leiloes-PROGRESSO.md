@@ -1,6 +1,16 @@
 # Progresso — Casa de Leilões
 
-Atualizado em 23/10/2026. Tarefa 8 concluída no local (telas privadas e entrar). As revisões independentes de auth, catálogo, carteira, lance, liquidação e componentes continuam abertas. Tarefa 9 concluída no local. Tarefa 10 (parte local) é a próxima.
+Atualizado em 23/10/2026. Tarefa 8 concluída no local (telas privadas e entrar). As revisões independentes de auth, catálogo, carteira, lance, liquidação e componentes continuam abertas. Tarefa 9 concluída no local. Tarefa 10 (parte local) concluída; deploy aguarda OK, contas e segredos do Fernando.
+
+## Tarefa 10 — parte local concluída
+
+- Commits `b68ca12` (seed, 413, carga) e `fe3c17f` (CI).
+- Seed idempotente com 1 leiloeiro + 2 licitantes fictícios, obra 437329 e 1 lote aberto; rodado no dev 5462.
+- Carga: 20 licitantes × 5 rodadas + carteira em dois lotes, p95 237 ms, invariantes ok.
+- Segurança: headers, SQL/JSON/página/sem sessão ok; corpo grande era 500, agora 413.
+- Testes: unit 59, integração 96, Vitest 49, E2E 16.
+- Pendente: decisão do multer (High), fornecedor/contas/segredos, push, CI real, deploy, backup/restore, review independente.
+- Evidência: `docs/evidence/2026-10-23-tarefa-10.md`.
 
 ## Tarefa 9 — concluída no local
 

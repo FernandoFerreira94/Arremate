@@ -37,7 +37,7 @@ Docker Compose `casadeleilao`, PostgreSQL 18 em duas instâncias/volumes própri
 
 `.env` local não versionado contém senhas aleatórias geradas; nunca copiar valores para logs/docs/Notion. `.env.example` documenta somente nomes/placeholders. Para reinstalar em outra máquina, gerar segredos locais e URLs adequadas antes de `db:up`. Não reutilizar credenciais locais em produção. `npm run db:stop` para apenas estes dois bancos; não usar down -v/reset sem aprovação.
 
-A Tarefa 1 criou o schema do núcleo e a migration `20261023104706_auction_core`, aplicada só nos Postgres locais 5462 e 5463. O papel da API continua `auction_app`. Seed de domínio ainda não existe.
+A Tarefa 1 criou o schema do núcleo e a migration `20261023104706_auction_core`, aplicada só nos Postgres locais 5462 e 5463. O papel da API continua `auction_app`. Seed de demo: `npm run db:seed --workspace back-end` (Tarefa 10), só em banco local; ver abaixo.
 
 ## Design e implantação
 
@@ -47,3 +47,9 @@ Destino: site Vercel + API persistente externa. Fornecedores e segredos de produ
 
 Shadcn é obrigatório por U13. Vite é peer do Vitest somente, não outro app web. Ajv8/formats2 na raiz satisfazem peers opcionais das ferramentas; Zod segue como validador planejado do formulário. Instalação com scripts de terceiros tem allowlist versionada no package.json. Limitações de dependências e resultados em docs/evidence/2026-10-23-bootstrap.md.
 
+
+## Seed de demonstração (Tarefa 10)
+
+- `npm run db:seed --workspace back-end`: cria `leiloeiro@arremate.demo`, `licitante1@arremate.demo` e `licitante2@arremate.demo` (fictícios), senha de demo `arremate-demo-2026` ou `SEED_DEMO_PASSWORD`; R$ 10.000 simulados por licitante; obra 437329 do snapshot local; 1 lote aberto por 7 dias.
+- Reexecutar não troca senha, não zera saldo, não apaga lance e não reabre lote. `npm run db:seed --workspace back-end -- --preparar-lote` cria um lote NOVO.
+- Exige `AUDIT_HMAC_KEY` (hex) e banco em 127.0.0.1/localhost. Usa `AUDIT_WITNESS_DIR` e `MEDIA_DIR` (padrão `.data/`), os mesmos da API.
