@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOutIcon, MenuIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { FlaskConicalIcon, LogOutIcon, MenuIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useLogout, useSession } from "@/features/auth/use-session";
@@ -46,7 +45,6 @@ export function SiteHeader() {
     <header className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1360px] items-center gap-4 px-4 lg:px-10">
         <Logo />
-        <Badge variant="warning" className="hidden sm:inline-flex">Demonstração · valores simulados</Badge>
         <nav aria-label="Principal" className="ml-4 hidden items-center gap-1 md:flex">
           {items.map((item) => (
             <Link
@@ -81,6 +79,11 @@ export function SiteHeader() {
             <div className="mt-auto">{account}</div>
           </SheetContent>
         </Sheet>
+      </div>
+      <div data-testid="demo-banner" className="flex items-center justify-center gap-2 border-t border-warning/30 bg-warning-soft px-4 py-2 text-center text-xs font-medium text-warning">
+        <FlaskConicalIcon aria-hidden className="size-3.5 shrink-0" />
+        <span className="sm:hidden">Demonstração · pagamentos simulados</span>
+        <span className="hidden sm:inline">Ambiente de demonstração · pagamentos simulados · nenhuma obra está à venda</span>
       </div>
     </header>
   );

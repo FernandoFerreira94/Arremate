@@ -1,0 +1,3 @@
+# Layouts existentes
+
+Shell global flex/min-h-dvh, header sticky e main max1360px/px4/lgpx10: [front-end/src/app/layout.tsx:25](../front-end/src/app/layout.tsx). Vitrine: grade sm2/lg4, gap4; [front-end/src/features/lots/showcase-page.tsx:70](../front-end/src/features/lots/showcase-page.tsx). Sala: grade lg12, colunas7/5 em [front-end/src/features/lots/lot-room-page.tsx:76](../front-end/src/features/lots/lot-room-page.tsx). Carteira tem CTA fixo mobile: [front-end/src/features/wallet/wallet-page.tsx:122](../front-end/src/features/wallet/wallet-page.tsx); não criar transform persistente em ancestrais das barras fixas.

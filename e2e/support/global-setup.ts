@@ -3,6 +3,7 @@ import { mkdirSync } from "node:fs";
 import { authFile, apiLoginFresh } from "./api-session";
 import { ensureE2eUsers } from "./demo-users";
 import { resetE2eDatabase } from "./reset-test-db";
+import { ensureE2eArtwork } from "./demo-artwork";
 
 /**
  * Uma senha e um login por conta por execução: o limite de login (10/min por IP) é regra do produto,
@@ -11,6 +12,7 @@ import { resetE2eDatabase } from "./reset-test-db";
 export default async function globalSetup(): Promise<void> {
   process.env.E2E_RUN_PASSWORD ??= randomBytes(18).toString("base64url");
   await resetE2eDatabase();
+  await ensureE2eArtwork();
   const users = await ensureE2eUsers();
   mkdirSync(".playwright-auth", { recursive: true });
   for (const role of ["auctioneer", "bidder", "bidder2"] as const) {

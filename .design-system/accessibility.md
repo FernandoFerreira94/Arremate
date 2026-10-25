@@ -1,0 +1,3 @@
+# Acessibilidade existente
+
+Skip link para #conteudo em [front-end/src/app/layout.tsx:27](../front-end/src/app/layout.tsx); foco2px/offset2px em [front-end/src/app/globals.css:84](../front-end/src/app/globals.css); reduced-motion global em [front-end/src/app/globals.css:85](../front-end/src/app/globals.css). Sheet/AlertDialog usam Radix, labels e descrições nas composições. O splash novo é decorativo/aria-hidden, não recebe foco, não substitui skeleton e deve sumir imediatamente por teclado/ponteiro/foco. Sem JS o conteúdo permanece acessível; impressão não inclui introdução. Registrar testes executados, sem alegar auditoria WCAG completa.

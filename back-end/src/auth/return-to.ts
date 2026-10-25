@@ -5,6 +5,9 @@ const RECEIPT = /^\/comprovantes\/[A-Za-z0-9_-]{20,128}$/;
 const STATIC_PATHS = new Set([
   "/",
   "/entrar",
+  "/termos",
+  "/privacidade",
+  "/como-funciona",
   "/painel/lotes",
   "/painel/lotes/novo",
   "/carteira",

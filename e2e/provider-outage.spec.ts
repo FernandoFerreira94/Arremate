@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { apiAs, publishLot } from "./support/api-session";
+import { E2E_BASE } from "./support/e2e-env";
 
 /**
  * O navegador nunca fala com o The Met: imagem e ficha vêm do snapshot local.
@@ -17,7 +18,11 @@ test("com o The Met inacessível, vitrine, sala e imagem continuam vindo do snap
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByText("Sobre o lote")).toBeVisible();
   const image = page.locator("figure img");
-  await expect(image).toHaveAttribute("src", /^\/api\/media\//);
+  await expect(image).toHaveAttribute("src", /\/_next\/image\?/);
+  const optimized = new URL((await image.getAttribute("src")) ?? "", E2E_BASE);
+  expect(optimized.origin).toBe(E2E_BASE);
+  expect(optimized.pathname).toBe("/_next/image");
+  expect(optimized.searchParams.get("url")).toMatch(/^\/api\/media\/[a-f0-9]{64}\.(jpg|png|webp)$/);
   await expect.poll(() => image.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true);
   await expect(page.getByText(/The Met|Metropolitan/).first()).toBeVisible();
 

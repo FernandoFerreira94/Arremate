@@ -86,3 +86,96 @@
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 }
+
+/* Extensão de motion aprovada em 24/10; a identidade continua no HANDOFF-GROK. */
+:root {
+  --motion-entry-duration: 850ms;
+  --motion-entry-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --layer-intro: 70;
+}
+
+.brand-intro { display: none; }
+html[data-arremate-intro="playing"] .brand-intro {
+  position: fixed;
+  inset: 0;
+  z-index: var(--layer-intro);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--background);
+  pointer-events: none;
+  animation: intro-exit 800ms cubic-bezier(0.4, 0, 0.2, 1) 2200ms forwards;
+}
+.brand-intro__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  animation: entry-assemble var(--motion-entry-duration) var(--motion-entry-ease) both;
+}
+.brand-intro__letter {
+  font-family: var(--font-serif);
+  font-size: 64px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--primary-foreground);
+}
+.brand-intro__mark svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.brand-intro__mark rect {
+  stroke: var(--accent);
+  stroke-width: 1.25;
+  stroke-dasharray: 1;
+  animation: intro-frame 1200ms cubic-bezier(0.4, 0, 0.2, 1) 250ms both;
+}
+.brand-intro__name {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--foreground);
+  animation: entry-reveal 900ms var(--motion-entry-ease) 600ms both;
+}
+
+/* Só opacity nos grupos: transform em ancestral quebraria os CTAs fixos mobile. */
+.page-entrance > div > :not([role="alert"], [role="status"]),
+.page-entrance [data-slot="card"] {
+  animation: entry-reveal var(--motion-entry-duration) var(--motion-entry-ease) backwards;
+}
+.page-entrance > div > :nth-child(2) { animation-delay: 160ms; }
+.page-entrance > div > :nth-child(3) { animation-delay: 300ms; }
+.page-entrance > div > :nth-child(n + 4) { animation-delay: 440ms; }
+.page-entrance h1,
+.page-entrance ul > li {
+  animation: entry-assemble var(--motion-entry-duration) var(--motion-entry-ease) backwards;
+}
+.page-entrance ul > li:nth-child(2) { animation-delay: 100ms; }
+.page-entrance ul > li:nth-child(3) { animation-delay: 200ms; }
+.page-entrance ul > li:nth-child(4) { animation-delay: 300ms; }
+.page-entrance ul > li:nth-child(5) { animation-delay: 400ms; }
+.page-entrance ul > li:nth-child(6) { animation-delay: 500ms; }
+.page-entrance ul > li:nth-child(n + 7) { animation-delay: 600ms; }
+html[data-arremate-intro="playing"] .page-entrance :is(h1, ul > li, [data-slot="card"]),
+html[data-arremate-intro="playing"] .page-entrance > div > * { animation-play-state: paused; }
+
+@keyframes entry-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes entry-assemble { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes intro-frame { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes intro-exit { to { opacity: 0; visibility: hidden; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-arremate-intro="playing"] .brand-intro { display: none; }
+  .page-entrance *, .page-entrance *::before, .page-entrance *::after { animation: none !important; }
+}
+@media print {
+  .brand-intro { display: none !important; }
+  .page-entrance * { animation: none !important; }
+}
+
+
+
+/* Foco torna o conteúdo imediatamente visível e não reinicia a sequência ao sair. */
+.page-entrance[data-entry-interrupted] * { animation: none !important; }

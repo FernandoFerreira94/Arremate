@@ -1,5 +1,6 @@
 "use client";
 
+import { ArtworkImage } from "@/components/app/artwork-image";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -134,8 +135,8 @@ export function MyLotsPage() {
                     <TableRow key={lot.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          {/* eslint-disable-next-line @next/next/no-img-element -- mídia local persistida pela API */}
-                          <img src={lot.imageUrl} alt="" className="size-10 rounded-sm object-cover" />
+
+                          <ArtworkImage src={lot.imageUrl} alt="" width={40} height={40} sizes="40px" className="size-10 rounded-sm object-cover" />
                           <span className="font-medium">{lot.title}</span>
                         </div>
                       </TableCell>

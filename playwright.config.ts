@@ -10,6 +10,7 @@ const testDatabaseUrl = e2eDatabaseUrl(process.env.TEST_DATABASE_URL);
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
+  workers: 1, // Mesmas contas/banco; concorrência de lances é exercitada dentro do cenário próprio.
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: "list",
@@ -28,6 +29,7 @@ export default defineConfig({
         API_HOST: "127.0.0.1",
         WEB_ORIGIN: E2E_BASE,
         AUDIT_WITNESS_DIR: resolve(__dirname, ".data/witness-e2e"),
+        MEDIA_DIR: resolve(__dirname, ".data/media-e2e"),
       },
     },
     {

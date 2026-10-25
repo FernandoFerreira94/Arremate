@@ -310,3 +310,8 @@ Fora do design: R05, R28–R33, U01, U05, U06, U09–U11.
 ## D13 — Liberação da implementação (Fernando, 23/10/2026 10:26)
 
 Fernando: “Libero: aceito HTML/PNG sem Penpot, arquitetura em aberto como risco, e Tarefa 1 com migration local e commits locais”. Começar pela Tarefa 1. Migration só no banco local (dev/teste, portas 5462/5463); commits locais permitidos; push, PR, deploy e gasto continuam exigindo autorização própria. Itens abertos do S5 são riscos: decidir e registrar na tarefa que depender deles, sem bloquear o início.
+
+## Entrada animada — 24/10/2026
+
+- [x] Extensão D17 aprovada e implementada: splash temático800ms por sessão e montagem das telas, preservando o design aprovado e dados ao vivo. Plano específico e escopo: [entrada animada](2026-10-24-entrada-animada.md).
+- [x] Testes/review/evidência da extensão registrados em [resultado](../../evidence/2026-10-24-entrada-animada.md). Isso não conclui gates de release ou tarefas de outras janelas.

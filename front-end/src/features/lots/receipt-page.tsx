@@ -1,5 +1,6 @@
 "use client";
 
+import { ArtworkImage } from "@/components/app/artwork-image";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -43,8 +44,8 @@ export function ReceiptPage({ token }: { token: string }) {
       <Card>
         <CardHeader><CardTitle>{r.artwork.title}</CardTitle></CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-[12rem_1fr]">
-          {/* eslint-disable-next-line @next/next/no-img-element -- mídia local já validada pela API */}
-          <img src={r.artwork.imageUrl} alt={`${r.artwork.title}, ${r.artwork.artist}`} className="w-full rounded-md bg-muted object-cover" />
+
+          <ArtworkImage src={r.artwork.imageUrl} alt={`${r.artwork.title}, ${r.artwork.artist}`} width={400} height={400} sizes="(min-width: 640px) 192px, 100vw" className="h-auto w-full rounded-md bg-muted object-cover" />
           <dl className="grid grid-cols-[minmax(0,9rem)_1fr] gap-y-2 text-sm">
             <dt className="text-muted-foreground">Artista</dt><dd>{r.artwork.artist}</dd>
             <dt className="text-muted-foreground">Arrematante</dt><dd>{r.winnerAlias}</dd>

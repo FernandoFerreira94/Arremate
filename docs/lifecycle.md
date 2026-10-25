@@ -126,6 +126,22 @@ Tarefa 2 concluída em 23/10/2026: cadeia HMAC e testemunha fora do banco, com f
 
 Tarefa 3 concluída em 23/10/2026: sessão opaca, CSRF, papéis e proxy same-origin. Evidência em [docs/evidence/2026-10-23-tarefa-3.md](evidence/2026-10-23-tarefa-3.md). O rewrite externo do Next não encaminhou o cookie; o caminho `/api` ficou no Route Handler. Produção da API continua sem fornecedor. Nada foi contratado.
 
+## Entrada animada — 24/10/2026
+
+D17: Fernando aprovou e autorizou implementar a direção visual proposta. Extensão localizada ao shell/frontend, sem dependência/schema/config de negócio novos; identidade D01–D12 preservada. Plano e evidência próprios em docs/superpowers/plans/2026-10-24-entrada-animada.md e docs/evidence/2026-10-24-entrada-animada.md. Motion validado em build local de produção; nenhum deploy/push efetuado. Demais riscos/gates do projeto permanecem conforme suas fontes.
+
+## D19 — Ritmo mais lento — 24/10/2026
+
+Calibragem visual solicitada: splash3s, componentes850ms e saída800ms. Mesma identidade/sem dependências novas; foco permanece visível. Browser isolado6checks e tipos/lint/build frontend; suíte integrada bloqueada por Docker desligado. Não altera status de release ou decisões de infraestrutura. Registro completo em docs/evidence/2026-10-24-entrada-animada.md.
+
+Revalidação D19 com Docker ativo (24/10/2026):20E2E aprovados, exit0, em build próprio web3310/API4310 e PostgreSQL de teste5463. Bloqueio de ambiente resolvido; nenhuma alteração de código/migration/config ou status de release/deploy.
+
+
 ## D20 — Preparação do Supabase — 24/10/2026
 
 Executada a preparação local da etapa 7, independente das pranchas solicitadas ao Fred: seleção de DIRECT_URL no Prisma CLI, exemplo vazio, guia de pooler/TLS/permissões e Data API desligada. Sem acesso/migration/seed/deploy hospedado e sem mudança de UI/schema/dependências. S5/S7/release permanecem conforme os gates existentes. Evidência: docs/evidence/2026-10-24-auth-pagamentos.md. Etapas 1–6 de auth/pagamentos seguem abertas; uso real do Supabase aguarda projeto/credenciais/OK de Fernando.
+
+
+## D21 — Auth/pagamentos, etapa 1 — 24/10/2026
+
+Aplicada A7 com faixa/rodapé e recursos Next previstos no pedido: imagens otimizadas com fallback, estados por rota e OG por lote. Evidência consolidada em docs/evidence/2026-10-24-auth-pagamentos.md. Tokens, next/font e alterações paralelas preservados. Sem concluir etapas2–6 ou release. Supabase arremate-verzel provisionado com autorização direta; Custelo já inativo. Schema/seed/deploy hospedados seguem sem autorização. Notion continua pendente do bloqueio automático informado.

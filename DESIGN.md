@@ -33,4 +33,12 @@ Só tema claro (D08). Sem dark mode.
 
 ## Evidência visual
 
-`docs/evidence/screenshots/tarefa-8/` e `tarefa-9/` (1440 e 390 px). `.design-system/` não foi criado: o HANDOFF + este arquivo cobrem a mesma função sem duplicar tokens.
+`docs/evidence/screenshots/tarefa-8/` e `tarefa-9/` (1440 e 390 px). `.design-system/` contém agora um índice documental do código/HANDOFF, extraído antes da extensão D17; tokens continuam canônicos em globals.css e a direção visual no HANDOFF, sem duplicação de tema.
+
+## Entrada animada — 24/10/2026
+
+D17: splash800ms por sessão e entrada sequencial200ms dos blocos, até8px, com CSS nativo. BrandIntro é decorativo; o script estático no head decide antes do primeiro frame e omite a introdução em reduced-motion/storage indisponível. Interação cancela imediatamente. PageEntrance usa pathname, sem reanimar dados ao vivo; sem transform persistente em ancestrais dos CTAs fixos. [Motion](.design-system/animations.md) e [evidência](docs/evidence/2026-10-24-entrada-animada.md).
+
+## D19 — Ritmo mais lento — 24/10/2026
+
+Tempos vigentes: splash3s, saída800ms, componentes850ms e cards escalonados100–600ms. Isso substitui o tempo inicial800/200ms acima. Interação/foco continuam imediatos; o wrapper mantém data-entry-interrupted até trocar rota, evitando foco invisível e reentrada ao desfocar. Sem mudar identidade/estrutura financeira.

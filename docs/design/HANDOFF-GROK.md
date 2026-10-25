@@ -152,3 +152,13 @@ Páginas sem requisito próprio: **Entrar 08** (E1–E7, M1–M3: inválido, cre
 4. Resolvido (decisão do diretor de design, 23/10): lote 0016 passou a usar *O rapto das sabinas* (Poussin), obra única por lote.
 5. Resolvido (23/10): favicon unificado com o “A” em Fraunces e borda escura do OG recortada.
 6. Aprovado: Design Freeze declarado por Fernando em 23/10 (D12). Seguem pendentes só os itens 1 (a11y, na implementação) e 3 (textos/códigos de erro com o back).
+
+## Entrada animada — 24/10/2026
+
+Extensão D17 aprovada por Fernando após o Design Freeze: splash com o monograma A/moldura latão/papel, sem som, cerca800ms total, somente primeiro acesso da sessão. Fade e deslocamento máximo8px em títulos/cards, defasagem curta; movimentos individuais200ms/ease-out. Respeitar reduced-motion, acesso imediato por interação e nenhuma animação de contagem financeira. Sem nova direção visual ou biblioteca.
+
+Fonte de implementação: front-end/src/components/app/{brand-intro,page-entrance}.tsx e globals.css. Detalhes/testes: [plano](../superpowers/plans/2026-10-24-entrada-animada.md) e [evidência](../evidence/2026-10-24-entrada-animada.md). A matriz original das nove páginas permanece.
+
+## D19 — Ritmo mais lento — 24/10/2026
+
+Pedido expresso de Fernando supera os tempos iniciais de D17/HANDOFF: splash3s, saída gradual800ms (inicia aos2200ms), componentes850ms com intervalos100–600ms. Moldura1200ms e nome900ms. Mesma identidade e displacement8px; sem nova biblioteca. Teclado/ponteiro/foco e movimento reduzido continuam liberando acesso imediato. Fonte ativa de motion: .design-system/animations.md e globals.css.

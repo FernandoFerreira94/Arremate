@@ -9,7 +9,7 @@ type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const lot = await fetchPublicLotMeta(id);
-  if (!lot) return { title: "Lote não encontrado", robots: { index: false, follow: false } };
+  if (!lot) notFound();
   return pageMetadata({ title: lot.title, description: `Sala do lote ${lot.title}${lot.artist ? `, de ${lot.artist}` : ""}. Leilão simulado de obra de acervo público.`, path: `/lotes/${id}` });
 }
 

@@ -106,9 +106,21 @@ Tarefa 9: `npm run lint`, `npm run typecheck`, `npm test` (57), `npm run test:in
 - SSE pelo proxy não foi medido.
 - CI do GitHub não foi executado (E2E local verde na Tarefa 8).
 
+- 24/10: D18 conteúdo de demonstração implementado só local (seed de 24 obras, estimativa e laudo simulados). Evidência: docs/evidence/2026-10-24-conteudo-demo.md.
+
 ## Auth/pagamentos — preparação independente das pranchas (24/10/2026)
 
 - D20: Supabase somente PostgreSQL; Prisma CLI prefere DIRECT_URL, com fallback local DATABASE_URL; runtime permanece separado.
 - Etapa 7 preparada localmente: variável de exemplo vazia e guia de Session pooler/TLS/roles/Data API. Validação e revisão em docs/evidence/2026-10-24-auth-pagamentos.md.
 - Etapas 1–6 (faixa/imagens/estados, cadastro, Pix, histórico/extrato, cartão, Google) continuam pendentes. Novas pranchas com Fred.
 - Nenhum banco hospedado acessado/migrado/semeado; sem deploy/push. Projeto/credenciais/validação Supabase e OK para migration/seed/deploy dependem de Fernando.
+
+
+## Auth/pagamentos — etapa 1 (D21, 24/10/2026)
+
+- Implementados faixa A7, rodapé e páginas Termos/Privacidade/Como funciona; next/image em8usos/7arquivos, fallback e origens restritas; loading/error em12segmentos;404 locais e OG por lote. Fonte Fraunces oficial/OFL, mantendo next/font.
+- Evidência e gates reais: docs/evidence/2026-10-24-auth-pagamentos.md. Plano específico: 2026-10-24-auth-pagamentos-etapa-1.md. Sem declarar etapas2–6 concluídas.
+- Supabase arremate-verzel criado em sa-east-1 por autorização direta, US$0/mês cotados, ACTIVE_HEALTHY; Custelo já INACTIVE. Não houve migration/seed da aplicação nem deploy hospedado.
+- Notion segue bloqueado pela revisão automática, sem gravações externas. Alterações paralelas de motion/pranchas ficam fora do commit.
+
+Estado desta etapa: EM ANDAMENTO, sem commit. E2E bloqueado antes de iniciar pela porta4310 ocupada; lint/tipos, API65, front60 e integração99 aprovados. Imagens/OG/status404/screenshot finais pendentes. Minor de fallback A→B→A registrado na evidência.

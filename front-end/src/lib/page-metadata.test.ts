@@ -31,3 +31,12 @@ describe("pageMetadata", () => {
     expect(String(meta.description).length).toBeLessThanOrEqual(160);
   });
 });
+
+
+it("usa a imagem social individual do lote também no Twitter, sem preço", () => {
+  const lotPath = "/lotes/00000000-0000-4000-8000-000000000001";
+  const meta = pageMetadata({ title: "Obra", description: "Arte simulada", path: lotPath, base: "https://arremate.example.com" });
+  const expected = "https://arremate.example.com" + lotPath + "/opengraph-image";
+  expect(meta.openGraph).toMatchObject({ images: [{ url: expected, width: 1200, height: 630 }] });
+  expect(meta.twitter).toMatchObject({ images: [expected] });
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import { ArtworkImage } from "@/components/app/artwork-image";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -79,8 +80,8 @@ function AwardCard({ award }: { award: Award }) {
   }
   return (
     <li className="flex gap-4 rounded-lg border p-3">
-      {/* eslint-disable-next-line @next/next/no-img-element -- mídia local persistida pela API */}
-      <img src={award.imageUrl} alt="" className="size-20 rounded-md object-cover" />
+
+      <ArtworkImage src={award.imageUrl} alt="" width={80} height={80} sizes="80px" className="size-20 rounded-md object-cover" />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate font-serif font-semibold">{award.title}</p>
         <p className="text-sm tabular-nums">{formatBrl(award.amountCents)} · {formatBrt(award.settledAt)}</p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { ArtworkImage } from "@/components/app/artwork-image";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useId, useMemo, useRef, useState } from "react";
@@ -93,8 +94,8 @@ export function WalletPage() {
                       <TableRow key={row.lotId}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            {/* eslint-disable-next-line @next/next/no-img-element -- mídia local persistida pela API */}
-                            <img src={row.imageUrl} alt="" className="size-10 rounded-sm object-cover" />
+
+                            <ArtworkImage src={row.imageUrl} alt="" width={40} height={40} sizes="40px" className="size-10 rounded-sm object-cover" />
                             <span className="font-medium">{row.title}</span>
                           </div>
                         </TableCell>

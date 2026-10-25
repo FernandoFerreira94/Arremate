@@ -7,3 +7,15 @@ describe("rewrite same-origin", () => {
     expect(JSON.stringify(rewrites ?? null)).not.toContain("/api/:path*");
   });
 });
+
+
+describe("origens da otimização de imagens", () => {
+  it("restringe imagens locais à mídia pública sem query", () => {
+    expect(nextConfig.images?.localPatterns).toEqual([{ pathname: "/api/media/**", search: "" }]);
+  });
+  it("aceita só o caminho público HTTPS do Met, sem redirect ou IP privado", () => {
+    expect(nextConfig.images?.remotePatterns).toEqual([{ protocol: "https", hostname: "images.metmuseum.org", port: "", pathname: "/CRDImages/**", search: "" }]);
+    expect(nextConfig.images?.maximumRedirects).toBe(0);
+    expect(nextConfig.images?.dangerouslyAllowLocalIP ?? false).toBe(false);
+  });
+});

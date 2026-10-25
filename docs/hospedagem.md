@@ -79,3 +79,10 @@ Montar a CA fora do repositório, em caminho absoluto legível pelo processo. N�
 7. Deploy requer novo OK, API persistente escolhida e volumes duráveis para mídia e testemunha HMAC fora do banco. Validar login, CSRF, SSE/proxy, concorrência, liquidação, restart e restauração conjunta de PostgreSQL + mídia + testemunha. Backup só do banco não comprova integridade recuperável.
 
 **NÃO VERIFICADO:** conexão/TLS/CA reais, configuração Data API, papéis/grants, versão e migrations no Supabase, seed, backup/restore, custo e deploy. Esta etapa prepara código/documentação; nenhum recurso hospedado foi consultado ou alterado. Prazo de trabalho vigente: **29/10/2026 às 18h (America/Sao_Paulo)**, conforme pedido atual de Fernando.
+
+
+### D20 — Projeto provisionado por autorização direta (24/10/2026)
+
+Fernando autorizou verificar/pausar o ativo e criar um projeto para o teste, confirmando a única organização retornada. Custelo já estava INACTIVE; não foi pausado novamente. Supabase **arremate-verzel**, ref **hrqqppepnmzxrrxxqnsf**, região **sa-east-1 (São Paulo)**, PostgreSQL **17.11.0.003**, criado e confirmado **ACTIVE_HEALTHY**. [Painel do projeto](https://supabase.com/dashboard/project/hrqqppepnmzxrrxxqnsf). Custo de criação cotado **US$0/mês**, organização Free; não contratado upgrade.
+
+Esse provisionamento atualiza o estado anterior de projeto ainda não criado. Não foi feita querySQL, migration, seed, grant, mudança de Data API, configuração de credenciais da aplicação ou deploy hospedado. As verificações e autorizações dos passos1–7 acima continuam necessárias antes de usar esse banco. Conexão/TLS, permissões e backup/restore continuam NÃO VERIFICADOS. Nenhum segredo foi solicitado ou registrado.

@@ -81,3 +81,9 @@ describe("sessão e fronteira", () => {
     await expect(verifyPassword(encoded, "outra-senha")).resolves.toBe(false);
   }, 20000);
 });
+
+
+it.each(["/termos", "/privacidade", "/como-funciona"])("login pode retornar à página pública %s", (destination) => {
+  expect(resolveReturnTo(destination, "BIDDER")).toEqual({ ok: true, path: destination });
+  expect(resolveReturnTo(destination, "AUCTIONEER")).toEqual({ ok: true, path: destination });
+});

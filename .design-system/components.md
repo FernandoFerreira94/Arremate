@@ -1,0 +1,3 @@
+# Componentes existentes
+
+Primitivas shadcn/Radix em front-end/src/components/ui: Button, Card, Badge, Alert, AlertDialog, Sheet, Input, Label, Skeleton, Table e Tabs. Button tem default/outline/ghost/destructive/link, tamanhos default/sm/lg/icon: [front-end/src/components/ui/button.tsx:9](../front-end/src/components/ui/button.tsx). Composição de lote em [front-end/src/features/lots/lot-card.tsx:11](../front-end/src/features/lots/lot-card.tsx); shell de título em [front-end/src/components/app/page-shell.tsx:1](../front-end/src/components/app/page-shell.tsx). Não criar outro Button/Card para motion; preservar semântica e handlers existentes.

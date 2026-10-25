@@ -20,7 +20,8 @@ export function pageMetadata(input: { title: string; description: string; path: 
   const title = clip(input.title, 70);
   const description = clip(input.description, 160);
   const social = title.includes("Arremate") ? title : `${title} · Arremate`;
-  const image = { url: `${base}/opengraph-image`, width: 1200, height: 630, alt: "Arremate — leilões simulados de arte de acervo público" };
+  const lotPath = /^\/lotes\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(path);
+  const image = { url: `${base}${lotPath ? path : ""}/opengraph-image`, width: 1200, height: 630, alt: "Arremate — leilões simulados de arte de acervo público" };
   return {
     title,
     description,

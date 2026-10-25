@@ -1,5 +1,6 @@
 "use client";
 
+import { ArtworkImage } from "@/components/app/artwork-image";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useId, useMemo, useState } from "react";
@@ -76,8 +77,7 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-7">
           <figure>
-            {/* eslint-disable-next-line @next/next/no-img-element -- mídia local já validada pela API */}
-            <img src={data.imageUrl} alt={`${data.title}, ${data.artist}`} className="w-full rounded-lg bg-muted object-contain" />
+            <ArtworkImage src={data.imageUrl} alt={`${data.title}, ${data.artist}`} width={1200} height={900} sizes="(min-width: 1360px) 728px, (min-width: 1024px) 58vw, 100vw" preload className="h-auto w-full rounded-lg bg-muted object-contain" />
             <figcaption className="mt-2 text-xs text-muted-foreground">{data.credit} · {data.license}</figcaption>
           </figure>
           <AboutCard lot={data} />

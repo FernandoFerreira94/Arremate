@@ -1,5 +1,6 @@
 "use client";
 
+import { ArtworkImage } from "@/components/app/artwork-image";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -140,8 +141,8 @@ export function NewLotPage() {
                       return (
                         <li key={item.externalId} className={cn("flex flex-col overflow-hidden rounded-lg border bg-card", isSelected && "border-primary ring-1 ring-primary")}>
                           {item.thumbnailUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element -- miniatura do catálogo público, só para escolha
-                            <img src={item.thumbnailUrl} alt="" className="aspect-[4/3] w-full object-cover" referrerPolicy="no-referrer" />
+
+                            <ArtworkImage src={item.thumbnailUrl} alt="" width={800} height={600} sizes="(min-width: 768px) 15vw, 50vw" className="aspect-[4/3] h-auto w-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
                             <div className="grid aspect-[4/3] place-items-center bg-muted text-xs text-muted-foreground">Imagem indisponível</div>
                           )}
@@ -190,8 +191,8 @@ export function NewLotPage() {
           {selected ? (
             <Card className="overflow-hidden">
               {selected.thumbnailUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- prévia da obra escolhida
-                <img src={selected.thumbnailUrl} alt={selected.title} className="aspect-[16/10] w-full object-cover" referrerPolicy="no-referrer" />
+
+                <ArtworkImage src={selected.thumbnailUrl} alt={selected.title} width={800} height={500} sizes="(min-width: 1024px) 42vw, 100vw" className="aspect-[16/10] h-auto w-full object-cover" referrerPolicy="no-referrer" />
               ) : null}
               <CardContent className="flex flex-col gap-1">
                 <Badge variant="warning" className="self-start">Obra selecionada</Badge>

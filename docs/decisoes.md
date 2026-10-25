@@ -122,8 +122,33 @@ Contrato: [api.md](api.md). Evidência: [2026-10-23-tarefa-3.md](evidence/2026-1
 | --- | --- | --- |
 | D16 | Fernando: “Aprovo o radix-ui”. O pacote `radix-ui` 1.8.1 (versão exata no lockfile), base das primitivas oficiais do shadcn (Dialog, AlertDialog, Tabs, Slot do Button), fica aprovado para a Tarefa 8 em diante | `front-end/package.json`, `package-lock.json` |
 
+## D17 — Entrada animada — 24/10/2026
+
+Fernando aprovou explicitamente a proposta com “Aprovar e implementar”: splash de cerca800ms com A/Fraunces e moldura latão sobre papel, sem som, uma vez por sessão da aba. Em seguida, fade e deslocamento até8px na montagem das páginas; sem reiniciar por alteração de lance/saldo/cronômetro. Movimento reduzido, storage bloqueado e interação por teclado/ponteiro/foco liberam acesso imediatamente.
+
+Implementação nativa CSS, sem dependência/configuração nova. Preserva D01–D12 e shadcn; movimentos individuais200ms, sequência total do splash800ms incluindo pausa/saída. [Plano](superpowers/plans/2026-10-24-entrada-animada.md) e [evidência](evidence/2026-10-24-entrada-animada.md). Não implica aprovação de release/deploy.
+
+## D18 - Conteúdo de demonstração (proposta do Fred) - 24/10/2026
+
+Fernando, 24/10 08:28: "Aprovo a proposta do Fred com estimativa e laudo marcados como simulados". Seed com 24 obras CC0 do The Met (idempotente, pelos serviços normais; "Encerrando" é derivado do tempo restante, não é estado novo). Campos novos no lote: estimativa (`estimate_low_cents`/`estimate_high_cents`) e laudo de conservação (`condition_report`), sempre exibidos como "Simulado para demonstração". UI: nota do artista, proveniência com link "Ver no The Met", técnica e nº de lances no cartão. Migration `20261024090000_lot_simulated_estimate`. Sem dependência nova; não implica release/deploy. [Proposta](design/PROPOSTA-CONTEUDO.md), [evidência](evidence/2026-10-24-conteudo-demo.md). (Numerada D18 porque D17 já foi usada pela entrada animada.)
+
+## D19 — Ritmo mais lento — 24/10/2026
+
+Fernando: “ainda assim está muito rápido, deixa mais devagar, vamos usar3s e mais devagar as entradas dos componentes na página”. Substitui os tempos iniciais de D17: splash3000ms; saída800ms a partir de2200ms; moldura1200ms; nome900ms; componentes850ms; intervalos100–600ms nos cards e160/300/440ms nos blocos. Mantém até8px, sessão única, identidade, reduced-motion e interrupção por interação. Foco no conteúdo cancela a sequência dessa rota persistentemente, para não esconder campos nem reanimar ao desfocar.
+
 ## D20 — Supabase somente PostgreSQL — 24/10/2026
 
 Fernando definiu Supabase como banco, com Prisma e duas conexões (`DATABASE_URL` runtime, `DIRECT_URL` para CLI/migrations). Sem Supabase Auth, PostgREST, Storage nem RLS como regra de negócio; autorização no Nest. API persistente com Session pooler 5432 e papel `auction_app` sem DDL; migrations por papel separado/conexão direta ou Session. Data API desativada antes das tabelas. TLS com validação de certificado; guia e limitações em [hospedagem](hospedagem.md#supabase-somente-postgresql--d20-preparação-local-24102026).
 
 Retomada de Fernando autoriza adiantar esta etapa independente das pranchas do Fred. D19 já pertence à calibragem da entrada e foi preservada. Esta é a preparação da etapa 7; etapas 1–6 de auth/pagamentos não são declaradas concluídas. Nenhuma conexão, migration, seed ou deploy hospedado autorizado/executado. [Plano](superpowers/plans/2026-10-24-preparacao-supabase.md) e [evidência](evidence/2026-10-24-auth-pagamentos.md).
+
+
+## D21 — Adendo A7 e recursos Next — 24/10/2026
+
+Pedido de Fernando autoriza etapa1 do adendo auth/pagamentos após entrega das pranchas A1–A7: faixa fixa de pagamentos simulados, links funcionais para Termos/Privacidade/Como funciona, next/image nos sete arquivos (oito imagens), loading/error por rota e OG por lote. Reutilizar tokens/componentes existentes; manter next/font, metadata,404 raiz e motion paralelo. Prioridade só na imagem principal da Sala; Next16 usa preload no lugar da prop priority obsoleta. Sem pacote novo nem mudança de schema/auth.
+
+Pranchas em docs/design/pranchas/auth-pagamentos; A7 aplicada neste recorte. Cadastro/Google/Pix/cartão/histórico continuam para etapas próprias; visitante não recebe link Criar conta antes de a rota existir. Conflitos de proposta e Freeze registrados na evidência, sem alterar DECISOES-VISUAIS.md. Plano: superpowers/plans/2026-10-24-auth-pagamentos-etapa-1.md.
+
+### D20 — provisionamento autorizado no Supabase
+
+Fernando pediu verificar o ativo, pausar e criar o banco do teste; confirmou a organização webcode.ff. Só Custelo foi listado, já INACTIVE. Criado arremate-verzel (ref hrqqppepnmzxrrxxqnsf) em sa-east-1, PostgreSQL17.11, confirmado ACTIVE_HEALTHY, custo cotado US$0/mês. Nenhuma pausa desnecessária, conexão da aplicação, migration ou seed hospedada. Aprovação de criar o projeto não autoriza migration/seed/deploy.
