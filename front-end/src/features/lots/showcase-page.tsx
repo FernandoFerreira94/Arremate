@@ -61,8 +61,8 @@ export function ShowcasePage() {
     <div className="flex flex-col gap-6">
       <NextAuctionHero />
       <div className="max-w-3xl">
-        <h1 className="text-4xl lg:text-5xl">Leilões de arte de acervo público</h1>
-        <p className="mt-2 text-muted-foreground">
+        <h1 className="text-2xl lg:text-3xl">Leilões de arte de acervo público</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Lotes de demonstração criados a partir do acervo aberto do The Met. Lances e saldos são simulados; as obras originais não estão à venda.
         </p>
       </div>
