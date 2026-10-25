@@ -1,4 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { markTourSeen } from "./support/tour";
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
+});
 
 test("vitrine pública: título, abas e estado vazio ou cartões, sem login", async ({ page }) => {
   await page.goto("/");
@@ -8,7 +13,7 @@ test("vitrine pública: título, abas e estado vazio ou cartões, sem login", as
   await expect(page.getByRole("tab", { name: /Encerrados/ })).toBeVisible();
   await expect(page.getByText(/Nenhum lote ao vivo|Abrir sala/).first()).toBeVisible();
   await page.getByRole("tab", { name: /Agendados/ }).click();
-  await expect(page.getByText(/Nenhum lote agendado|Abrir sala/).first()).toBeVisible();
+  await expect(page.getByText(/Nenhum lote agendado|Avise-me|Avisaremos/).first()).toBeVisible();
 });
 
 test("comprovante com token válido mas inexistente mostra erro real, sem selo positivo", async ({ page }) => {

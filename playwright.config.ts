@@ -38,7 +38,7 @@ export default defineConfig({
       url: E2E_BASE,
       reuseExistingServer: false,
       timeout: 300000,
-      env: { NEXT_DIST_DIR: ".next-e2e", API_PROXY_TARGET: E2E_API, SITE_URL: E2E_BASE },
+      env: { NEXT_PUBLIC_DEMO_LOGIN: "true", NEXT_DIST_DIR: ".next-e2e", API_PROXY_TARGET: E2E_API, SITE_URL: E2E_BASE },
     },
   ],
 });

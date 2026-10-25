@@ -71,10 +71,11 @@ test("entrada acompanha a rota, sem repetir splash nem reiniciar a cada render d
   const starts = await page.locator(".page-entrance").getAttribute("data-entry-starts");
   await page.waitForTimeout(1100);
   await expect(page.locator(".page-entrance")).toHaveAttribute("data-entry-starts", starts ?? "0");
-  await page.getByRole("link", { name: "Entrar", exact: true }).first().click();
-  await expect(page.locator(".page-entrance")).toHaveAttribute("data-page-path", "/entrar");
+  // Rodada 3: "Entrar" virou Sheet (sem troca de rota); a navegação é conferida por um link real do cabeçalho.
+  await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Como funciona", exact: true }).click();
+  await expect(page.locator(".page-entrance")).toHaveAttribute("data-page-path", "/como-funciona");
   await expect(page.locator(".brand-intro")).toBeHidden();
-  await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Como funciona a demonstração" })).toBeVisible();
 });
 
 test("movimento reduzido omite splash e animações de entrada", async ({ page }) => {

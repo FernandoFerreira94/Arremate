@@ -76,6 +76,21 @@
   --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
 }
 
+/* Transições do Sheet equivalentes ao shadcn (tw-animate-css não instalado): fade do overlay, slide do conteúdo; 500ms abrir / 300ms fechar. */
+@keyframes sheet-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes sheet-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes sheet-out-right { from { transform: translateX(0); } to { transform: translateX(100%); } }
+@keyframes sheet-in-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheet-out-bottom { from { transform: translateY(0); } to { transform: translateY(100%); } }
+.sheet-overlay[data-state="open"] { animation: sheet-fade-in 500ms ease-in-out; }
+.sheet-overlay[data-state="closed"] { animation: sheet-fade-out 300ms ease-in-out forwards; }
+.sheet-content { transition: transform 300ms ease-in-out; }
+.sheet-content[data-side="right"][data-state="open"] { animation: sheet-in-right 500ms ease-in-out; }
+.sheet-content[data-side="right"][data-state="closed"] { animation: sheet-out-right 300ms ease-in-out forwards; }
+.sheet-content[data-side="bottom"][data-state="open"] { animation: sheet-in-bottom 500ms ease-in-out; }
+.sheet-content[data-side="bottom"][data-state="closed"] { animation: sheet-out-bottom 300ms ease-in-out forwards; }
+
 @layer base {
   * { border-color: var(--border); }
   html { color-scheme: light; }
@@ -179,3 +194,23 @@ html[data-arremate-intro="playing"] .page-entrance > div > * { animation-play-st
 
 /* Foco torna o conteúdo imediatamente visível e não reinicia a sequência ao sair. */
 .page-entrance[data-entry-interrupted] * { animation: none !important; }
+
+/* R12 (tour): recorte acompanha a forma do alvo; mesma curva das animações data-[state] do shadcn. */
+.tour-cutout {
+  box-shadow: 0 0 0 9999px rgb(0 0 0 / 0.7);
+  transition: top 250ms ease, left 250ms ease, width 250ms ease, height 250ms ease, border-radius 250ms ease;
+}
+@keyframes tour-tip-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes tour-tip-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+.tour-tip[data-state="open"] { animation: tour-tip-in 150ms ease-out; }
+.tour-tip[data-state="closed"] { animation: tour-tip-out 150ms ease-in forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .tour-cutout { transition: none; }
+  .tour-tip[data-state] { animation: none; }
+}

@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Post, Put, Query, Req } from "@nestjs/common";
 import type { Request } from "express";
 import { ApiException } from "../auth/api.exception";
 import type { Actor } from "../auth/auth.service";
 import { Roles } from "../auth/roles.guard";
+import { Authenticated } from "../auth/session.guard";
 import { RejectExtraDto } from "../auth/dto/login.dto";
 import { BiddingService } from "./bidding.service";
 import { CreateLotDto, PageQuery } from "./dto/create-lot.dto";
@@ -25,6 +26,18 @@ export class LotsController {
   @Get("lots")
   showcase(@Query() query: PageQuery) {
     return this.lots.showcase(query.page);
+  }
+
+  /** D22 (H2): próximo leilão agendado, público. */
+  @Get("lots/next")
+  next() {
+    return this.lots.nextScheduled();
+  }
+
+  /** D22 (H2b): até 5 agendados para o carrossel do hero, público. */
+  @Get("lots/upcoming")
+  upcoming(@Query("limit") limit?: string) {
+    return this.lots.upcoming(limit);
   }
 
   @Get("lots/:id")
@@ -64,6 +77,73 @@ export class LotsController {
   @Roles("BIDDER")
   awards(@Query() query: PageQuery, @Req() request: ActorRequest) {
     return this.settlement.listAwards(actorOf(request), query.page);
+  }
+
+  /** D22 (R12): id do usuário para a chave local do tour (arremate.tour.v1.<id>). TODO(integração Codex): mover para /auth/me. */
+  @Get("me/id")
+  @Authenticated()
+  me(@Req() request: ActorRequest) {
+    return { userId: actorOf(request).userId };
+  }
+
+  @Get("me/favorites")
+  @Authenticated()
+  favorites(@Req() request: ActorRequest) {
+    return this.lots.favorites(actorOf(request));
+  }
+
+  @Put("lots/:id/favorite")
+  @Authenticated()
+  @HttpCode(200)
+  favorite(@Param("id") id: string, @Req() request: ActorRequest) {
+    return this.lots.setFavorite(actorOf(request), id, true);
+  }
+
+  @Delete("lots/:id/favorite")
+  @Authenticated()
+  @HttpCode(200)
+  unfavorite(@Param("id") id: string, @Req() request: ActorRequest) {
+    return this.lots.setFavorite(actorOf(request), id, false);
+  }
+
+  @Get("me/watches")
+  @Authenticated()
+  watches(@Req() request: ActorRequest) {
+    return this.lots.watches(actorOf(request));
+  }
+
+  @Put("lots/:id/watch")
+  @Authenticated()
+  @HttpCode(200)
+  watch(@Param("id") id: string, @Req() request: ActorRequest) {
+    return this.lots.setWatch(actorOf(request), id, true);
+  }
+
+  @Delete("lots/:id/watch")
+  @Authenticated()
+  @HttpCode(200)
+  unwatch(@Param("id") id: string, @Req() request: ActorRequest) {
+    return this.lots.setWatch(actorOf(request), id, false);
+  }
+
+  @Get("me/notifications")
+  @Authenticated()
+  notifications(@Req() request: ActorRequest) {
+    return this.lots.notifications(actorOf(request));
+  }
+
+  @Post("me/notifications/read-all")
+  @Authenticated()
+  @HttpCode(200)
+  readAll(@Req() request: ActorRequest) {
+    return this.lots.markRead(actorOf(request), null);
+  }
+
+  @Post("me/notifications/:id/read")
+  @Authenticated()
+  @HttpCode(200)
+  read(@Param("id") id: string, @Req() request: ActorRequest) {
+    return this.lots.markRead(actorOf(request), id);
   }
 
   @Post("lots")

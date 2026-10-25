@@ -1,10 +1,15 @@
 import { test, expect } from "@playwright/test";
+import { markTourSeen } from "./support/tour";
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
+});
 
 test("início com a identidade aprovada e acesso à entrada", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Leilões de arte de acervo público", level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: "Arremate, página inicial" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Entrar" }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Entrar" }).first()).toBeVisible();
 });
 
 test("metadados e noindex chegam no HTML inicial sem JavaScript", async ({ request }) => {

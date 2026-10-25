@@ -4,8 +4,9 @@ import { ArtworkImage } from "@/components/app/artwork-image";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useId, useMemo, useState } from "react";
-import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon, GavelIcon, ShieldCheckIcon, WifiOffIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon, FlaskConicalIcon, GavelIcon, ShieldCheckIcon, WifiOffIcon } from "lucide-react";
 import { LotStateBadge } from "@/components/app/lot-state-badge";
+import { FavoriteButton } from "../favorites/favorite-button";
 import { MoneyInput } from "@/components/app/money-input";
 import { ErrorState, LoadingRows } from "@/components/app/page-states";
 import { Alert } from "@/components/ui/alert";
@@ -31,6 +32,8 @@ import { createIdempotentAction } from "@/lib/idempotent-action";
 import { formatBrl, parseBrlInput } from "@/lib/money";
 import { useLotChannel } from "@/lib/realtime";
 import { bidsKey, getBids, getLot, lotKey, placeBid, SIMULATED_LABEL, type PublicLot } from "./lots-api";
+import { LotDetailRows } from "./lot-details";
+import { RecentBidsTrigger } from "./recent-bids";
 import { bidShortcuts, clockOffset, formatCountdown, rankByBidder, remainingMs } from "./room-logic";
 import { useNow } from "./showcase-page";
 
@@ -85,7 +88,10 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
         </div>
         <div className="flex flex-col gap-6 lg:col-span-5">
           <div>
-            <LotStateBadge state={data.state} />
+            <div className="flex items-start justify-between gap-2">
+              <LotStateBadge state={data.state} />
+              <FavoriteButton lotId={data.id} title={data.title} variant="outline" />
+            </div>
             <h1 className="mt-2 text-3xl lg:text-[40px] lg:leading-tight">{data.title}</h1>
             <p className="text-sm text-muted-foreground">{[data.artist, data.date].filter(Boolean).join(" · ")}</p>
           </div>
@@ -130,7 +136,7 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Histórico de lances</CardTitle>
-              <span className="text-xs text-muted-foreground">{data.bidCount} lance(s) · {ranking.length} licitante(s)</span>
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><RecentBidsTrigger lotId={lotId} bidCount={data.bidCount} title={data.title} /> · {ranking.length} licitante(s)</span>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div aria-live="polite" className="sr-only">{data.currentCents ? `Lance atual ${formatBrl(data.currentCents)}` : ""}</div>
@@ -170,29 +176,11 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
 }
 
 function AboutCard({ lot }: { lot: PublicLot }) {
-  const rows: Array<[string, string]> = [
-    ["Artista", lot.artist],
-    ["Nota do artista", lot.artistBio ?? ""],
-    ["Data", lot.date],
-    ["Técnica", lot.medium],
-    ["Dimensões", lot.dimensions],
-    ["Proveniência", lot.credit],
-    ["Licença da imagem", lot.license],
-    ["Lance inicial", formatBrl(lot.initialCents)],
-    ["Incremento mínimo", formatBrl(lot.incrementCents)],
-    ["Estimativa", lot.estimate ? `${formatBrl(lot.estimate.lowCents)} – ${formatBrl(lot.estimate.highCents)} (${SIMULATED_LABEL.toLowerCase()})` : ""],
-    ["Início", formatBrt(lot.startsAt)],
-    ["Fim previsto", formatBrt(lot.endsAt)],
-  ];
   return (
     <Card>
       <CardHeader><CardTitle>Sobre o lote</CardTitle></CardHeader>
       <CardContent>
-        <dl className="grid grid-cols-[minmax(0,10rem)_1fr] gap-y-2 text-sm">
-          {rows.filter(([, value]) => value).map(([label, value]) => (
-            <div key={label} className="contents"><dt className="text-muted-foreground">{label}</dt><dd>{value}</dd></div>
-          ))}
-        </dl>
+        <LotDetailRows lot={lot} />
         {lot.sourceUrl ? (
           <Button asChild variant="outline" size="sm" className="mt-4">
             <a href={lot.sourceUrl} target="_blank" rel="noopener noreferrer"><ExternalLinkIcon /> Ver no The Met</a>
@@ -283,9 +271,22 @@ function BidForm({ lot, availableCents, onDone }: { lot: PublicLot; availableCen
         <AlertDialog open={confirm !== null} onOpenChange={(open) => (!open && !mutation.isPending ? setConfirm(null) : undefined)}>
           <AlertDialogContent>
             <AlertDialogTitle>Confirmar lance</AlertDialogTitle>
-            <AlertDialogDescription>
-              {lot.title}: {confirm ? formatBrl(confirm) : ""}. Valor simulado; fica comprometido na carteira enquanto você liderar.
+            <div className="flex items-start gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element -- mídia local já validada pela API */}
+              <img src={lot.imageUrl} alt="" className="size-16 shrink-0 rounded-md bg-muted object-contain" />
+              <div className="min-w-0">
+                <p className="line-clamp-2 font-serif font-semibold leading-snug" title={lot.title}>{lot.title}</p>
+                <p className="line-clamp-1 text-xs text-muted-foreground">{lot.artist}</p>
+              </div>
+            </div>
+            <AlertDialogDescription asChild>
+              <div className="rounded-lg bg-muted p-4 text-center">
+                <span className="block text-xs text-muted-foreground">Seu lance</span>
+                <span className="block font-serif text-3xl font-semibold tabular-nums text-primary">{confirm ? formatBrl(confirm) : ""}</span>
+                <span className="block text-xs text-muted-foreground">Fica comprometido na carteira enquanto você liderar</span>
+              </div>
             </AlertDialogDescription>
+            <p className="inline-flex items-center justify-center gap-1.5 text-xs text-warning"><FlaskConicalIcon className="size-3.5" /> Valor simulado · nenhuma cobrança real</p>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={mutation.isPending}>Voltar</AlertDialogCancel>
               <AlertDialogAction

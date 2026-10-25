@@ -25,6 +25,7 @@ import { LotsController } from "./lots/lots.controller";
 import { LotsRepository } from "./lots/lots.repository";
 import { LotsService } from "./lots/lots.service";
 import { SettlementRepository } from "./lots/settlement.repository";
+import { NotificationRunner } from "./lots/notification-runner";
 import { SettlementRunner } from "./lots/settlement-runner";
 import { SettlementService } from "./lots/settlement.service";
 import { ReceiptsController } from "./receipts/receipts.controller";
@@ -56,6 +57,8 @@ interface ApplicationOptions {
   witnessDir?: string;
   /** Intervalo do runner de liquidação; false desliga (padrão em NODE_ENV=test). */
   settlementIntervalMs?: number | false;
+  /** D22: intervalo da varredura agendado→aberto que gera notificações; false desliga (padrão em NODE_ENV=test). */
+  notificationIntervalMs?: number | false;
 }
 
 @Module({})
@@ -126,6 +129,12 @@ class ApplicationModule {
           useFactory: (settlement: SettlementService, events: LotEventsService) =>
             new SettlementRunner(settlement, options.settlementIntervalMs ?? (process.env.NODE_ENV === "test" ? false : 1000), events),
           inject: [SettlementService, LotEventsService],
+        },
+        {
+          provide: NotificationRunner,
+          useFactory: (lots: LotsService) =>
+            new NotificationRunner(lots, options.notificationIntervalMs ?? (process.env.NODE_ENV === "test" ? false : 5000)),
+          inject: [LotsService],
         },
         {
           provide: ReceiptsService,

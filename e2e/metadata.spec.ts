@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { E2E_BASE } from "./support/e2e-env";
+import { markTourSeen } from "./support/tour";
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
+});
 
 /** Metadados via HTTP puro (sem JS): o que um crawler ou preview social lê. */
 function head(html: string) {

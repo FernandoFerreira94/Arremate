@@ -62,6 +62,12 @@ export class Session {
     for (const [name, value] of Object.entries(headers)) call.set(name, value);
     return call.send(body);
   }
+
+  /** PUT/DELETE com CSRF e Origin (favoritos, D21). */
+  async mutate(method: "put" | "delete", path: string) {
+    const token = await this.csrf();
+    return request(this.app.getHttpServer())[method](path).set("Origin", ORIGIN).set("Cookie", this.cookie()).set("X-CSRF-Token", token);
+  }
 }
 
 export async function createUser(pool: Pool, prefix: string, role: "AUCTIONEER" | "BIDDER", passwordHash: string): Promise<{ id: string; email: string }> {

@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { ensureE2eUsers, type E2eUser, type E2eUsers } from "./support/demo-users";
+import { markTourSeen } from "./support/tour";
+
+test.beforeEach(async ({ page }) => {
+  await markTourSeen(page);
+});
 
 let users: E2eUsers;
 
@@ -64,7 +69,8 @@ test("licitante: redireciona, preserva email, deposita uma vez, não vê painel 
 
   await page.goto("/carteira");
   await expect(page.getByTestId("saldo-total")).toBeVisible();
-  await page.getByRole("button", { name: "Sair" }).click();
+  await page.getByRole("button", { name: "Menu da conta" }).click();
+  await page.getByRole("menuitem", { name: "Sair" }).click();
   await expect(page).toHaveURL(/\/entrar/);
   await page.goBack();
   await expect(page).toHaveURL(/\/entrar/);

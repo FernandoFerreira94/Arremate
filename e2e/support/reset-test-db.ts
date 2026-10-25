@@ -19,7 +19,7 @@ export async function resetE2eDatabase(): Promise<void> {
   const pool = new Pool({ connectionString: url.toString(), max: 1 });
   try {
     await pool.query(
-      "TRUNCATE receipts, settlements, bids, wallet_entries, wallets, idempotency_records, sessions, lots RESTART IDENTITY",
+      "TRUNCATE favorites, receipts, settlements, bids, wallet_entries, wallets, idempotency_records, sessions, lots RESTART IDENTITY",
     );
   } finally {
     await pool.end();

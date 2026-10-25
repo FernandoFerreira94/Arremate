@@ -25,7 +25,7 @@ import { FakeMet, jpeg, metObject } from "../support/met-fake";
 
 jest.setTimeout(400_000);
 
-describe("catalogo de demonstracao com 24 obras (D17)", () => {
+describe("catalogo de demonstracao com 36 obras (D17 + D19)", () => {
   const connectionString = process.env.TEST_DATABASE_URL;
   if (!connectionString) throw new Error("Configure TEST_DATABASE_URL para testar PostgreSQL real.");
   const prefix = `catalogo-${randomUUID().slice(0, 8)}-`;
@@ -81,8 +81,8 @@ describe("catalogo de demonstracao com 24 obras (D17)", () => {
   });
 
   it("planos de lance sao validos: crescentes, acima do incremento e sem licitante repetido em sequencia", () => {
-    expect(DEMO_CATALOG).toHaveLength(24);
-    expect(new Set(DEMO_CATALOG.map((e) => e.externalId)).size).toBe(24);
+    expect(DEMO_CATALOG).toHaveLength(36);
+    expect(new Set(DEMO_CATALOG.map((e) => e.externalId)).size).toBe(36);
     for (const e of DEMO_CATALOG) {
       expect(e.estimate[0]).toBeLessThanOrEqual(e.estimate[1]);
       if (!e.bids) continue;
@@ -95,10 +95,10 @@ describe("catalogo de demonstracao com 24 obras (D17)", () => {
     }
   });
 
-  it("cria 24 lotes pelos servicos, liquida os encerrados e mantem auditoria integra", async () => {
+  it("cria 36 lotes pelos servicos, liquida os encerrados e mantem auditoria integra", async () => {
     const result = await runCatalogSeed(options);
     expect(result.warnings).toEqual([]);
-    expect(result.created).toHaveLength(24);
+    expect(result.created).toHaveLength(36);
     lotIds = result.created.map((c) => c.lotId);
     const rows = await pool.query<{ status: string; n: number; low: string | null; report: string | null }>(
       `SELECT l.status::text AS status, (SELECT count(*)::int FROM bids b WHERE b.lot_id = l.id) AS n,
@@ -107,13 +107,13 @@ describe("catalogo de demonstracao com 24 obras (D17)", () => {
       [lotIds],
     );
     const by = (s: string) => rows.rows.filter((r) => r.status === s).length;
-    expect(by("SETTLED")).toBe(5);
-    expect(by("CLOSED_NO_BIDS")).toBe(1);
-    expect(by("PUBLISHED")).toBe(18);
+    expect(by("SETTLED")).toBe(10);
+    expect(by("CLOSED_NO_BIDS")).toBe(2);
+    expect(by("PUBLISHED")).toBe(24);
     expect(rows.rows.every((r) => r.low !== null && r.report)).toBe(true);
     const totalBids = DEMO_CATALOG.reduce((s, e) => s + (e.bids?.n ?? 0), 0);
     expect(rows.rows.reduce((s, r) => s + r.n, 0)).toBe(totalBids);
-    expect((await pool.query(`SELECT 1 FROM receipts r JOIN settlements s ON s.id = r.settlement_id WHERE s.lot_id = ANY($1::uuid[])`, [lotIds])).rowCount).toBe(5);
+    expect((await pool.query(`SELECT 1 FROM receipts r JOIN settlements s ON s.id = r.settlement_id WHERE s.lot_id = ANY($1::uuid[])`, [lotIds])).rowCount).toBe(10);
     for (const id of lotIds) expect((await audit.verifyLot(id)).status).toBe("INTACT");
     const wallets = await pool.query<{ ok: boolean }>(
       `SELECT bool_and(committed_cents <= total_cents) AS ok FROM wallets WHERE user_id = ANY($1::uuid[])`,
@@ -133,8 +133,8 @@ describe("catalogo de demonstracao com 24 obras (D17)", () => {
     const lots = async () => (await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM lots WHERE owner_id = $1`, [options.ownerId])).rows[0]?.n;
     const again = await runCatalogSeed(options);
     expect(again.created).toHaveLength(0);
-    expect(again.skipped).toHaveLength(24);
-    expect(await lots()).toBe(24);
+    expect(again.skipped).toHaveLength(36);
+    expect(await lots()).toBe(36);
     expect(await snapshot()).toBe(before);
     const deposits = await pool.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM wallet_entries e JOIN wallets w ON w.id = e.wallet_id WHERE w.user_id = ANY($1::uuid[]) AND e.kind = 'DEPOSIT'`,

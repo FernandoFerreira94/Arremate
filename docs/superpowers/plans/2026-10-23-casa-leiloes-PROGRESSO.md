@@ -124,3 +124,11 @@ Tarefa 9: `npm run lint`, `npm run typecheck`, `npm test` (57), `npm run test:in
 - Notion segue bloqueado pela revisão automática, sem gravações externas. Alterações paralelas de motion/pranchas ficam fora do commit.
 
 Estado desta etapa: EM ANDAMENTO, sem commit. E2E bloqueado antes de iniciar pela porta4310 ocupada; lint/tipos, API65, front60 e integração99 aprovados. Imagens/OG/status404/screenshot finais pendentes. Minor de fallback A→B→A registrado na evidência.
+
+## Rodada 3 — pranchas R1–R10 (24/10/2026)
+
+- D22 (D21 na branch): adendo ao Freeze D12. Implementado em `feat/rodada-3` (worktree separado, commits locais, sem push).
+- Sheet de auth, cabeçalho novo, últimos lances, abas `?aba=`, card fixo, Detalhes, confirmação R7, Perfil, Suporte/FAQ, Como funciona; seed 0025–0036.
+- Verde: lint, typecheck, vitest 64, unit 65, integração 99, Playwright 21. Evidência: docs/evidence/2026-10-24-rodada-3.md.
+- Pendente de integração (Codex): botão Google, cadastro real, nome/e-mail/cartões no Perfil, links Carteira `?aba`. Termos/Privacidade entraram pela etapa 1 do Codex e estão no rodapé F3-cor.
+- 25/10: hero H2 + carrossel H2b, Avise-me, notificações N1–N4 e rodapé F3-cor (`c11f308`). Merge local `--no-ff` de `feat/rodada-3` em `chore/bootstrap` em 25/10/2026, sem push.
