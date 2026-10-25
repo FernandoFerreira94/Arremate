@@ -7,7 +7,7 @@ import { CatalogService } from "../catalog/catalog.service";
 import { MoneyError, parsePositiveMoney } from "../common/money";
 import { DatabaseRepository } from "../database/database.repository";
 import type { CreateLotDto } from "./dto/create-lot.dto";
-import { LotsRepository, type LotRow } from "./lots.repository";
+import { LotsRepository, type LotRow, type NotificationRow } from "./lots.repository";
 
 export const SHOWCASE_PAGE_SIZE = 8;
 export const START_TOLERANCE_MS = 60_000;
@@ -91,6 +91,45 @@ export class LotsService {
       await this.lots.removeFavorite(actor.userId, lotId);
     }
     return { lotId, favorite };
+  }
+
+  /** D21 (H2): próximo leilão para o hero; `lot` nulo quando não há agendado. */
+  async nextScheduled(): Promise<{ lot: LotView | null; serverNow: string }> {
+    const row = await this.lots.nextScheduled();
+    return { lot: row ? toView(row) : null, serverNow: (row?.server_now ?? (await this.lots.clock())).toISOString() };
+  }
+
+  async watches(actor: Actor): Promise<{ lotIds: string[] }> {
+    return { lotIds: await this.lots.watches(actor.userId) };
+  }
+
+  /** D21 (N1): "Avise-me quando abrir". Cancelar apaga a inscrição; lote já aberto recusa com 409. */
+  async setWatch(actor: Actor, lotId: string, watch: boolean): Promise<{ lotId: string; watching: boolean }> {
+    if (!UUID.test(lotId)) throw new ApiException(404, "NAO_ENCONTRADO");
+    if (!watch) {
+      await this.lots.removeWatch(actor.userId, lotId);
+      return { lotId, watching: false };
+    }
+    const outcome = await this.lots.addWatch(actor.userId, lotId);
+    if (outcome === "missing") throw new ApiException(404, "NAO_ENCONTRADO");
+    if (outcome === "open") throw new ApiException(409, "LOTE_JA_ABERTO");
+    return { lotId, watching: true };
+  }
+
+  async notifications(actor: Actor): Promise<{ items: NotificationView[]; unread: number }> {
+    const rows = await this.lots.notifications(actor.userId);
+    const items = rows.map(toNotification);
+    return { items, unread: items.filter((item) => item.readAt === null).length };
+  }
+
+  async markRead(actor: Actor, id: string | null): Promise<{ items: NotificationView[]; unread: number }> {
+    if (id !== null && !UUID.test(id)) throw new ApiException(404, "NAO_ENCONTRADO");
+    await this.lots.markRead(actor.userId, id);
+    return this.notifications(actor);
+  }
+
+  generateOpenedNotifications(): Promise<number> {
+    return this.lots.generateOpenedNotifications();
   }
 
   /** Verificação pública: status, revisão e contagem presos à mesma leitura. Sem chave é INDETERMINATE, nunca íntegro. */
@@ -230,6 +269,30 @@ export function lotState(status: string, startsAt: Date, endsAt: Date, now: Date
 export function lotResult(status: string, endsAt: Date, now: Date): LotResult {
   if (status === "CANCELLED" || status === "SETTLED" || status === "CLOSED_NO_BIDS") return status;
   return now.getTime() >= endsAt.getTime() ? "CLOSED_PENDING" : "OPEN";
+}
+
+export type NotificationView = {
+  id: string;
+  kind: string;
+  lotId: string;
+  title: string;
+  imageUrl: string;
+  initialCents: string;
+  createdAt: string;
+  readAt: string | null;
+};
+
+function toNotification(row: NotificationRow): NotificationView {
+  return {
+    id: row.id,
+    kind: row.kind,
+    lotId: row.lot_id,
+    title: row.title,
+    imageUrl: `/api/media/${row.media_key}`,
+    initialCents: row.initial_cents,
+    createdAt: row.created_at.toISOString(),
+    readAt: row.read_at ? row.read_at.toISOString() : null,
+  };
 }
 
 function toView(row: LotRow): LotView {

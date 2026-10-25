@@ -8,6 +8,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { EmptyState, ErrorState } from "@/components/app/page-states";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NextAuctionHero } from "../notifications/next-auction-hero";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LotCard } from "./lot-card";
 import { getShowcase } from "./lots-api";
@@ -58,6 +59,7 @@ export function ShowcasePage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <NextAuctionHero />
       <div className="max-w-3xl">
         <h1 className="text-4xl lg:text-5xl">Leilões de arte de acervo público</h1>
         <p className="mt-2 text-muted-foreground">

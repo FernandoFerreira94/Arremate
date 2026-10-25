@@ -28,6 +28,12 @@ export class LotsController {
     return this.lots.showcase(query.page);
   }
 
+  /** D21 (H2): próximo leilão agendado, público. */
+  @Get("lots/next")
+  next() {
+    return this.lots.nextScheduled();
+  }
+
   @Get("lots/:id")
   detail(@Param("id") id: string) {
     return this.lots.detail(id);
@@ -92,6 +98,46 @@ export class LotsController {
   @HttpCode(200)
   unfavorite(@Param("id") id: string, @Req() request: ActorRequest) {
     return this.lots.setFavorite(actorOf(request), id, false);
+  }
+
+  @Get("me/watches")
+  @Authenticated()
+  watches(@Req() request: ActorRequest) {
+    return this.lots.watches(actorOf(request));
+  }
+
+  @Put("lots/:id/watch")
+  @Authenticated()
+  @HttpCode(200)
+  watch(@Param("id") id: string, @Req() request: ActorRequest) {
+    return this.lots.setWatch(actorOf(request), id, true);
+  }
+
+  @Delete("lots/:id/watch")
+  @Authenticated()
+  @HttpCode(200)
+  unwatch(@Param("id") id: string, @Req() request: ActorRequest) {
+    return this.lots.setWatch(actorOf(request), id, false);
+  }
+
+  @Get("me/notifications")
+  @Authenticated()
+  notifications(@Req() request: ActorRequest) {
+    return this.lots.notifications(actorOf(request));
+  }
+
+  @Post("me/notifications/read-all")
+  @Authenticated()
+  @HttpCode(200)
+  readAll(@Req() request: ActorRequest) {
+    return this.lots.markRead(actorOf(request), null);
+  }
+
+  @Post("me/notifications/:id/read")
+  @Authenticated()
+  @HttpCode(200)
+  read(@Param("id") id: string, @Req() request: ActorRequest) {
+    return this.lots.markRead(actorOf(request), id);
   }
 
   @Post("lots")

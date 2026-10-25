@@ -40,6 +40,7 @@ import {
 import { useTour } from "@/features/tour/tour";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuthSheet } from "@/features/auth/auth-sheet";
+import { NotificationBell } from "@/features/notifications/notification-bell";
 import { useLogout, useSession } from "@/features/auth/use-session";
 import type { Role } from "@/features/auth/auth-api";
 import { getWallet } from "@/features/wallet/wallet-api";
@@ -200,6 +201,7 @@ export function SiteHeader() {
           </NavigationMenuList>
         </NavigationMenu>
         <div className="col-start-3 flex items-center justify-end gap-2">
+          {role ? <NotificationBell /> : null}
           <div className="hidden items-center gap-2 md:flex">
             {role === "BIDDER" ? <BalanceChip /> : null}
             {profile}

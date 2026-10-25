@@ -51,6 +51,8 @@ model User {
   wallet      Wallet?
   idempotency IdempotencyRecord[]
   favorites   Favorite[]
+  lotWatches  LotWatch[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -208,4 +210,32 @@ model Favorite {
   @@id([userId, lotId])
   @@index([userId, createdAt])
   @@map("favorites")
+}
+
+/// D21 (Fernando, 25/10/2026): "Avise-me quando abrir". Sem FK para lots (mesmo motivo de favorites: o TRUNCATE do E2E).
+/// A inscrição é apagada ao cancelar o aviso ou quando a notificação é gerada.
+model LotWatch {
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lotId     String   @map("lot_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@id([userId, lotId])
+  @@index([lotId])
+  @@map("lot_watches")
+}
+
+/// D21: notificação in-app "Lote abriu"; a API guarda as 20 mais recentes por usuário.
+model Notification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lotId     String    @map("lot_id") @db.Uuid
+  kind      String    @default("LOT_OPENED") @db.Text
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  readAt    DateTime? @map("read_at") @db.Timestamptz(3)
+
+  @@unique([userId, lotId, kind])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

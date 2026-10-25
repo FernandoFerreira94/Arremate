@@ -11,6 +11,7 @@ import { formatBrl } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { LotDetailsDialog } from "./lot-details";
 import { FavoriteButton } from "../favorites/favorite-button";
+import { WatchButton } from "../notifications/watch-button";
 import type { PublicLot } from "./lots-api";
 import { RecentBidsTrigger } from "./recent-bids";
 import { formatCountdown, remainingMs } from "./room-logic";
@@ -48,9 +49,13 @@ export function LotCard({ lot, now, offset, dimmed = false }: { lot: PublicLot; 
           <span data-tour="bids" className="inline-flex"><RecentBidsTrigger lotId={lot.id} bidCount={lot.bidCount} title={lot.title} /></span>
           <div className="flex items-center gap-1">
             <LotDetailsDialog lot={lot} compact />
-            <Button asChild size="sm">
-              <Link href={`/lotes/${lot.id}`} data-tour={live ? "room" : undefined}>Abrir sala <ChevronRightIcon /></Link>
-            </Button>
+            {lot.state === "SCHEDULED" ? (
+              <WatchButton lotId={lot.id} title={lot.title} variant="card" />
+            ) : (
+              <Button asChild size="sm">
+                <Link href={`/lotes/${lot.id}`} data-tour={live ? "room" : undefined}>Abrir sala <ChevronRightIcon /></Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>

@@ -5,6 +5,9 @@ import { useState } from "react";
 import { AuthSheetProvider } from "@/features/auth/auth-sheet";
 import { PendingFavoriteRunner } from "@/features/favorites/use-favorites";
 import { TourProvider } from "@/features/tour/tour";
+import { ToastProvider } from "@/components/app/toast";
+import { NotificationToaster } from "@/features/notifications/use-notifications";
+import { PendingWatchRunner } from "@/features/notifications/use-watches";
 
 /** Um QueryClient por aba. Sessão e saldo não são compartilhados entre usuários nem guardados fora dele. */
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -18,8 +21,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={client}>
       <AuthSheetProvider>
         <TourProvider>
-          <PendingFavoriteRunner />
-          {children}
+          <ToastProvider>
+            <PendingFavoriteRunner />
+            <PendingWatchRunner />
+            <NotificationToaster />
+            {children}
+          </ToastProvider>
         </TourProvider>
       </AuthSheetProvider>
     </QueryClientProvider>
