@@ -34,6 +34,12 @@ export class LotsController {
     return this.lots.nextScheduled();
   }
 
+  /** D21 (H2b): até 5 agendados para o carrossel do hero, público. */
+  @Get("lots/upcoming")
+  upcoming(@Query("limit") limit?: string) {
+    return this.lots.upcoming(limit);
+  }
+
   @Get("lots/:id")
   detail(@Param("id") id: string) {
     return this.lots.detail(id);

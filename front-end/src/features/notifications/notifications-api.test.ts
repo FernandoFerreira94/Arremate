@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { badgeLabel, countdownParts, toastable, type NotificationItem } from "./notifications-api";
+import { badgeLabel, countdownParts, toastable, wrapIndex, type NotificationItem } from "./notifications-api";
 
 const item = (id: string, lotId: string, readAt: string | null = null): NotificationItem => ({
   id, kind: "LOT_OPENED", lotId, title: "Obra", imageUrl: "/x.jpg", initialCents: "100", createdAt: "2026-10-25T12:00:00Z", readAt,
@@ -19,5 +19,10 @@ describe("notificações", () => {
   it("contagem em h/min/s", () => {
     expect(countdownParts((1 * 3600 + 48 * 60 + 22) * 1000)).toEqual({ h: "01", m: "48", s: "22" });
     expect(countdownParts(-5)).toEqual({ h: "00", m: "00", s: "00" });
+  });
+  it("índice do carrossel é circular", () => {
+    expect(wrapIndex(5, 5)).toBe(0);
+    expect(wrapIndex(-1, 5)).toBe(4);
+    expect(wrapIndex(2, 0)).toBe(0);
   });
 });

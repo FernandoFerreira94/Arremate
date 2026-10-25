@@ -3,6 +3,7 @@ import type { PublicLot } from "../lots/lots-api";
 
 /** D21 (H2, N1–N4). */
 export type NextLotView = { lot: PublicLot | null; serverNow: string };
+export type UpcomingView = { items: PublicLot[]; serverNow: string };
 export type NotificationItem = {
   id: string;
   kind: "LOT_OPENED" | string;
@@ -16,6 +17,10 @@ export type NotificationItem = {
 export type NotificationsView = { items: NotificationItem[]; unread: number };
 
 export const NEXT_LOT_KEY = ["lots", "next"] as const;
+export const UPCOMING_KEY = ["lots", "upcoming"] as const;
+/** H2b: autoplay do carrossel. */
+export const CAROUSEL_MS = 4_000;
+export const SWIPE_PX = 40;
 export const WATCHES_KEY = ["watches"] as const;
 export const NOTIFICATIONS_KEY = ["notifications"] as const;
 export const PENDING_WATCH_KEY = "arremate.aviso.pendente";
@@ -25,6 +30,14 @@ export const TOAST_MS = 8_000;
 
 export async function getNextLot(): Promise<NextLotView> {
   return (await apiFetch("/api/lots/next")) as NextLotView;
+}
+export async function getUpcoming(): Promise<UpcomingView> {
+  return (await apiFetch("/api/lots/upcoming?limit=5")) as UpcomingView;
+}
+/** Índice circular do carrossel. */
+export function wrapIndex(index: number, total: number): number {
+  if (total <= 0) return 0;
+  return ((index % total) + total) % total;
 }
 export async function getWatches(): Promise<{ lotIds: string[] }> {
   return (await apiFetch("/api/me/watches")) as { lotIds: string[] };

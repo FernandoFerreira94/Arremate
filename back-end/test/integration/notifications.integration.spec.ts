@@ -89,6 +89,22 @@ describe("avise-me e notificações (D21)", () => {
     if (response.body.lot) expect(Date.parse(response.body.lot.startsAt)).toBeGreaterThan(Date.now() - 5000);
   });
 
+  it("GET /lots/upcoming devolve até 5 agendados em ordem de abertura e limita o parâmetro", async () => {
+    for (let i = 0; i < 6; i += 1) await lot("scheduled");
+    const server = app.getHttpServer();
+    const full = await request(server).get("/api/lots/upcoming");
+    expect(full.status).toBe(200);
+    expect(full.body.items.length).toBe(5);
+    const starts = full.body.items.map((item: { startsAt: string }) => Date.parse(item.startsAt));
+    expect([...starts].sort((a, b) => a - b)).toEqual(starts);
+    expect(starts.every((t: number) => t > Date.now() - 5000)).toBe(true);
+    expect((await request(server).get("/api/lots/upcoming?limit=2")).body.items).toHaveLength(2);
+    expect((await request(server).get("/api/lots/upcoming?limit=99")).body.items).toHaveLength(5);
+    expect((await request(server).get("/api/lots/upcoming?limit=abc")).status).toBe(200);
+    const next = await request(server).get("/api/lots/next");
+    expect(next.body.lot.id).toBe(full.body.items[0].id);
+  });
+
   it("inscreve, recusa lote aberto ou inexistente e cancelar apaga a inscrição", async () => {
     const session = await bidder();
     const id = await lot("scheduled");

@@ -49,6 +49,8 @@ export type LotView = {
 
 export type Paged<T> = { items: T[]; page: number; pageSize: number; total: number; serverNow: string };
 
+const UPCOMING_MAX = 5;
+
 export class LotsService {
   private readonly logger = new Logger(LotsService.name);
 
@@ -97,6 +99,14 @@ export class LotsService {
   async nextScheduled(): Promise<{ lot: LotView | null; serverNow: string }> {
     const row = await this.lots.nextScheduled();
     return { lot: row ? toView(row) : null, serverNow: (row?.server_now ?? (await this.lots.clock())).toISOString() };
+  }
+
+  /** D21 (H2b): carrossel do hero, até 5 agendados pela ordem de abertura. `limit` inválido cai no padrão 5. */
+  async upcoming(limitRaw?: string): Promise<{ items: LotView[]; serverNow: string }> {
+    const parsed = Number.parseInt(limitRaw ?? "", 10);
+    const limit = Number.isFinite(parsed) ? Math.min(UPCOMING_MAX, Math.max(1, parsed)) : UPCOMING_MAX;
+    const rows = await this.lots.upcoming(limit);
+    return { items: rows.map(toView), serverNow: (rows[0]?.server_now ?? (await this.lots.clock())).toISOString() };
   }
 
   async watches(actor: Actor): Promise<{ lotIds: string[] }> {

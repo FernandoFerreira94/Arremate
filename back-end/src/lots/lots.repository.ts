@@ -120,10 +120,16 @@ export class LotsRepository {
 
   /** D21 (H2): próximo lote agendado (o que abre primeiro). */
   async nextScheduled(): Promise<LotRow | null> {
+    return (await this.upcoming(1))[0] ?? null;
+  }
+
+  /** D21 (H2b): até `limit` agendados, pela ordem de abertura. */
+  async upcoming(limit: number): Promise<LotRow[]> {
     const result = await this.database.query<LotRow>(
-      `SELECT ${LOT_COLUMNS} ${LOT_FROM} WHERE l.status = 'PUBLISHED' AND l.starts_at > clock_timestamp() ORDER BY l.starts_at ASC, l.id LIMIT 1`,
+      `SELECT ${LOT_COLUMNS} ${LOT_FROM} WHERE l.status = 'PUBLISHED' AND l.starts_at > clock_timestamp() ORDER BY l.starts_at ASC, l.id LIMIT $1`,
+      [limit],
     );
-    return result.rows[0] ?? null;
+    return result.rows;
   }
 
   async watches(userId: string): Promise<string[]> {
