@@ -126,12 +126,13 @@ describe("carteira", () => {
     expect(await ledger(id)).toEqual({ total: "1000", sum: "1000", entries: 8 });
   });
 
-  it("aceita entrada no teto e acumula acima dele", async () => {
+  it("aceita depósito no teto de 10.000.000 centavos, acumula acima dele e recusa acima do teto", async () => {
     const { session, id } = await login("BIDDER");
-    await deposit(session, "999999999999");
-    const second = await deposit(session, "999999999999");
-    expect(second.body.totalCents).toBe("1999999999998");
-    expect((await ledger(id)).sum).toBe("1999999999998");
+    await deposit(session, "10000000");
+    const second = await deposit(session, "10000000");
+    expect(second.body.totalCents).toBe("20000000");
+    expect((await deposit(session, "10000001")).status).toBe(400);
+    expect((await ledger(id)).sum).toBe("20000000");
   });
 
   it("leiloeiro e visitante não acessam carteira; userId injetado é rejeitado", async () => {
