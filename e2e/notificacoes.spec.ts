@@ -30,7 +30,7 @@ test("avise-me no hero gera notificação, toast e painel quando o lote abre", a
   await expect(page.getByText("Nenhuma notificação")).toBeVisible();
   await page.keyboard.press("Escape");
 
-  const toast = page.getByRole("status").filter({ hasText: "O lote abriu" });
+  const toast = page.locator("[data-sonner-toast]").filter({ hasText: "O lote abriu" }) // D25: N4 agora é um toast Sonner;
   await expect(toast).toBeVisible({ timeout: 100_000 });
   await expect(toast.getByRole("link", { name: "Dar lance" })).toHaveAttribute("href", `/lotes/${lotId}`);
   await expect(toast.getByRole("link", { name: "Ver lote" })).toBeVisible();

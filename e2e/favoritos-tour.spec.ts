@@ -37,6 +37,8 @@ test("favoritar sem login abre a Sheet e refaz o favorito; aparece em Meus favor
   await page.goto(`/lotes/${lotId}`);
   await page.getByRole("button", { name: /Remover .* dos favoritos/ }).click();
   await expect(page.getByRole("button", { name: TITLE_HEART }).first()).toHaveAttribute("aria-pressed", "false");
+  // D25: o toast só aparece depois que a API confirmou a remoção (evita corrida com a página de favoritos).
+  await expect(page.getByText("Removido dos favoritos.")).toBeVisible();
   await page.goto("/favoritos");
   await expect(page.getByText("Você ainda não favoritou nenhum lote")).toBeVisible();
   await expect(page.getByRole("link", { name: "Ver a vitrine" })).toBeVisible();
