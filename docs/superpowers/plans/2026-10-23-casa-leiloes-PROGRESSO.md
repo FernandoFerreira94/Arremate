@@ -148,3 +148,11 @@ Estado desta etapa: EM ANDAMENTO, sem commit. E2E bloqueado antes de iniciar pel
 - Front: Sonner (`sonner@2.0.7` exato) no lugar do toast próprio, `lib/notify`, código de suporte com Copiar, Desfazer no favorito, N4 migrado, tela de erro E1 e `global-error`.
 - Verde: lint, typecheck, unit 80, vitest 95, integração 123, Playwright 47 (workers=1).
 - Aberto: aviso de hidratação #418 visto em `/painel/lotes/novo` e `/carteira`, causa não isolada.
+
+## Achados da Sentinela M1, M2, B1, B3 (D26, 26/10/2026)
+
+- M1: IP real pelo proxy `/api` com `trust proxy` = loopback; limite de login depois de Origin/CSRF e limite por e-mail.
+- M2: CSP com nonce, `frame-ancestors 'none'`, `X-Frame-Options`, `nosniff`, `Referrer-Policy` e HSTS só em produção.
+- B1: cota própria para erros do navegador e limite de `/api/client-errors` por IP real. B3: 3 streams SSE por IP real.
+- API em 4300 agora roda o build (`node dist/main.js`) em console próprio; a queda vinha do `node --watch` reiniciando sozinho.
+- Verde: lint e typecheck sem erro, unit 81/81, vitest 100/100, integração 126/126 (23 suítes), E2E 48/48 com workers=1, build ok. O E2E de lances fecha os contextos que abre (cada um segura um SSE do limite de 3 por IP).

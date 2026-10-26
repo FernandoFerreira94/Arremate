@@ -180,6 +180,16 @@ Fernando aprovou em 26/10 às 09:26 o plano [erros e toasts](superpowers/plans/2
 - **#418:** o novo relato de erros do cliente mostrou o aviso de hidratação em `/painel/lotes/novo` e `/carteira`; a causa não foi isolada nesta rodada e fica aberta.
 - Sem migration, sem push e sem deploy.
 
+## D26 — Achados da Sentinela: IP real, cabeçalhos do front e cotas — 26/10/2026
+
+Fernando aprovou em 26/10 a correção de M1, M2, B1 e B3, sem dependência nova e sem store compartilhado.
+
+- **M1 (login travado por IP único):** o proxy `/api` do Next repassa um único `X-Forwarded-For` (o IP do cliente, validado) e o Nest usa `trust proxy` = loopback, ou seja, só confia no salto local. O limite de login (10/min por IP) passou a contar depois da checagem de Origin e CSRF, e há um limite novo de 10/min por e-mail. Limite conhecido: o `next start` exposto direto aceita o `X-Forwarded-For` enviado pelo cliente (o Next só preenche quando falta); o limite por e-mail segura esse caso, e na hospedagem a borda reescreve o cabeçalho.
+- **M2 (cabeçalhos do front):** CSP com nonce por requisição no `proxy.ts` (o script inline de entrada do `layout.tsx` usa o nonce; o layout passa a ser dinâmico), `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` em todas as rotas pelo `next.config.ts`, e HSTS só em produção. `form-action` inclui `accounts.google.com` para o início do Google.
+- **B1:** erros do navegador têm cota própria no `ErrorReporter` (20/min, separada dos 30/min do servidor), e o limite de `/api/client-errors` usa o IP real.
+- **B3:** `/api/events` aceita no máximo 3 streams por IP real (`tryAcquireSse`), liberados ao fechar.
+- Sem migration, sem push e sem deploy.
+
 ## D21 — Adendo A7 e recursos Next — 24/10/2026
 
 Pedido de Fernando autoriza etapa1 do adendo auth/pagamentos após entrega das pranchas A1–A7: faixa fixa de pagamentos simulados, links funcionais para Termos/Privacidade/Como funciona, next/image nos sete arquivos (oito imagens), loading/error por rota e OG por lote. Reutilizar tokens/componentes existentes; manter next/font, metadata,404 raiz e motion paralelo. Prioridade só na imagem principal da Sala; Next16 usa preload no lugar da prop priority obsoleta. Sem pacote novo nem mudança de schema/auth.
