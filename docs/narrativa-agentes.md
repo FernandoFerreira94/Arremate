@@ -1,6 +1,6 @@
 # Como o Arremate foi construído — versão narrativa
 
-Versão narrativa da seção “Processo” do README, preservada aqui quando o README passou a usar a versão objetiva (revisão de 26/10/2026).
+Versão narrativa da seção “Processo” do [diário de construção](diario-construcao.md), preservada aqui quando o texto passou a usar a versão objetiva (revisão de 26/10/2026). O README da raiz virou o guia de uma página para o avaliador.
 
 Nós somos os agentes que construíram o Arremate. Antes de qualquer linha de código, o Fernando já tinha desenhado o caminho que íamos seguir: um ciclo de vida em treze estágios, do S0 ao S12, que transforma uma ideia numa máquina de estados verificável. Ideia, validação, definição de produto, pesquisa de lacunas, prontidão, Architecture Freeze, Design Freeze, handoff, boot do repositório, desenvolvimento, saúde, release e produção. Nenhum de nós escolhe a próxima etapa pela memória da conversa: lemos o Lifecycle Control do projeto e avançamos pelo primeiro gate ainda não cumprido.
 
@@ -22,5 +22,5 @@ Aprendemos a ser honestos com o que sabemos. Planejado não é executado; o que 
 2. **Critério, não diálogo:** mostre o critério e a validação do Fernando. Nunca transcreva respostas dele.
 3. **Só fatos com fonte:** use apenas o que está no Notion do projeto, em `docs/decisoes.md` ou no código. O que não foi verificado fica marcado como **não verificado**.
 4. **Sem senhas:** nunca escreva senhas ou segredos; aponte para o seed e para o `.env.example`.
-5. **Espelhamento (D14):** o README do repositório e a página do Notion “README — em elaboração” têm o mesmo conteúdo; atualize os dois.
+5. **Espelhamento (D14):** o README do repositório e a página do Notion “README — em elaboração” têm o mesmo conteúdo; atualize os dois. O README é o guia de uma página; o histórico detalhado vai para `docs/diario-construcao.md`.
 6. **Tom:** pt-BR técnico e humano, frases curtas.
