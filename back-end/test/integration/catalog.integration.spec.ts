@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, stat, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { INestApplication } from "@nestjs/common";
@@ -145,6 +145,51 @@ describe("catálogo do Met", () => {
     expect(Buffer.compare(media.body as Buffer, jpeg(800, 600))).toBe(0);
     expect((await request(app.getHttpServer()).get("/api/media/..%2F..%2F.env")).status).toBe(404);
     expect((await request(app.getHttpServer()).get(`/api/media/${"0".repeat(64)}.jpg`)).status).toBe(404);
+  });
+
+  it("D28: zoom entrega a versão em alta quando existe e cai na mídia normal da obra quando não", async () => {
+    const id = freshId();
+    fake.object(metObject(id));
+    fake.image(`/CRDImages/test/web-large/${id}.jpg`, jpeg(600, 400));
+    const snapshot = await app.get(CatalogService).importItem(String(id));
+    const server = app.getHttpServer();
+
+    const fallback = await request(server).get(`/api/media/zoom/${id}`);
+    expect(fallback.status).toBe(200);
+    expect(fallback.headers["content-type"]).toBe("image/jpeg");
+    expect(fallback.headers["cache-control"]).not.toContain("immutable");
+    expect(Buffer.compare(fallback.body as Buffer, jpeg(600, 400))).toBe(0);
+
+    await mkdir(join(mediaDir, "zoom"), { recursive: true });
+    await writeFile(join(mediaDir, "zoom", `${id}.jpg`), jpeg(2500, 1666));
+    const hires = await request(server).get(`/api/media/zoom/${id}`);
+    expect(hires.status).toBe(200);
+    expect(Buffer.compare(hires.body as Buffer, jpeg(2500, 1666))).toBe(0);
+    expect(snapshot.mediaKey).toMatch(/\.jpg$/);
+
+    expect((await request(server).get("/api/media/zoom/..%2F..%2F.env")).status).toBe(404);
+    expect((await request(server).get("/api/media/zoom/999999999")).status).toBe(404);
+  });
+
+  it("QA ALTA 1: mídia do snapshot ausente neste checkout é restaurada do Met só se o sha256 bater", async () => {
+    const id = freshId();
+    fake.object(metObject(id));
+    fake.image(`/CRDImages/test/web-large/${id}.jpg`, jpeg(640, 480));
+    const { mediaKey } = await app.get(CatalogService).importItem(String(id));
+    const server = app.getHttpServer();
+    await unlink(join(mediaDir, mediaKey));
+
+    const restored = await request(server).get(`/api/media/${mediaKey}`);
+    expect(restored.status).toBe(200);
+    expect(Buffer.compare(restored.body as Buffer, jpeg(640, 480))).toBe(0);
+    expect((await stat(join(mediaDir, mediaKey))).isFile()).toBe(true);
+
+    await unlink(join(mediaDir, mediaKey));
+    fake.image(`/CRDImages/test/web-large/${id}.jpg`, jpeg(641, 480));
+    expect((await request(server).get(`/api/media/${mediaKey}`)).status).toBe(404);
+    fake.down = true;
+    expect((await request(server).get(`/api/media/${mediaKey}`)).status).toBe(404);
+    expect((await request(server).get(`/api/media/${"0".repeat(64)}.jpg`)).status).toBe(404);
   });
 
   it("recusa licença não pública, imagem inválida e origem fora da allowlist sem gravar", async () => {

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { ApiException } from "../auth/api.exception";
 import { DatabaseRepository } from "../database/database.repository";
 import { inspectImage, MediaStore } from "./image-importer";
@@ -101,6 +102,48 @@ export class CatalogService {
   async removeOrphanMedia(olderThanMs: number, now: number): Promise<number> {
     const rows = await this.database.query<{ media_key: string }>(`SELECT media_key FROM catalog_item_snapshots`);
     return this.media.removeOrphans(new Set(rows.rows.map((row) => row.media_key)), olderThanMs, now);
+  }
+
+  /**
+   * QA ALTA 1: o banco local é compartilhado entre checkouts, mas a mídia fica no <MEDIA_DIR> de cada um.
+   * Se o snapshot aponta para um arquivo que não está aqui, baixa de novo a mesma imagem do Met e só aceita
+   * se o sha256 bater com a chave gravada (o snapshot assinado não muda).
+   */
+  async restoreMedia(key: string): Promise<boolean> {
+    const pending = this.restoring.get(key);
+    if (pending) return pending;
+    const work = this.fetchMissingMedia(key).finally(() => this.restoring.delete(key));
+    this.restoring.set(key, work);
+    return work;
+  }
+
+  private readonly restoring = new Map<string, Promise<boolean>>();
+
+  private async fetchMissingMedia(key: string): Promise<boolean> {
+    const result = await this.database.query<{ external_id: string }>(
+      `SELECT external_id FROM catalog_item_snapshots WHERE provider = $1 AND media_key = $2 LIMIT 1`,
+      [MET_PROVIDER, key],
+    );
+    const externalId = result.rows[0]?.external_id;
+    if (!externalId) return false;
+    try {
+      const budget = this.client.newBudget();
+      const item = await this.client.object(Number(externalId), budget);
+      const imageUrl = item?.primaryImageSmall || item?.primaryImage;
+      if (!imageUrl) return false;
+      const image = await this.client.image(imageUrl, budget);
+      const inspected = inspectImage(image.bytes, image.contentType);
+      const expected = key.slice(0, key.lastIndexOf("."));
+      if (createHash("sha256").update(image.bytes).digest("hex") !== expected || !key.endsWith(`.${inspected.ext}`)) return false;
+      return (await this.media.save(image.bytes, inspected.ext)) === key;
+    } catch {
+      return false;
+    }
+  }
+
+  /** D28: mídia normal da obra, usada pelo zoom quando não há versão em alta. */
+  async snapshotMediaKey(externalId: string): Promise<string | null> {
+    return (await this.findSnapshot(externalId))?.mediaKey ?? null;
   }
 
   private async findSnapshot(externalId: string): Promise<ImportedSnapshot | null> {
