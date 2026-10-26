@@ -134,7 +134,7 @@ describe("sessão HTTP", () => {
 
     const me = await request(app.getHttpServer()).get("/api/auth/me").set("Cookie", cookieHeader(jar)).set("X-Role", "AUCTIONEER").set("X-User-Id", randomUUID());
     expect(me.status).toBe(200);
-    expect(me.body).toEqual({ role: "BIDDER", userId: user.id, name: "Participante" });
+    expect(me.body).toEqual({ role: "BIDDER", userId: user.id, name: "Licitante" });
     expect(JSON.stringify(me.body)).not.toContain(session);
   });
 

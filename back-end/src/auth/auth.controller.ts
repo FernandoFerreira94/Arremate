@@ -45,6 +45,14 @@ export class AuthController {
   @Authenticated()
   me(@Req() request: Request & { actor?: Actor }): { role: Actor["role"]; userId: string; name: string } {
     if (!request.actor) throw new ApiException(401, "SESSAO_NECESSARIA");
-    return { role: request.actor.role, userId: request.actor.userId, name: request.actor.name ?? "Participante" };
+    return { role: request.actor.role, userId: request.actor.userId, name: displayName(request.actor.name, request.actor.role) };
   }
+}
+
+/** QA BAIXA 6: conta sem nome (as demo do seed) mostra o papel, não "Participante". */
+export function displayName(name: string | null | undefined, role: Actor["role"]): string {
+  const trimmed = name?.trim();
+  // "Participante" é o default da coluna users.name: conta que nunca informou nome.
+  if (trimmed && trimmed !== "Participante") return trimmed;
+  return role === "AUCTIONEER" ? "Leiloeiro" : "Licitante";
 }
