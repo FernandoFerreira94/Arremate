@@ -12,6 +12,7 @@ export type ParticipationRow = {
   status: string;
   ends_at: Date;
   my_top_cents: string;
+  my_bids: { amountCents: string; acceptedAt: string }[];
   top_cents: string;
   i_lead: boolean;
   public_token: string | null;
@@ -20,7 +21,7 @@ export type ParticipationRow = {
 
 export type AwardRow = { lot_id: string; title: string; media_key: string; amount_cents: string; settled_at: Date; public_token: string };
 
-/** Leituras decisórias e gravações da liquidação; tudo no cliente transacional recebido. */
+/** Leituras decisÃƒÆ’Ã‚Â³rias e gravaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes da liquidaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o; tudo no cliente transacional recebido. */
 export class SettlementRepository {
   async lockLot(client: PoolClient, lotId: string): Promise<SettlingLot | null> {
     const result = await client.query<SettlingLot>(
@@ -49,7 +50,7 @@ export class SettlementRepository {
   async clock(client: PoolClient): Promise<Date> {
     const result = await client.query<{ now: Date }>(`SELECT date_trunc('milliseconds', clock_timestamp()) AS now`);
     const now = result.rows[0]?.now;
-    if (!now) throw new Error("relógio do banco indisponível");
+    if (!now) throw new Error("relÃƒÆ’Ã‚Â³gio do banco indisponÃƒÆ’Ã‚Â­vel");
     return now;
   }
 
@@ -65,7 +66,7 @@ export class SettlementRepository {
        WHERE id = $1 AND committed_cents >= $2::numeric`,
       [walletId, amount.toString()],
     );
-    if (updated.rowCount !== 1) throw new Error("reserva do vencedor não confere");
+    if (updated.rowCount !== 1) throw new Error("reserva do vencedor nÃƒÆ’Ã‚Â£o confere");
   }
 
   async creditSeller(client: PoolClient, walletId: string, amount: bigint, lotId: string): Promise<void> {
@@ -95,7 +96,7 @@ export class SettlementRepository {
       expectedRevision,
       revision,
     ]);
-    if (updated.rowCount !== 1) throw new Error("lote mudou durante a liquidação");
+    if (updated.rowCount !== 1) throw new Error("lote mudou durante a liquidaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o");
   }
 
   async dueLots(database: DatabaseRepository, limit: number): Promise<string[]> {
@@ -109,16 +110,16 @@ export class SettlementRepository {
   async participations(database: DatabaseRepository, userId: string, limit: number, offset: number): Promise<{ rows: ParticipationRow[]; total: number }> {
     const rows = await database.query<ParticipationRow>(
       `SELECT l.id AS lot_id, s.title, s.media_key, l.status::text AS status, l.ends_at,
-              mine.top::text AS my_top_cents, top.amount_cents::text AS top_cents, top.user_id = $1 AS i_lead,
+              mine.top::text AS my_top_cents, mine.my_bids, top.amount_cents::text AS top_cents, top.user_id = $1 AS i_lead,
               CASE WHEN l.status = 'SETTLED' AND top.user_id = $1 THEN r.public_token END AS public_token,
               clock_timestamp() AS server_now
-       FROM (SELECT lot_id, max(amount_cents) AS top, max(accepted_at) AS last_at FROM bids WHERE user_id = $1 GROUP BY lot_id) mine
+       FROM (SELECT lot_id, max(amount_cents) AS top, max(accepted_at) AS last_at, jsonb_agg(jsonb_build_object('amountCents', amount_cents::text, 'acceptedAt', accepted_at) ORDER BY sequence) AS my_bids FROM bids WHERE user_id = $1 GROUP BY lot_id) mine
        JOIN lots l ON l.id = mine.lot_id
        JOIN catalog_item_snapshots s ON s.id = l.snapshot_id
        JOIN LATERAL (SELECT user_id, amount_cents FROM bids WHERE lot_id = l.id ORDER BY sequence DESC LIMIT 1) top ON true
        LEFT JOIN settlements st ON st.lot_id = l.id
        LEFT JOIN receipts r ON r.settlement_id = st.id
-       ORDER BY mine.last_at DESC, l.id LIMIT $2 OFFSET $3`,
+       ORDER BY l.ends_at DESC, l.id LIMIT $2 OFFSET $3`,
       [userId, limit, offset],
     );
     const total = await database.query<{ n: number }>(`SELECT count(DISTINCT lot_id)::int AS n FROM bids WHERE user_id = $1`, [userId]);
