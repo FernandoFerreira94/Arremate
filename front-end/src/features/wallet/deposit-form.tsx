@@ -65,12 +65,12 @@ export function DepositForm({ method, onMethod, onDone }: { method: "PIX" | "CAR
     <form className="flex flex-col gap-4" onSubmit={submit} noValidate>
       <div className="flex items-center justify-between gap-2"><h2 className="font-serif text-lg font-semibold">Adicionar saldo</h2><Badge variant="warning">Simulado</Badge></div>
       <CardDescription>Dinheiro fictício para a demonstração. Pagamentos simulados, sem cobrança real.</CardDescription>
-      <div className="flex flex-col gap-1.5"><Label htmlFor={amountId}>Valor (R$)</Label><MoneyInput id={amountId} value={text} onChange={amountChanged} error={fieldError} hint="Entre R$ 1,00 e R$ 100.000,00 por depósito" disabled={mutation.isPending} /></div>
+      <div className="flex flex-col gap-1.5"><Label htmlFor={amountId}>Valor (R$)</Label><MoneyInput id={amountId} value={text} onChange={amountChanged} error={fieldError ?? (text.trim() && !checkedAmount.ok ? checkedAmount.message : undefined)} hint="Entre R$ 1,00 e R$ 100.000,00 por depósito" disabled={mutation.isPending} /></div>
       <div className="grid grid-cols-3 gap-2">{SHORTCUTS.map((shortcut) => <Button key={shortcut.value} type="button" variant="outline" size="sm" onClick={() => amountChanged(shortcut.value)} disabled={mutation.isPending}>{shortcut.label}</Button>)}</div>
       <Tabs value={method} onValueChange={(value) => onMethod(value === "CARD" ? "CARD" : "PIX")}><TabsList className="grid w-full grid-cols-2" aria-label="Método de pagamento"><TabsTrigger value="PIX" disabled={mutation.isPending}>Pix simulado</TabsTrigger><TabsTrigger value="CARD" disabled={mutation.isPending}><CreditCardIcon className="size-4" /> Cartão de teste</TabsTrigger></TabsList></Tabs>
       {method === "PIX" ? (
         <div className="flex flex-col gap-3">
-          <div className="relative mx-auto rounded-md border bg-card p-3" aria-label="QR ilustrativo simulado, sem valor para pagamento">
+          <div className="relative isolate mx-auto overflow-hidden rounded-md border bg-card p-3" aria-label="QR ilustrativo simulado, sem valor para pagamento">
             <svg viewBox="0 0 21 21" className="size-40 text-foreground" aria-hidden><path fill="currentColor" d="M0 0h7v7H0zm14 0h7v7h-7zM0 14h7v7H0zM8 0h2v2H8zm3 1h2v4h-2zM8 3h2v5H8zm2 5h4v2h-4zm5 0h2v3h-2zm3 0h3v2h-3zM0 8h3v2H0zm4 0h3v4H4zM1 11h2v2H1zm7 0h3v4H8zm4 0h2v2h-2zm3 2h6v2h-6zm-4 3h4v2h-4zm5 0h2v5h-2zm3 0h2v2h-2zM8 18h3v3H8zm4 1h2v2h-2zm7 0h2v2h-2z"/><path fill="var(--card)" d="M1 1h5v5H1zm14 0h5v5h-5zM1 15h5v5H1z"/><path fill="currentColor" d="M2 2h3v3H2zm14 0h3v3h-3zM2 16h3v3H2z"/></svg>
             <span className="absolute inset-x-0 top-1/2 -rotate-12 border-y border-warning bg-warning-soft p-1 text-center text-sm font-bold tracking-widest text-warning">SIMULADO</span>
           </div>

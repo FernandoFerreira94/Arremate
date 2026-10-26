@@ -53,8 +53,8 @@ function WalletContent() {
   return (
     <PageShell title="Minha carteira" description="Saldo simulado · pagamentos por Pix ou cartão de teste, sem cobrança real.">
       {params.get("conta") === "criada" ? <Alert variant="success" className="mb-6"><CheckCircle2Icon /><p role="status">Conta criada. Adicione saldo simulado para dar lances.</p></Alert> : null}
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="flex flex-col gap-6 lg:col-span-8">
+      <div className="grid grid-cols-1 gap-6 pb-24 lg:grid-cols-12 lg:pb-0">
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-8">
           {wallet.isPending ? (
             <LoadingRows label="Carregando saldos" rows={1} />
           ) : wallet.isError ? (
@@ -123,7 +123,7 @@ function WalletContent() {
           </Card>
         </div>
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t bg-card p-4 lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:hidden" data-testid="carteira-barra-deposito">
         <Sheet open={sheetOpen} onOpenChange={changeSheet}>
           <SheetTrigger asChild>
             <Button size="lg" className="w-full"><PlusIcon /> Adicionar saldo</Button>
@@ -146,12 +146,12 @@ function Balances({ wallet }: { wallet: WalletView }) {
     { key: "committed", label: "Comprometido", value: wallet.committedCents, note: "Reservado nos lotes em que você lidera", icon: LockIcon, highlight: false },
   ];
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
       {cards.map((card) => (
         <Card key={card.key} className={cn(card.highlight && "border-primary ring-1 ring-primary sm:order-last")}>
           <CardContent className="flex flex-col gap-2">
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><card.icon className="size-4" aria-hidden />{card.label}</p>
-            <p className="font-serif text-[28px] font-semibold tabular-nums" data-testid={`saldo-${card.key}`}>{formatBrl(card.value)}</p>
+            <p className="break-words font-serif text-[28px] font-semibold tabular-nums sm:text-2xl xl:text-[28px]" data-testid={`saldo-${card.key}`}>{formatBrl(card.value)}</p>
             <p className="text-xs text-muted-foreground">{card.note}</p>
           </CardContent>
         </Card>
