@@ -302,7 +302,7 @@ describe("sessão HTTP", () => {
     expect(wallet.body.returnTo).toBe("/carteira");
   });
 
-  it("não coloca o cookie no JSON nem no log e ignora X-Forwarded-For no limite", async () => {
+  it("não coloca o cookie no JSON nem no log; CSRF inválido não consome o limite (D26)", async () => {
     const user = await createUser("BIDDER");
     const spies = ["error", "warn", "log", "debug", "verbose"].map((method) =>
       jest.spyOn(Logger.prototype, method as "error").mockImplementation((message: unknown) => {
@@ -325,26 +325,44 @@ describe("sessão HTTP", () => {
     now += 120_000;
     const limited = new Map<string, string>();
     await issueCsrf(limited);
-    for (let attempt = 0; attempt < 10; attempt += 1) {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
       const failure = await request(app.getHttpServer())
         .post("/api/auth/login")
         .set("Origin", ORIGIN)
         .set("Cookie", cookieHeader(limited))
         .set("X-CSRF-Token", "token-errado")
-        .set("X-Forwarded-For", `203.0.113.${attempt}`)
         .send({ email: user.email, password: "senha-errada" });
       expect(failure.status).toBe(403);
     }
-    const blocked = await request(app.getHttpServer())
-      .post("/api/auth/login")
-      .set("Origin", ORIGIN)
-      .set("Cookie", cookieHeader(limited))
-      .set("X-CSRF-Token", "token-errado")
-      .set("X-Forwarded-For", "198.51.100.20")
-      .send({ email: user.email, password: "senha-correta-demonstracao" });
-    expect(blocked.status).toBe(429);
-    expect(blocked.body.code).toBe("LIMITE_EXCEDIDO");
-    expect(JSON.stringify(blocked.body)).not.toContain("198.51.100.20");
+    const allowed = await postLogin(new Map(), { email: user.email, password: "senha-correta-demonstracao" });
+    expect(allowed.status).toBe(200);
+  });
+
+  it("D26 (M1): limita login por IP real e por conta, sem misturar IPs", async () => {
+    now += 120_000;
+    const user = await createUser("BIDDER");
+    const attempt = async (ip: string, email: string) => {
+      const jar = new Map<string, string>();
+      const token = await issueCsrf(jar);
+      return request(app.getHttpServer())
+        .post("/api/auth/login")
+        .set("Origin", ORIGIN)
+        .set("Cookie", cookieHeader(jar))
+        .set("X-CSRF-Token", token)
+        .set("X-Forwarded-For", ip)
+        .send({ email, password: "senha-errada" });
+    };
+    for (let i = 0; i < 10; i += 1) expect((await attempt("203.0.113.70", `ninguem${i}@exemplo.test`)).status).toBe(401);
+    const blockedIp = await attempt("203.0.113.70", "ninguem-extra@exemplo.test");
+    expect(blockedIp.status).toBe(429);
+    expect(JSON.stringify(blockedIp.body)).not.toContain("203.0.113.70");
+    expect((await attempt("203.0.113.71", "ninguem-extra@exemplo.test")).status).toBe(401);
+
+    now += 120_000;
+    for (let i = 0; i < 10; i += 1) expect((await attempt(`198.51.100.${i}`, user.email)).status).toBe(401);
+    const blockedEmail = await attempt("198.51.100.99", user.email.toUpperCase());
+    expect(blockedEmail.status).toBe(429);
+    expect(blockedEmail.body.code).toBe("LIMITE_EXCEDIDO");
   });
 
   it("usa cookie __Host- e Secure quando a API está em produção", async () => {

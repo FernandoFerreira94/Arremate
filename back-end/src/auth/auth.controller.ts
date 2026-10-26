@@ -6,10 +6,15 @@ import { AuthService, type Actor, type PublicSession } from "./auth.service";
 import { Authenticated } from "./session.guard";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
+import { consumeOrThrow } from "./csrf.guard";
+import { RateLimiter } from "./rate-limit";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly limits: RateLimiter,
+  ) {}
 
   @Get("csrf")
   csrf(@Req() request: Request, @Res({ passthrough: true }) response: Response): { csrfToken: string } {
@@ -19,6 +24,8 @@ export class AuthController {
   @Post("login")
   @HttpCode(200)
   async login(@Body() body: LoginDto, @Res({ passthrough: true }) response: Response): Promise<PublicSession & { message: string }> {
+    // D26 (M1): limite por conta, além do limite por IP do CsrfGuard.
+    consumeOrThrow(this.limits, "loginEmail", String(body.email ?? "").trim().toLowerCase());
     return withMessage(await this.auth.login(body, response), SUCCESS_MESSAGES.LOGIN);
   }
 

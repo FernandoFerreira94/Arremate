@@ -1,5 +1,6 @@
 const WINDOW_MS = 60_000;
-const LIMITS = { login: 10, mutation: 60, catalog: 30, audit: 30, clientError: 20 } as const;
+// D26: loginEmail limita tentativas por conta, independente do IP (M1).
+const LIMITS = { login: 10, loginEmail: 10, mutation: 60, catalog: 30, audit: 30, clientError: 20 } as const;
 
 export type RateBucket = keyof typeof LIMITS;
 

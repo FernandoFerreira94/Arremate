@@ -52,6 +52,8 @@ describe("sessão e fronteira", () => {
       headers: { "x-forwarded-for": "203.0.113.9", host: "evil.example" },
     };
     expect(clientIp(request)).toBe("127.0.0.1");
+    // D26 (M1): o IP calculado pelo Express (trust proxy = loopback) tem prioridade sobre o socket.
+    expect(clientIp({ ...request, ip: "::ffff:203.0.113.9" })).toBe("203.0.113.9");
     const dev = sessionCookie(false);
     const prod = sessionCookie(true);
     expect(dev.name).toBe("session");

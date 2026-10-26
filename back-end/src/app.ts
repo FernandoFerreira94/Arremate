@@ -174,7 +174,8 @@ class ApplicationModule {
 export async function createApplication(options: ApplicationOptions = {}): Promise<INestApplication> {
   const app = await NestFactory.create(ApplicationModule.register(options), { logger: options.logger, abortOnError: false });
   const http = app.getHttpAdapter().getInstance();
-  http.set("trust proxy", false);
+  // D26 (M1): confia só no salto local (o proxy /api do Next); X-Forwarded-For vindo de fora é ignorado.
+  http.set("trust proxy", "loopback");
   http.disable("x-powered-by");
   app.setGlobalPrefix("api");
   app.use(helmet());

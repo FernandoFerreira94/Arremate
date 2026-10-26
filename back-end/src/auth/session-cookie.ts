@@ -25,8 +25,12 @@ export function readCookie(header: string | undefined, name: string): string | n
   return null;
 }
 
-export function clientIp(request: { socket: { remoteAddress?: string | null }; headers?: unknown }): string {
-  const raw = request.socket.remoteAddress ?? "";
+/**
+ * D26 (M1): `request.ip` vem do Express com `trust proxy` = loopback, ou seja, o X-Forwarded-For só vale quando
+ * o salto anterior é o proxy do Next na mesma máquina. Sem Express (testes unitários), cai no socket.
+ */
+export function clientIp(request: { ip?: string; socket: { remoteAddress?: string | null }; headers?: unknown }): string {
+  const raw = request.ip || request.socket.remoteAddress || "";
   if (raw.startsWith("::ffff:")) return raw.slice("::ffff:".length);
   return raw || "desconhecido";
 }
