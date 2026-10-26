@@ -23,9 +23,12 @@ jobs:
       API_PORT: 4300
       API_HOST: 127.0.0.1
       SITE_URL: http://127.0.0.1:3300
-      AUDIT_WITNESS_DIR: ${{ runner.temp }}/witness
-      MEDIA_DIR: ${{ runner.temp }}/media
     steps:
+      # O contexto runner não existe no env do job; os diretórios vêm de um passo.
+      - name: Diretorios de testemunha e midia fora do repositorio
+        run: |
+          echo "AUDIT_WITNESS_DIR=$RUNNER_TEMP/witness" >> "$GITHUB_ENV"
+          echo "MEDIA_DIR=$RUNNER_TEMP/media" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
