@@ -36,6 +36,13 @@ describe("POST /api/client-errors (A6)", () => {
     expect((await post().set("Origin", ORIGIN).send({ message: "a".repeat(9000) })).status).toBe(413);
   });
 
+  it("D26 (B1): o limite usa o IP real repassado pelo proxy local", async () => {
+    let last = 0;
+    for (let i = 0; i < 21; i += 1) last = (await post().set("Origin", ORIGIN).set("X-Forwarded-For", "203.0.113.50").send({ message: `ip a ${i}` })).status;
+    expect(last).toBe(429);
+    expect((await post().set("Origin", ORIGIN).set("X-Forwarded-For", "203.0.113.51").send({ message: "ip b" })).status).toBe(202);
+  });
+
   it("limita por IP (429)", async () => {
     let last = 0;
     for (let i = 0; i < 25; i += 1) last = (await post().set("Origin", ORIGIN).send({ message: `erro ${i}` })).status;

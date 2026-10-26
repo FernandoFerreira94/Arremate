@@ -40,6 +40,16 @@ describe("ErrorReporter (A1-A3)", () => {
     expect(sent).toHaveLength(31);
   });
 
+  it("D26 (B1): erros do navegador têm cota própria e não calam os do servidor", () => {
+    const { sent, reporter } = setup();
+    for (let i = 0; i < 25; i += 1) reporter.record({ source: "client", name: "Error", message: `cliente ${"x".repeat(i)}` });
+    expect(sent).toHaveLength(20);
+    expect(reporter.droppedClient).toBe(5);
+    for (let i = 0; i < 30; i += 1) reporter.capture(new Error(`servidor ${"y".repeat(i)}`), { source: "api" });
+    expect(sent).toHaveLength(50);
+    expect(reporter.dropped).toBe(0);
+  });
+
   it("nunca lança, mesmo com transporte quebrado", () => {
     const reporter = new ErrorReporter({ send: () => { throw new Error("x"); } });
     expect(() => reporter.capture(new Error("a"), { source: "api" })).not.toThrow();

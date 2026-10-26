@@ -5,6 +5,8 @@ import { sanitizePath, sanitizeStack, sanitizeText, sanitizeUrl } from "./saniti
 
 const DEDUPE_MS = 60_000;
 const MAX_PER_MINUTE = 30;
+/** D26 (B1): o navegador tem cota própria, para um cliente ruidoso não calar os erros do servidor. */
+const MAX_CLIENT_PER_MINUTE = 20;
 
 /** Transporte padrão (D25): só registra no log da API. Não há destino externo. */
 export class LogTransport implements ErrorTransport {
@@ -21,9 +23,9 @@ export class LogTransport implements ErrorTransport {
  */
 export class ErrorReporter {
   private readonly seen = new Map<string, number>();
-  private windowStart = 0;
-  private sent = 0;
+  private readonly windows = { server: { start: 0, sent: 0 }, client: { start: 0, sent: 0 } };
   dropped = 0;
+  droppedClient = 0;
 
   constructor(
     private readonly transport: ErrorTransport = new LogTransport(),
@@ -62,16 +64,19 @@ export class ErrorReporter {
       const now = this.now();
       for (const [key, at] of this.seen) if (now - at >= DEDUPE_MS) this.seen.delete(key);
       if (this.seen.has(event.fingerprint)) return null;
-      if (now - this.windowStart >= 60_000) {
-        this.windowStart = now;
-        this.sent = 0;
+      const fromClient = event.source === "client";
+      const window = fromClient ? this.windows.client : this.windows.server;
+      if (now - window.start >= 60_000) {
+        window.start = now;
+        window.sent = 0;
       }
-      if (this.sent >= MAX_PER_MINUTE) {
-        this.dropped += 1;
+      if (window.sent >= (fromClient ? MAX_CLIENT_PER_MINUTE : MAX_PER_MINUTE)) {
+        if (fromClient) this.droppedClient += 1;
+        else this.dropped += 1;
         return null;
       }
       this.seen.set(event.fingerprint, now);
-      this.sent += 1;
+      window.sent += 1;
       this.transport.send(event);
       return event;
     } catch {
