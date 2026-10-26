@@ -15,7 +15,7 @@ describe("encerramento da sessão no cliente", () => {
 
     await endSession(queryClient, logout, () => {
       order.push("redirect");
-      expect(queryClient.getQueryData(["session"])).toBeUndefined();
+      expect(queryClient.getQueryData(["session"])).toBeNull();
       expect(queryClient.getQueryData(["public", "lots"])).toEqual([{ id: "lote" }]);
     });
 
