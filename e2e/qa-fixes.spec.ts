@@ -34,6 +34,22 @@ test("carteira a 390px: sem rolagem lateral, barra e Pix clicáveis", async ({ b
   }
 });
 
+test("QA N2: a 390px o selo Simulado não cobre o X e a Sheet fecha por ele", async ({ browser }) => {
+  const page = await pageAs(browser, "bidder", MOBILE);
+  await page.goto("/carteira");
+  await page.getByTestId("carteira-barra-deposito").getByRole("button", { name: "Adicionar saldo" }).click();
+  const sheet = page.getByRole("dialog");
+  await expect(sheet).toBeVisible();
+  const close = sheet.getByRole("button", { name: "Fechar" });
+  const badge = sheet.getByText("Simulado", { exact: true }).first();
+  const [x, b] = [await close.boundingBox(), await badge.boundingBox()];
+  expect(x && b).toBeTruthy();
+  const overlaps = !!x && !!b && b.x < x.x + x.width && x.x < b.x + b.width && b.y < x.y + x.height && x.y < b.y + b.height;
+  expect(overlaps).toBe(false);
+  await close.click();
+  await expect(sheet).toBeHidden();
+});
+
 test("depósito de R$ 0 mostra a mensagem na hora", async ({ browser }) => {
   const page = await pageAs(browser, "bidder");
   await page.goto("/carteira?aba=pix");

@@ -63,7 +63,7 @@ export function DepositForm({ method, onMethod, onDone }: { method: "PIX" | "CAR
   }
   return (
     <form className="flex flex-col gap-4" onSubmit={submit} noValidate>
-      <div className="flex items-center justify-between gap-2"><h2 className="font-serif text-lg font-semibold">Adicionar saldo</h2><Badge variant="warning">Simulado</Badge></div>
+      <div className="flex items-center justify-between gap-2 pr-12 lg:pr-0"><h2 className="font-serif text-lg font-semibold">Adicionar saldo</h2><Badge variant="warning">Simulado</Badge></div>
       <CardDescription>Dinheiro fictício para a demonstração. Pagamentos simulados, sem cobrança real.</CardDescription>
       <div className="flex flex-col gap-1.5"><Label htmlFor={amountId}>Valor (R$)</Label><MoneyInput id={amountId} value={text} onChange={amountChanged} error={fieldError ?? (text.trim() && !checkedAmount.ok ? checkedAmount.message : undefined)} hint="Entre R$ 1,00 e R$ 100.000,00 por depósito" disabled={mutation.isPending} /></div>
       <div className="grid grid-cols-3 gap-2">{SHORTCUTS.map((shortcut) => <Button key={shortcut.value} type="button" variant="outline" size="sm" onClick={() => amountChanged(shortcut.value)} disabled={mutation.isPending}>{shortcut.label}</Button>)}</div>
