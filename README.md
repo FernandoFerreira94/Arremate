@@ -129,10 +129,36 @@ O CI (`.github/workflows/ci.yml`) migra um banco vazio, roda o seed duas vezes, 
 - **Extras além do pedido:** cadastro, cartão de teste e Pix simulados na carteira, favoritos, “Avise-me”, notificações, zoom da obra e tour guiado.
 - **Não verificado:** Safari/Firefox e aparelho físico.
 
+## Como o projeto foi construído
+
+_Na voz dos agentes que construíram o Arremate. Texto completo em [docs/narrativa-agentes.md](docs/narrativa-agentes.md) e, tarefa a tarefa, no [diário de construção](docs/diario-construcao.md)._
+
+Nós somos os agentes de IA que construíram o Arremate, dentro de uma arquitetura que o Fernando projetou. Antes da primeira linha de código ele já tinha desenhado o caminho: um ciclo de vida em treze estágios (S0 a S12) que funciona como máquina de estados. Nenhum de nós escolhe a próxima etapa pela memória da conversa; lemos o Lifecycle Control e avançamos pelo primeiro gate ainda não cumprido ([docs/lifecycle.md](docs/lifecycle.md)).
+
+**Quem fez o quê**
+
+- **Orquestrador:** leu o enunciado, quebrou o trabalho em tarefas pequenas e conduziu os gates. Nenhuma etapa avançou sem a saída exigida pelo gate anterior.
+- **Fred, designer de UI/UX:** desenhou as pranchas e o design system antes de qualquer componente novo. Hero, header e footer foram escolhidos entre três variações dele; a interface saiu das pranchas congeladas (Design Freeze D12, adendo D21), não o contrário.
+- **Executores (Codex e Cursor/Claude Code):** implementaram cada tarefa com testes e deixaram a evidência em `docs/evidence/`.
+- **QA/E2E:** rodou os testes ponta a ponta num mundo à parte, com build, portas e banco próprios, navegando como usuário.
+
+**Passo a passo**
+
+1. **Ideia, validação e produto (S0 a S2):** o desafio virou um intake sem negócio inventado; o escopo técnico passou com condições (dinheiro simulado, qualidade) e o produto foi descrito a partir do PDF.
+2. **Pesquisa e prontidão (S3 e S4):** a lacuna do anti-sniping foi levada ao Fernando e resolvida por ele; as escolhas técnicas ficaram registradas como abertas.
+3. **Arquitetura e design (S5 e S6):** propusemos a arquitetura; o Fernando aceitou os riscos em aberto e aprovou as pranchas HTML/PNG como fonte visual (D09 a D13).
+4. **Boot do repositório:** pasta, dependências, bancos isolados, health check e placeholder técnico, sem nenhuma tela final antes do design.
+5. **Desenvolvimento, tarefa a tarefa:** núcleo de dinheiro e schema (Tarefa 1), cadeia HMAC com testemunha fora do banco para a auditoria (Tarefa 2), sessão, CSRF e papéis (Tarefa 3), e depois lances ao vivo, liquidação, carteira, entrada animada, cadastro, Google e pagamentos simulados. Cada tarefa fechou com teste e evidência.
+6. **Saúde e release:** revisão de segurança independente, rodadas de QA e correções cobertas por E2E antes de qualquer publicação.
+
+**Onde paramos para o Fernando decidir:** troca de decisão já congelada, direção visual com mais de uma opção válida, credencial, produção, gasto real ou ação destrutiva. Nesses pontos levamos as alternativas e o trade-off, e ele decidiu pelo critério. Foi assim que entraram `@node-rs/argon2` (D15) e `radix-ui` (D16), cada uma com motivo em `docs/decisoes.md`.
+
+**O que aprendemos a respeitar:** planejado não é executado, e o que não verificamos fica marcado como **não verificado**. Commits pequenos com diff conferido, migration só no banco local e nada hospedado sem validação humana. O Fernando projetou a arquitetura; nós executamos dentro dela, e cada entrega passou pelo olhar dele antes de virar produto.
+
 ## Uso de IA
 
 - **Onde usei:** planejamento e quebra em tarefas, pranchas de UI (Grok), código do front e da API (Codex e Claude Code), testes, uma revisão de segurança independente e QA navegando como usuário.
 - **Como usei:** a IA escreveu a maior parte do código dentro de um processo que eu defini: cada entrega com testes e evidência em `docs/evidence/`, e nenhuma dependência, push ou deploy sem a minha validação. As escolhas relevantes estão registradas, com alternativas, em `docs/decisoes.md`.
 - **O que revisei e ajustei:** a revisão de segurança achou o login travado por um IP único atrás do proxy e cabeçalhos ausentes no front, corrigidos com teste. O QA achou a sala mostrando “superado” e “ganhando” ao mesmo tempo e recusas de regra exibidas como erro do sistema; corrigi e cobri com E2E. O cadastro, o Google e os pagamentos simulados foram começados pelo Codex e terminados com o Claude Code. Também corrigi o próprio README quando ele afirmava algo que o código não sustentava, como a chave de auditoria e a migration que faltavam no passo a passo.
 
-Como o projeto foi construído, tarefa a tarefa: [diário de construção](docs/diario-construcao.md). Roteiro para explicar as decisões em voz alta: [como explicar o projeto](docs/entrevista.md).
+Roteiro para explicar as decisões em voz alta: [como explicar o projeto](docs/entrevista.md).
