@@ -132,3 +132,11 @@ Estado desta etapa: EM ANDAMENTO, sem commit. E2E bloqueado antes de iniciar pel
 - Verde: lint, typecheck, vitest 64, unit 65, integração 99, Playwright 21. Evidência: docs/evidence/2026-10-24-rodada-3.md.
 - Pendente de integração (Codex): botão Google, cadastro real, nome/e-mail/cartões no Perfil, links Carteira `?aba`. Termos/Privacidade entraram pela etapa 1 do Codex e estão no rodapé F3-cor.
 - 25/10: hero H2 + carrossel H2b, Avise-me, notificações N1–N4 e rodapé F3-cor (`c11f308`). Merge local `--no-ff` de `feat/rodada-3` em `chore/bootstrap` em 25/10/2026, sem push.
+
+## Auth/pagamentos — cadastro, Google e pagamentos simulados (D24, 26/10/2026)
+
+- Trabalho do Codex revisado e concluído em commits separados; acentos regravados por ele restaurados em commit próprio.
+- Cadastro/login por e-mail, `/auth/me` com nome (sem `/api/me/id`), Google OAuth (variáveis `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`), cartão de teste sem PAN/CVV, depósitos Pix e cartão idempotentes, extrato e histórico de lances.
+- Migration `20261025103000_auth_payments` aplicada só em 5462/5463.
+- Verde: lint, typecheck, unit 70, vitest 90, integração 120, Playwright 39 (workers=1).
+- NÃO VERIFICADO: consentimento real do Google (sem credencial). D23 (vínculo Google com e-mail diferente) reservada e não aprovada.
