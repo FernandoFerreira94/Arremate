@@ -1,0 +1,56 @@
+# Deploy da demo numa VM (ex.: Oracle Cloud Always Free). Uso:
+#   cp infra/deploy/deploy.env.example .env.deploy   # e preencha
+#   docker compose -f compose.deploy.yaml --env-file .env.deploy up -d --build
+# Volumes nomeados guardam o banco, a testemunha da auditoria e as imagens entre restarts e deploys.
+name: arremate
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_OWNER_PASSWORD:?Configure DB_OWNER_PASSWORD}
+      POSTGRES_DB: arremate
+    volumes:
+      - db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d arremate"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://auction_app:${DB_APP_PASSWORD:?Configure DB_APP_PASSWORD}@db:5432/arremate
+      DIRECT_URL: postgresql://postgres:${DB_OWNER_PASSWORD}@db:5432/arremate
+      APP_DATABASE_PASSWORD: ${DB_APP_PASSWORD}
+      AUDIT_HMAC_KEY: ${AUDIT_HMAC_KEY:?Configure AUDIT_HMAC_KEY}
+      WEB_ORIGIN: https://${PUBLIC_HOST:?Configure PUBLIC_HOST}
+      SITE_URL: https://${PUBLIC_HOST}
+      PORT: "3000"
+      # D31: licitantes automáticos desligados na demo pública.
+      DEMO_BOTS: ""
+    volumes:
+      - data:/data
+    restart: unless-stopped
+
+  # HTTPS automático (Let's Encrypt). PUBLIC_HOST pode ser <ip-com-hifens>.sslip.io, sem comprar domínio.
+  caddy:
+    image: caddy:2.10-alpine
+    depends_on: [app]
+    command: caddy reverse-proxy --from ${PUBLIC_HOST} --to app:3000
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy:/data
+    restart: unless-stopped
+
+volumes:
+  db:
+  data:
+  caddy:

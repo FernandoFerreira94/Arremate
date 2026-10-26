@@ -4,7 +4,7 @@
  * - Obra real do The Met (437329, dominio publico/CC0) a partir do snapshot local em docs/design.
  * - 1 lote aberto na primeira execucao. Reexecutar nunca zera saldo, apaga lance nem reabre lote;
  *   lote novo so com o comando explicito `--preparar-lote` (datas relativas a agora).
- * - So roda em banco local (127.0.0.1/localhost).
+ * - So roda em banco local (127.0.0.1/localhost), salvo SEED_ALLOW_HOSTED=1 no deploy da demo.
  * - Depois roda o catalogo de 24 obras (D17, `seed-catalog.ts`); `--sem-catalogo` pula essa etapa.
  */
 import { readFile } from "node:fs/promises";
@@ -39,14 +39,19 @@ export type SeedResult = {
   warnings: string[];
 };
 
-export function assertLocalDatabase(url: string | undefined): void {
-  if (!url) return;
+/** O reset nunca libera banco remoto; o seed só com `SEED_ALLOW_HOSTED=1` explícito (deploy da demo). */
+export function assertLocalDatabase(url: string | undefined, allowHosted = false): void {
+  if (!url || allowHosted) return;
   const host = new URL(url).hostname;
-  if (host !== "127.0.0.1" && host !== "localhost") throw new Error("Seed so roda em banco local (127.0.0.1/localhost).");
+  if (host !== "127.0.0.1" && host !== "localhost") throw new Error("Seed so roda em banco local (127.0.0.1/localhost); no deploy use SEED_ALLOW_HOSTED=1.");
+}
+
+export function seedAllowsHosted(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.SEED_ALLOW_HOSTED === "1";
 }
 
 export async function runSeed(o: SeedOptions): Promise<SeedResult> {
-  assertLocalDatabase(o.databaseUrl);
+  assertLocalDatabase(o.databaseUrl, seedAllowsHosted());
   const prefix = o.emailPrefix ?? "";
   const warnings: string[] = [];
   const users = [
@@ -143,7 +148,7 @@ async function ensureSnapshot(o: SeedOptions): Promise<string> {
 async function main(): Promise<void> {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL ausente.");
-  assertLocalDatabase(url);
+  assertLocalDatabase(url, seedAllowsHosted());
   const raw = process.env.AUDIT_HMAC_KEY;
   if (typeof raw !== "string" || !/^(?:[0-9a-fA-F]{2}){32,}$/.test(raw)) throw new Error("AUDIT_HMAC_KEY ausente ou invalida (hex, 32+ bytes).");
   const { AuditRepository } = await import("../src/audit/audit.repository");
