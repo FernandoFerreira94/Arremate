@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect } from "react";
 import { reportClientError } from "@/lib/error-reporter";
 import "./globals.css";
@@ -16,11 +17,8 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
     <html lang="pt-BR">
       <body className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 font-sans text-foreground antialiased">
         <main role="alert" className="flex max-w-lg flex-col items-center gap-3 text-center">
-          <p className="mb-6 inline-flex items-center gap-2.5" aria-label="Arremate">
-            <span aria-hidden className="grid size-8 place-items-center rounded-md bg-primary p-[3px]">
-              <span className="grid size-full place-items-center rounded-[3px] border border-accent font-serif text-lg font-bold leading-none text-primary-foreground">A</span>
-            </span>
-            <span className="font-serif text-xl font-semibold">Arremate</span>
+          <p className="mb-6 inline-flex items-center" aria-label="Arremate">
+            <Image src="/brand/l3-horizontal-paper.svg" alt="" width={135} height={32} className="h-8 w-auto" />
           </p>
           <h1 className="font-serif text-3xl font-semibold">O Arremate não carregou</h1>
           <p className="text-sm text-muted-foreground">Recarregue a página. Se continuar, volte mais tarde.</p>

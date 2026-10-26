@@ -23,6 +23,7 @@ export default async function LotImage({ params }: { params: Promise<{ id: strin
       }
     } catch { /* A imagem ausente não impede o preview com título. */ }
   }
+  const mark = "data:image/svg+xml;base64," + (await readFile(join(process.cwd(), "public/brand/l3-simbolo-paper.svg"))).toString("base64");
   const font = new Uint8Array(await readFile(join(process.cwd(), "public/fonts/fraunces-600.ttf"))).buffer;
   return new ImageResponse(
     <div style={{ width: "100%", height: "100%", display: "flex", background: "#F6F3EC", color: "#1F1B16", padding: 50, gap: 50, fontFamily: "Fraunces" }}>
@@ -30,9 +31,19 @@ export default async function LotImage({ params }: { params: Promise<{ id: strin
         // ImageResponse precisa do elemento img para renderizar o bitmap incorporado.
         // eslint-disable-next-line @next/next/no-img-element
         <img src={artwork} alt="" width={480} height={530} style={{ objectFit: "contain" }} />
-      ) : <div style={{ width: 480, height: 530, background: "#6E1E2B", color: "#F6F3EC", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 180 }}>A</div>}
+      ) : (
+        <div style={{ width: 480, height: 530, background: "#6E1E2B", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {/* Sem imagem da obra: símbolo L3 (martelo) no lugar. */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renderiza o SVG pelo elemento img. */}
+          <img src={mark} alt="" width={240} height={240} />
+        </div>
+      )}
       <div style={{ width: 570, display: "flex", flexDirection: "column", justifyContent: "center", gap: 24 }}>
-        <div style={{ fontSize: 38, color: "#6E1E2B" }}>Arremate</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renderiza o SVG pelo elemento img. */}
+          <img src={mark} alt="" width={44} height={44} />
+          <div style={{ fontSize: 38, color: "#6E1E2B" }}>Arremate</div>
+        </div>
         <div style={{ fontSize: 54, lineHeight: 1.1 }}>{lot.title.slice(0, 120)}</div>
         <div style={{ fontSize: 26, color: "#5C5448" }}>{lot.artist.slice(0, 100)}</div>
         <div style={{ fontSize: 22, color: "#6E1E2B" }}>Demonstração · valores simulados</div>

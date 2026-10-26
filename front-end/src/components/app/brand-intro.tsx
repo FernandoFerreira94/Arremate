@@ -25,7 +25,16 @@ export function BrandIntro() {
   return (
     <div className="brand-intro" aria-hidden="true">
       <div className="brand-intro__mark">
-        <span className="brand-intro__letter">A</span>
+        {/* Martelo da L3 (public/brand/l3-simbolo-paper.svg) em papel sobre o bordô do selo. */}
+        <svg className="brand-intro__glyph" viewBox="0 0 32 32" aria-hidden="true">
+          <g transform="rotate(-40 16 15)">
+            <rect x="8.5" y="6" width="15" height="7.5" rx="1.6" fill="#F6F3EC" />
+            <rect x="11" y="6" width="1.6" height="7.5" fill="#A9823A" />
+            <rect x="19.4" y="6" width="1.6" height="7.5" fill="#A9823A" />
+            <rect x="14.7" y="12" width="2.6" height="13" rx="1.3" fill="#F6F3EC" />
+          </g>
+          <rect x="5" y="24.6" width="13" height="3" rx="1" fill="#A9823A" />
+        </svg>
         <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
           <rect x="5" y="5" width="90" height="90" rx="3" pathLength="1" />
         </svg>
