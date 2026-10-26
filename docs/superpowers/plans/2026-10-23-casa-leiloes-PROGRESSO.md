@@ -140,3 +140,11 @@ Estado desta etapa: EM ANDAMENTO, sem commit. E2E bloqueado antes de iniciar pel
 - Migration `20261025103000_auth_payments` aplicada só em 5462/5463.
 - Verde: lint, typecheck, unit 70, vitest 90, integração 120, Playwright 39 (workers=1).
 - NÃO VERIFICADO: consentimento real do Google (sem credencial). D23 (vínculo Google com e-mail diferente) reservada e não aprovada.
+
+## Erros e toasts (D25, 26/10/2026)
+
+- Plano `2026-10-25-erros-e-toasts.md` e pranchas T1/T2/E1 em `docs/design/pranchas/toast/`.
+- API: `message` em pt-BR nas mutações, códigos `LIMITE_CONEXOES` e `LOTE_JA_ABERTO`, `/auth/me` padronizado; 15 de 43 endpoints corrigidos (tabela em `docs/api-mensagens.md`). `ErrorReporter` só em log e `POST /api/client-errors`.
+- Front: Sonner (`sonner@2.0.7` exato) no lugar do toast próprio, `lib/notify`, código de suporte com Copiar, Desfazer no favorito, N4 migrado, tela de erro E1 e `global-error`.
+- Verde: lint, typecheck, unit 80, vitest 95, integração 123, Playwright 47 (workers=1).
+- Aberto: aviso de hidratação #418 visto em `/painel/lotes/novo` e `/carteira`, causa não isolada.

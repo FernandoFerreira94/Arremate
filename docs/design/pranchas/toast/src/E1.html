@@ -1,0 +1,545 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>E1</title><style>
+:root{--bg:#F6F3EC;--surface:#FFFDF8;--muted:#EEE9DE;--border:#DDD5C4;--ink:#1F1B16;--ink-2:#5C5448;--ink-3:#7A705F;
+--primary:#6E1E2B;--primary-h:#5A1722;--primary-fg:#FFF8F0;--accent:#A9823A;--accent-soft:#F3E8D0;
+--live:#B42318;--live-soft:#FBE9E7;--sched:#2F5D8A;--sched-soft:#E6EEF6;--closed:#5C5448;--closed-soft:#ECE7DD;
+--ok:#1E6B45;--ok-soft:#E3F1E8;--warn:#8A5300;--warn-soft:#FBEFD9;--err:#B42318;--err-soft:#FBE9E7;--info:#2F5D8A;--info-soft:#E6EEF6;
+--ring:#A9823A;--r-sm:4px;--r-md:6px;--r-lg:10px;--r-xl:14px;
+--sh-sm:0 1px 2px rgba(31,27,22,.08);--sh-md:0 2px 8px rgba(31,27,22,.10);--sh-lg:0 12px 32px rgba(31,27,22,.16)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;color:var(--ink);background:#D9D3C6;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.serif{font-family:Fraunces,serif;font-optical-sizing:auto}
+.num{font-variant-numeric:tabular-nums}
+.board{padding:40px;}
+.bh{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:24px}
+.bh h1{font-family:Fraunces,serif;font-size:34px;font-weight:600}
+.bh p{color:var(--ink-2);max-width:760px}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:var(--warn-soft);color:var(--warn);border:1px solid #E9CF9C}
+.frame{background:var(--bg);box-shadow:0 10px 40px rgba(0,0,0,.18);overflow:hidden;position:relative}
+.flabel{font-size:12px;font-weight:600;color:#3d372e;margin:0 0 8px;display:flex;gap:8px;align-items:center}
+.flabel b{background:#1F1B16;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px}
+.note{font-size:12px;color:#3d372e;background:#fff8;border-left:3px solid var(--accent);padding:6px 10px;margin-top:8px;border-radius:0 4px 4px 0}
+.ic{flex:none;vertical-align:middle}
+/* shell */
+.top{height:64px;display:flex;align-items:center;gap:24px;padding:0 40px;background:var(--surface);border-bottom:1px solid var(--border)}
+.top nav{display:flex;gap:4px;margin-left:16px}
+.top nav a{padding:8px 12px;border-radius:var(--r-md);color:var(--ink-2);font-weight:500;text-decoration:none}
+.top nav a.on{color:var(--ink);background:var(--muted)}
+.sp{flex:1}
+.logo{display:flex;align-items:center;gap:10px;font-family:Fraunces,serif;font-weight:600;font-size:20px;letter-spacing:-.01em}
+.sim{font-size:11px;font-weight:600;color:var(--warn);background:var(--warn-soft);border:1px solid #E9CF9C;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:var(--r-md);font-weight:600;font-size:14px;border:1px solid transparent;white-space:nowrap;font-family:Inter}
+.btn.p{background:var(--primary);color:var(--primary-fg);box-shadow:var(--sh-sm)}
+.btn.o{background:var(--surface);border-color:var(--border);color:var(--ink)}
+.btn.g{background:transparent;color:var(--ink)}
+.btn.d{background:var(--err);color:#fff}
+.btn.lg{height:48px;padding:0 22px;font-size:15px}
+.btn.sm{height:32px;padding:0 12px;font-size:13px}
+.btn.dis{opacity:.5}
+.btn.focus{outline:2px solid var(--ring);outline-offset:2px}
+.btn.hov.p{background:var(--primary-h)}
+.input{height:44px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);padding:0 12px;display:flex;align-items:center;gap:8px;font-size:15px}
+.input.err{border-color:var(--err);box-shadow:0 0 0 3px var(--err-soft)}
+.input.focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.lbl{font-size:13px;font-weight:600;margin-bottom:6px;display:block}
+.help{font-size:12px;color:var(--ink-3);margin-top:6px}
+.help.e{color:var(--err);display:flex;gap:6px;align-items:flex-start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-sm)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.b-live{background:var(--live-soft);color:var(--live)}.b-live:before{content:"";width:7px;height:7px;border-radius:9px;background:var(--live)}
+.b-sched{background:var(--sched-soft);color:var(--sched)}.b-closed{background:var(--closed-soft);color:var(--closed)}
+.b-ok{background:var(--ok-soft);color:var(--ok)}.b-warn{background:var(--warn-soft);color:var(--warn)}.b-err{background:var(--err-soft);color:var(--err)}.b-info{background:var(--info-soft);color:var(--info)}
+.b-ext{background:var(--accent-soft);color:#6B5220}
+.alert{display:flex;gap:10px;padding:12px 14px;border-radius:var(--r-md);border:1px solid;font-size:13px;align-items:flex-start}
+.alert b{display:block;font-size:14px;margin-bottom:2px}
+.a-err{background:var(--err-soft);border-color:#F2C4BE;color:#7A1A12}.a-ok{background:var(--ok-soft);border-color:#B9DCC6;color:#14492F}
+.a-warn{background:var(--warn-soft);border-color:#E9CF9C;color:#5E3A00}.a-info{background:var(--info-soft);border-color:#C3D5E8;color:#1E3F60}
+.tabs{display:inline-flex;background:var(--muted);border-radius:var(--r-md);padding:4px;gap:2px}
+.tabs span{padding:7px 14px;border-radius:var(--r-sm);font-weight:600;color:var(--ink-2);font-size:13px;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.tabs span.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh-sm)}
+.tabs .ct{font-size:11px;background:var(--border);border-radius:9px;padding:0 6px}
+.art{width:100%;object-fit:cover;display:block;background:var(--muted)}
+.ph{background:repeating-linear-gradient(45deg,var(--muted),var(--muted) 10px,#E6E0D3 10px,#E6E0D3 20px);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-2);gap:6px;font-size:12px;font-weight:600;text-align:center}
+.sk{background:linear-gradient(90deg,#E9E3D7,#F2EEE5,#E9E3D7);border-radius:4px}
+.muted{color:var(--ink-2)}.small{font-size:12px}.xs{font-size:11px}
+.row{display:flex;gap:12px;align-items:center}.col{display:flex;flex-direction:column}
+.grid{display:grid;gap:24px}
+.lot .meta{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.lot h3{font-family:Fraunces,serif;font-size:18px;font-weight:600;line-height:1.2}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.kv span:first-child{color:var(--ink-2)}
+.price{font-family:Fraunces,serif;font-weight:600;font-variant-numeric:tabular-nums}
+.foot{padding:20px 40px;border-top:1px solid var(--border);color:var(--ink-3);font-size:12px;display:flex;justify-content:space-between;background:var(--surface)}
+table{border-collapse:collapse;width:100%}
+th{font-size:12px;text-align:left;color:var(--ink-2);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid #ECE6DA;font-size:13px}
+.dialog{background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--sh-lg);padding:24px;border:1px solid var(--border)}
+.overlay{position:absolute;inset:0;background:rgba(31,27,22,.45);display:flex;align-items:center;justify-content:center}
+.mtop{height:56px;display:flex;align-items:center;padding:0 16px;gap:10px;background:var(--surface);border-bottom:1px solid var(--border)}
+.mbar{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:12px 16px 20px;box-shadow:0 -4px 16px rgba(31,27,22,.08)}
+h2.s{font-family:Fraunces,serif;font-size:22px;font-weight:600;margin-bottom:12px}
+.sec{background:#F3EFE7;border-radius:12px;padding:24px;margin-bottom:24px}
+.sec>h2{font-family:Fraunces,serif;font-size:24px;margin-bottom:4px}
+.sec>p.d{color:var(--ink-2);margin-bottom:16px;font-size:13px}
+.cred{font-size:11px;color:var(--ink-3)}
+.demo{background:var(--warn-soft);color:var(--warn);border-bottom:1px solid #E9CF9C;font-size:12px;font-weight:600;display:flex;gap:8px;align-items:center;justify-content:center;padding:6px 16px;text-align:center}
+.foot2{padding:20px 40px;border-top:1px solid var(--border);color:var(--ink-3);font-size:12px;background:var(--surface);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.foot2 a{color:var(--ink-2);text-decoration:underline;margin-right:14px}
+.chk{width:18px;height:18px;border:1.5px solid var(--ink-2);border-radius:4px;flex:none;display:inline-flex;align-items:center;justify-content:center}
+.chk.on{background:var(--primary);border-color:var(--primary);color:var(--primary-fg)}
+.chk.err{border-color:var(--err);box-shadow:0 0 0 3px var(--err-soft)}
+.meter{display:flex;gap:4px;margin-top:8px}.meter i{flex:1;height:4px;border-radius:2px;background:var(--muted)}
+.div{display:flex;align-items:center;gap:10px;color:var(--ink-3);font-size:12px}.div:before,.div:after{content:"";flex:1;border-top:1px solid var(--border)}
+.qr{position:relative;width:200px;height:200px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px}
+.wm{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.wm span{transform:rotate(-18deg);background:var(--warn-soft);color:var(--warn);border:2px solid var(--warn);font-weight:800;letter-spacing:.12em;padding:4px 12px;border-radius:4px;font-size:16px}
+.tcard{border-radius:var(--r-lg);padding:18px;background:var(--muted);border:1px dashed var(--ink-3);height:170px;display:flex;flex-direction:column;justify-content:space-between}
+.mframe{width:390px;background:var(--bg);box-shadow:0 10px 40px rgba(0,0,0,.18);overflow:hidden;position:relative;border-radius:18px}
+.clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.clamp1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-lg);padding:6px;min-width:220px}
+.menu .it{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:var(--r-sm);font-size:14px}
+.menu .it.on{background:var(--muted)}.menu .sep{border-top:1px solid var(--border);margin:6px 0}.menu .lb{font-size:11px;color:var(--ink-3);padding:6px 10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.sheet{position:absolute;top:0;bottom:0;right:0;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--sh-lg);padding:24px}
+.acc{border-bottom:1px solid var(--border)}.acc .q{display:flex;justify-content:space-between;align-items:center;padding:14px 0;font-weight:600}.acc .a{padding:0 0 14px;color:var(--ink-2);font-size:13px}
+.lcard{height:452px;display:flex;flex-direction:column}
+.lcard .meta{flex:1}
+.hero{background:var(--surface);border-bottom:1px solid var(--border)}
+.cd{display:flex;gap:8px}.cd div{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;text-align:center;min-width:84px}
+.cd b{display:block;font-family:Fraunces,serif;font-size:36px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}.cd span{font-size:11px;color:var(--ink-3);text-transform:uppercase}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6B5220;display:flex;gap:6px;align-items:center}
+.ni{display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);align-items:flex-start;min-height:64px}.ni.un{background:var(--accent-soft)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--primary);flex:none;margin-top:6px}.dot.r{background:transparent}
+.toast{width:380px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:0 8px 24px rgba(31,27,22,.16);padding:14px;display:flex;gap:12px}
+.ib{width:36px;height:36px;padding:0;justify-content:center}.mi{display:flex;align-items:center;gap:12px;min-height:48px;border-bottom:1px solid var(--border);font-size:15px;padding:0 4px}
+.mh4{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6B5220;margin:14px 0 2px}.ft a{color:var(--ink-2);text-decoration:none;display:flex;align-items:center;gap:8px;font-size:14px;min-height:32px}
+.ft h4{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6B5220;margin-bottom:6px}
+.ft.m a{min-height:44px;border-bottom:1px solid var(--border)}
+.ft.dk{background:var(--ink);color:var(--border)}.ft.dk a{color:var(--primary-fg)}.ft.dk h4{color:var(--accent)}.ft.dk.m a{border-color:#5C5448}
+.ft.dk .cr{color:var(--border)}
+.pg{display:flex;gap:6px;justify-content:center;margin-top:24px}
+.ft.br{background:var(--primary);color:rgba(246,243,236,.8)}.ft.br a{color:var(--bg)}.ft.br h4{color:rgba(246,243,236,.8)}.ft.br.m a{border-color:rgba(246,243,236,.25)}.ft.br .cr{color:rgba(246,243,236,.8)}.ts{width:356px;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--c);border-radius:var(--r-lg);box-shadow:0 8px 24px rgba(31,27,22,.14);padding:12px 12px 12px 14px;display:flex;gap:10px;align-items:flex-start;position:relative}
+.ts .ti{color:var(--c);margin-top:1px;flex:none}.ts b{font-size:14px;color:var(--ink)}.ts .d{font-size:13px;color:var(--ink-2);margin-top:2px}.ts .ref{font-size:12px;color:var(--ink-3);margin-top:4px;font-variant-numeric:tabular-nums}
+.ts .x{width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--ink-3);flex:none;border-radius:var(--r-md)}
+.spec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 22px;font-size:13px;line-height:1.55;color:var(--ink-2)}.spec b{color:var(--ink)}.spec li{margin-left:18px}
+table.rg{border-collapse:collapse;font-size:13px;width:100%}table.rg td,table.rg th{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left}table.rg th{font-size:12px;color:#6B5220;text-transform:uppercase;letter-spacing:.05em}
+.vl{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:8px}</style></head><body style="width:1520px"><div class="board"><div class="bh"><div><div class="row" style="margin-bottom:6px"><span class="tag">Toast e erros · adendo ao Freeze D12 · proposta · tokens inalterados</span><span class="xs muted">Arremate · 25/10/2026</span></div><h1>E1 · Erro inesperado (error.tsx e global-error.tsx)</h1><p>Mesmo padrão da 404 (bloco central max-w-lg, título Fraunces, texto muted, botões shadcn). Sem stack trace; código de referência (digest) discreto e opcional. Sonner (shadcn) aprovado; sem tokens novos; lucide.</p></div><div class="row"><svg width="40" height="40" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg><span class="serif" style="font-size:22px;font-weight:600">Arremate</span></div></div><div class="flabel" style="margin-top:22px"><b>E1.0</b>Referência · 404 atual (not-found.tsx)</div><div class="frame" style="width:1440px"><div class="top" style="position:relative"><div class="logo"><svg width="30" height="30" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg>Arremate</div><nav style="display:flex;gap:4px;margin:0 auto"><a class="on" style="display:flex;gap:6px;align-items:center"><svg
+  class="ic  lucide lucide-gavel"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m14 13-8.381 8.38a1 1 0 0 1-3.001-3l8.384-8.381" />
+  <path d="m16 16 6-6" />
+  <path d="m21.5 10.5-8-8" />
+  <path d="m8 8 6-6" />
+  <path d="m8.5 7.5 8 8" />
+</svg>Leilões<svg
+  class="ic  lucide lucide-chevron-down"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></a><a class="" style="display:flex;gap:6px;align-items:center"><svg
+  class="ic  lucide lucide-book-open"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 7v14" />
+  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+</svg>Como funciona</a><a class="" style="display:flex;gap:6px;align-items:center"><svg
+  class="ic  lucide lucide-life-buoy"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m4.93 4.93 4.24 4.24" />
+  <path d="m14.83 9.17 4.24-4.24" />
+  <path d="m14.83 14.83 4.24 4.24" />
+  <path d="m9.17 14.83-4.24 4.24" />
+  <circle cx="12" cy="12" r="4" />
+</svg>Suporte/FAQ</a></nav><span class="btn o sm"><svg
+  class="ic  lucide lucide-wallet"
+  xmlns="http://www.w3.org/2000/svg"
+  width="15"
+  height="15"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+</svg><span class="num">R$ 7.000,00</span></span><span class="btn g sm" style="gap:8px"><span style="width:28px;height:28px;border-radius:50%;background:var(--accent-soft);display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#6B5220">A</span>Ana R.<svg
+  class="ic  lucide lucide-chevron-down"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></span></div><div class="demo"><svg
+  class="ic  lucide lucide-flask-conical"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" />
+  <path d="M8.5 2h7" />
+  <path d="M7 16h10" />
+</svg>Ambiente de demonstração · pagamentos simulados · nenhuma obra está à venda</div><div style="max-width:512px;margin:0 auto;padding:64px 0;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center"><h1 class="serif" style="font-size:30px">Página não encontrada</h1><p class="small muted">O endereço não existe ou o lote não está disponível.</p><span class="btn o">Ir para a vitrine</span></div></div><div class="flabel" style="margin-top:22px"><b>E1.1</b>error.tsx · desktop 1440 · dentro do layout (header atual + footer F3-cor)</div><div class="frame" style="width:1440px"><div class="top" style="position:relative"><div class="logo"><svg width="30" height="30" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg>Arremate</div><nav style="display:flex;gap:4px;margin:0 auto"><a class="on" style="display:flex;gap:6px;align-items:center"><svg
+  class="ic  lucide lucide-gavel"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m14 13-8.381 8.38a1 1 0 0 1-3.001-3l8.384-8.381" />
+  <path d="m16 16 6-6" />
+  <path d="m21.5 10.5-8-8" />
+  <path d="m8 8 6-6" />
+  <path d="m8.5 7.5 8 8" />
+</svg>Leilões<svg
+  class="ic  lucide lucide-chevron-down"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></a><a class="" style="display:flex;gap:6px;align-items:center"><svg
+  class="ic  lucide lucide-book-open"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 7v14" />
+  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+</svg>Como funciona</a><a class="" style="display:flex;gap:6px;align-items:center"><svg
+  class="ic  lucide lucide-life-buoy"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m4.93 4.93 4.24 4.24" />
+  <path d="m14.83 9.17 4.24-4.24" />
+  <path d="m14.83 14.83 4.24 4.24" />
+  <path d="m9.17 14.83-4.24 4.24" />
+  <circle cx="12" cy="12" r="4" />
+</svg>Suporte/FAQ</a></nav><span class="btn g sm ib" style="position:relative;width:36px;height:36px" aria-label="Notificações"><svg
+  class="ic  lucide lucide-bell"
+  xmlns="http://www.w3.org/2000/svg"
+  width="18"
+  height="18"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+</svg></span><span class="btn o sm"><svg
+  class="ic  lucide lucide-wallet"
+  xmlns="http://www.w3.org/2000/svg"
+  width="15"
+  height="15"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+</svg><span class="num">R$ 7.000,00</span></span><span class="btn g sm" style="gap:8px"><span style="width:28px;height:28px;border-radius:50%;background:var(--accent-soft);display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#6B5220">A</span>Ana R.<svg
+  class="ic  lucide lucide-chevron-down"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m6 9 6 6 6-6" />
+</svg></span></div><div class="demo"><svg
+  class="ic  lucide lucide-flask-conical"
+  xmlns="http://www.w3.org/2000/svg"
+  width="14"
+  height="14"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" />
+  <path d="M8.5 2h7" />
+  <path d="M7 16h10" />
+</svg>Ambiente de demonstração · pagamentos simulados · nenhuma obra está à venda</div><div style="max-width:512px;margin:0 auto;padding:64px 0;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center"><span style="width:56px;height:56px;border-radius:50%;background:var(--err-soft);color:var(--err);display:inline-flex;align-items:center;justify-content:center"><svg
+  class="ic  lucide lucide-circle-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <line x1="12" x2="12" y1="8" y2="12" />
+  <line x1="12" x2="12.01" y1="16" y2="16" />
+</svg></span><h1 class="serif" style="font-size:30px;font-weight:600">Algo deu errado</h1><p class="small muted">Não conseguimos abrir esta página agora. Tente de novo em instantes.</p><div class="row" style="gap:10px;margin-top:8px;justify-content:center"><span class="btn p lg" style=""><svg
+  class="ic  lucide lucide-refresh-cw"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>Tentar de novo</span><span class="btn o lg" style="">Voltar à vitrine</span></div><p class="xs" style="color:var(--ink-3);margin-top:10px">Código de referência: <span class="num">a1b2c3d4</span></p></div><div class="ft br" style="padding:44px 40px 22px"><div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:32px"><div><h3 class="serif" style="font-size:30px;font-weight:600;color:var(--bg);line-height:1.2">Cada lance, registrado.<br><span style="color:var(--accent)">Cada obra, de domínio público.</span></h3><span class="badge" style="background:var(--warn-soft);color:var(--warn);margin-top:14px;white-space:normal;height:auto;padding:4px 10px"><svg
+  class="ic  lucide lucide-flask-conical"
+  xmlns="http://www.w3.org/2000/svg"
+  width="13"
+  height="13"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" />
+  <path d="M8.5 2h7" />
+  <path d="M7 16h10" />
+</svg>Demonstração · pagamentos simulados, sem dinheiro real</span></div><div><h4>Leilão</h4><a>Como funciona</a><a>FAQ</a></div><div><h4>Minha conta</h4><a>Perfil</a><a>Carteira</a><a>Favoritos</a></div><div><h4>Ajuda</h4><a>Suporte</a></div><div><h4>Legal</h4><a>Termos</a><a>Privacidade</a></div></div><div class="xs cr" style="border-top:1px solid var(--accent);margin-top:30px;padding-top:14px;display:flex;justify-content:space-between;align-items:center"><span class="row" style="gap:8px;color:var(--bg)"><svg width="22" height="22" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg><b class="serif">Arremate</b></span><span>Obras: domínio público (CC0) · The Metropolitan Museum of Art Open Access · valores simulados</span></div></div></div><div class="flabel" style="margin-top:22px"><b>E1.2</b>global-error.tsx · desktop 1440 · sem layout (html/body próprios, CSS inline mínimo)</div><div class="frame" style="width:1440px"><div style="background:var(--bg);height:520px;display:flex;align-items:center"><div style="width:100%"><div class="row" style="justify-content:center;gap:8px;padding-top:0px"><span class="logo"><svg width="28" height="28" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg>Arremate</span></div><div style="max-width:512px;margin:0 auto;padding:64px 0;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center"><span style="width:56px;height:56px;border-radius:50%;background:var(--err-soft);color:var(--err);display:inline-flex;align-items:center;justify-content:center"><svg
+  class="ic  lucide lucide-circle-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <line x1="12" x2="12" y1="8" y2="12" />
+  <line x1="12" x2="12.01" y1="16" y2="16" />
+</svg></span><h1 class="serif" style="font-size:30px;font-weight:600">O Arremate não carregou</h1><p class="small muted">Recarregue a página. Se continuar, volte mais tarde.</p><div class="row" style="gap:10px;margin-top:8px;justify-content:center"><span class="btn p lg" style=""><svg
+  class="ic  lucide lucide-refresh-cw"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>Tentar de novo</span><span class="btn o lg" style="">Ir para a vitrine</span></div><p class="xs" style="color:var(--ink-3);margin-top:10px">Código de referência: <span class="num">a1b2c3d4</span></p></div></div></div></div><div class="grid" style="grid-template-columns:repeat(2,390px);margin-top:28px;gap:32px;align-items:start"><div><div class="flabel"><b>E1.3</b>error.tsx · mobile 390</div><div class="mframe"><div class="mtop"><div class="logo" style="font-size:18px"><svg width="26" height="26" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg>Arremate</div><div class="sp"></div><span class="btn g sm ib" style="position:relative;width:44px;height:44px" aria-label="Notificações"><svg
+  class="ic  lucide lucide-bell"
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+</svg></span><span class="btn g sm" style="padding:0 10px" aria-label="Menu"><svg
+  class="ic  lucide lucide-menu"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" />
+</svg></span></div><div class="demo" style="font-size:11px"><svg
+  class="ic  lucide lucide-flask-conical"
+  xmlns="http://www.w3.org/2000/svg"
+  width="13"
+  height="13"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" />
+  <path d="M8.5 2h7" />
+  <path d="M7 16h10" />
+</svg>Demonstração · pagamentos simulados</div><div style="max-width:512px;margin:0 auto;padding:40px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center"><span style="width:56px;height:56px;border-radius:50%;background:var(--err-soft);color:var(--err);display:inline-flex;align-items:center;justify-content:center"><svg
+  class="ic  lucide lucide-circle-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <line x1="12" x2="12" y1="8" y2="12" />
+  <line x1="12" x2="12.01" y1="16" y2="16" />
+</svg></span><h1 class="serif" style="font-size:26px;font-weight:600">Algo deu errado</h1><p class="small muted">Não conseguimos abrir esta página agora. Tente de novo em instantes.</p><div class="col" style="gap:10px;margin-top:8px;width:100%"><span class="btn p" style="min-height:44px;width:100%"><svg
+  class="ic  lucide lucide-refresh-cw"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>Tentar de novo</span><span class="btn o" style="min-height:44px;width:100%">Voltar à vitrine</span></div><p class="xs" style="color:var(--ink-3);margin-top:10px">Código de referência: <span class="num">a1b2c3d4</span></p></div><div class="ft br m" style="padding:28px 16px"><h3 class="serif" style="font-size:24px;font-weight:600;color:var(--bg);line-height:1.2">Cada lance, registrado.<br><span style="color:var(--accent)">Cada obra, de domínio público.</span></h3><span class="badge" style="background:var(--warn-soft);color:var(--warn);margin-top:14px;white-space:normal;height:auto;padding:4px 10px"><svg
+  class="ic  lucide lucide-flask-conical"
+  xmlns="http://www.w3.org/2000/svg"
+  width="13"
+  height="13"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" />
+  <path d="M8.5 2h7" />
+  <path d="M7 16h10" />
+</svg>Demonstração · pagamentos simulados, sem dinheiro real</span><div class="col" style="gap:18px;margin-top:22px"><div><h4>Leilão</h4><a>Como funciona</a><a>FAQ</a></div><div><h4>Minha conta</h4><a>Perfil</a><a>Carteira</a><a>Favoritos</a></div><div><h4>Ajuda</h4><a>Suporte</a></div><div><h4>Legal</h4><a>Termos</a><a>Privacidade</a></div></div><div class="xs cr" style="margin-top:20px"><div class="logo cr"><svg width="22" height="22" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg>Arremate</div> Obras: domínio público (CC0) · The Metropolitan Museum of Art Open Access</div></div></div></div><div><div class="flabel"><b>E1.4</b>global-error.tsx · mobile 390</div><div class="mframe"><div style="background:var(--bg);"><div style="width:100%"><div class="row" style="justify-content:center;gap:8px;padding-top:24px"><span class="logo"><svg width="28" height="28" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="6" fill="#6E1E2B"/><rect x="5" y="5" width="22" height="22" rx="2" fill="none" stroke="#A9823A" stroke-width="1.5"/><text x="16" y="22.5" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="17" fill="#FFF8F0">A</text></svg>Arremate</span></div><div style="max-width:512px;margin:0 auto;padding:40px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center"><span style="width:56px;height:56px;border-radius:50%;background:var(--err-soft);color:var(--err);display:inline-flex;align-items:center;justify-content:center"><svg
+  class="ic  lucide lucide-circle-alert"
+  xmlns="http://www.w3.org/2000/svg"
+  width="28"
+  height="28"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <line x1="12" x2="12" y1="8" y2="12" />
+  <line x1="12" x2="12.01" y1="16" y2="16" />
+</svg></span><h1 class="serif" style="font-size:26px;font-weight:600">O Arremate não carregou</h1><p class="small muted">Recarregue a página. Se continuar, volte mais tarde.</p><div class="col" style="gap:10px;margin-top:8px;width:100%"><span class="btn p" style="min-height:44px;width:100%"><svg
+  class="ic  lucide lucide-refresh-cw"
+  xmlns="http://www.w3.org/2000/svg"
+  width="16"
+  height="16"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>Tentar de novo</span><span class="btn o" style="min-height:44px;width:100%">Ir para a vitrine</span></div><p class="xs" style="color:var(--ink-3);margin-top:10px">Código de referência: <span class="num">a1b2c3d4</span></p></div></div></div><div style=height:40px></div></div></div></div><div class="note" style="margin-top:20px;max-width:1100px">“Tentar de novo” chama reset() (error.tsx) ou location.reload() (global-error). “Voltar à vitrine” = Link “/” (no global-error, &lt;a href=/&gt; simples). Código de referência só se o digest existir; texto ink-3 12 px, selecionável. global-error não usa header/footer nem fontes externas: Fraunces com fallback serif, cores dos tokens copiadas como valores (não são tokens novos). Mobile: botões empilhados, 44 px.</div></div></body></html>

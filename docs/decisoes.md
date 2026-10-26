@@ -169,6 +169,17 @@ Fernando pediu em 25/10 às 10:46 cadastro e login reais, Google OAuth e pagamen
 - Migration `20261025103000_auth_payments` aplicada só nos bancos locais 5462 e 5463, com autorização de Fernando. Sem push, sem deploy e sem credencial Google criada.
 
 
+## D25 — Mensagens de erro, toasts e tela de erro — 26/10/2026
+
+Fernando aprovou em 26/10 às 09:26 o plano [erros e toasts](superpowers/plans/2026-10-25-erros-e-toasts.md) e as pranchas [T1, T2 e E1](design/pranchas/toast/INDICE.md), com G1 (dependência `sonner`, versão exata) e G2.
+
+- **API:** mutações só acrescentam `message` em pt-BR; textos e códigos em `common/messages.ts`; novos códigos `LIMITE_CONEXOES` (429) e `LOTE_JA_ABERTO` (409). Tabela da auditoria B0 em [api-mensagens.md](api-mensagens.md): 15 endpoints corrigidos de 43.
+- **Observabilidade:** `ErrorReporter` só registra em log (sanitiza e-mail, token e números; dedupe de 60 s; 30/min). 5xx (exceto 503) e erros não tratados do processo são capturados. `POST /api/client-errors` recebe os erros do navegador (origem, 8 KB, 20/min por IP).
+- **Toasts (Sonner):** só tema claro; canto inferior direito no desktop e topo central no celular; até 3 visíveis; sucesso 4 s, aviso 6 s, erro 8 s; com ação fica até fechar. Erro de API mostra o código de suporte inteiro com botão Copiar. 401 leva ao `/entrar`. Favorito removido oferece "Desfazer" (o PUT é idempotente). O toast próprio e o N4 migraram para o Sonner.
+- **Tela de erro (E1):** "Algo deu errado", Tentar de novo, Voltar à vitrine e o código; `global-error` próprio recarrega com `location.reload()`. Rota `/teste-erro` só existe com `NEXT_PUBLIC_E2E_ERRORS=1`.
+- **#418:** o novo relato de erros do cliente mostrou o aviso de hidratação em `/painel/lotes/novo` e `/carteira`; a causa não foi isolada nesta rodada e fica aberta.
+- Sem migration, sem push e sem deploy.
+
 ## D21 — Adendo A7 e recursos Next — 24/10/2026
 
 Pedido de Fernando autoriza etapa1 do adendo auth/pagamentos após entrega das pranchas A1–A7: faixa fixa de pagamentos simulados, links funcionais para Termos/Privacidade/Como funciona, next/image nos sete arquivos (oito imagens), loading/error por rota e OG por lote. Reutilizar tokens/componentes existentes; manter next/font, metadata,404 raiz e motion paralelo. Prioridade só na imagem principal da Sala; Next16 usa preload no lugar da prop priority obsoleta. Sem pacote novo nem mudança de schema/auth.
