@@ -132,6 +132,7 @@ test("quem já lidera vê o botão desabilitado e o motivo, sem toast de erro", 
   await expect(page.getByRole("button", { name: "Dar lance" })).toBeDisabled();
   await expect(page.getByTestId("lidera-aviso")).toHaveText("Você já lidera este lote. Dê outro lance quando alguém cobrir o seu.");
   await expect(page.locator("[data-sonner-toast][data-type='error']")).toHaveCount(0);
+  await page.context().close(); // libera o SSE da sala (limite de 3 por IP)
 });
 
 // Recusa por regra de lance é aviso, nunca erro vermelho com código para suporte (mesmo se a sala estiver desatualizada).
@@ -159,6 +160,7 @@ for (const [code, message] of [
     await expect(toast).toHaveAttribute("data-type", "warning");
     await expect(toast.getByTestId("support-code")).toHaveCount(0);
     await expect(page.locator("[data-sonner-toast][data-type='error']")).toHaveCount(0);
+    await page.context().close(); // libera o SSE da sala (limite de 3 por IP)
   });
 }
 
