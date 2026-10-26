@@ -40,5 +40,8 @@
     "@prisma/engines@7.10.1": true,
     "unrs-resolver@1.12.2": true,
     "@parcel/watcher@2.6.0": true
+  },
+  "overrides": {
+    "multer": "2.5.0"
   }
 }
