@@ -18,6 +18,7 @@ import { formatBrt } from "@/lib/datetime";
 import { formatBrl } from "@/lib/money";
 import { listAwards, listParticipations, type Award, type Participation } from "./awards-api";
 import { outcomeLabel, type Outcome } from "./participations";
+import { notifySuccess } from "@/lib/notify";
 
 const OUTCOME_VARIANT: Record<Outcome, "success" | "danger" | "warning" | "neutral" | "ended"> = {
   LEADING: "success",
@@ -65,6 +66,7 @@ function AwardCard({ award }: { award: Award }) {
     try {
       await navigator.clipboard.writeText(new URL(href, window.location.origin).toString());
       setCopied("ok");
+      notifySuccess("Link do comprovante copiado.");
     } catch {
       setCopied("erro");
     }

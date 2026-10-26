@@ -1,67 +1,58 @@
 "use client";
 
-import { XIcon } from "lucide-react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+import { CircleAlertIcon, CircleCheckIcon, InfoIcon, LoaderCircleIcon, TriangleAlertIcon } from "lucide-react";
+import { useSyncExternalStore } from "react";
+import { Toaster } from "sonner";
+
+const MOBILE = "(max-width: 640px)";
+
+function subscribe(onChange: () => void) {
+  const query = window.matchMedia(MOBILE);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+/** Mobile (≤ 640 px) no topo central, abaixo do header (T2). */
+function useMobile(): boolean {
+  return useSyncExternalStore(subscribe, () => window.matchMedia(MOBILE).matches, () => false);
+}
 
 /**
- * Toast local (D22): o Sonner não está instalado e não entra dependência nova. Região aria-live, some em `durationMs`
- * (8 s por padrão), fecha no X ou por ação. Embaixo à direita no desktop, no topo no mobile.
+ * Toaster do Arremate (Sonner, G1/G2; substitui o toast local da D22). Só tema claro. Desktop embaixo à direita,
+ * mobile no topo; até 3 visíveis; corpo --card e cor de estado só na borda esquerda e no ícone (prancha T1/T2).
  */
-export type ToastInput = { id: string; render: (close: () => void) => React.ReactNode; durationMs?: number };
-type ToastApi = { show: (toast: ToastInput) => void; dismiss: (id: string) => void };
-
-const ToastContext = createContext<ToastApi | null>(null);
-
-export function useToast(): ToastApi {
-  const api = useContext(ToastContext);
-  if (!api) throw new Error("useToast fora do ToastProvider");
-  return api;
-}
-
-export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = useState<ToastInput[]>([]);
-  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
-  const dismiss = useCallback((id: string) => {
-    const timer = timers.current.get(id);
-    if (timer) clearTimeout(timer);
-    timers.current.delete(id);
-    setToasts((list) => list.filter((t) => t.id !== id));
-  }, []);
-  const show = useCallback(
-    (toast: ToastInput) => {
-      setToasts((list) => [...list.filter((t) => t.id !== toast.id), toast].slice(-3));
-      const old = timers.current.get(toast.id);
-      if (old) clearTimeout(old);
-      timers.current.set(toast.id, setTimeout(() => dismiss(toast.id), toast.durationMs ?? 8000));
-    },
-    [dismiss],
-  );
-  useEffect(() => {
-    const map = timers.current;
-    return () => map.forEach((t) => clearTimeout(t));
-  }, []);
-  const api = useMemo(() => ({ show, dismiss }), [show, dismiss]);
+export function AppToaster() {
+  const mobile = useMobile();
   return (
-    <ToastContext.Provider value={api}>
-      {children}
-      <div aria-live="polite" aria-relevant="additions" className="pointer-events-none fixed inset-x-0 top-0 z-[60] flex flex-col items-center gap-2 p-3 sm:inset-x-auto sm:top-auto sm:right-0 sm:bottom-0 sm:items-end sm:p-6">
-        {toasts.map((toast) => (
-          <ToastCard key={toast.id} toast={toast} onClose={dismiss} />
-        ))}
-      </div>
-    </ToastContext.Provider>
-  );
-}
-
-function ToastCard({ toast, onClose }: { toast: ToastInput; onClose: (id: string) => void }) {
-  const close = () => onClose(toast.id);
-  return (
-    <div role="status" className={cn("pointer-events-auto relative w-full max-w-sm rounded-xl border bg-card p-4 pr-10 text-card-foreground shadow-lg")}>
-      {toast.render(close)}
-      <button type="button" onClick={close} aria-label="Fechar aviso" className="absolute top-1 right-1 inline-flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted">
-        <XIcon className="size-4" />
-      </button>
-    </div>
+    <Toaster
+      theme="light"
+      position={mobile ? "top-center" : "bottom-right"}
+      offset={mobile ? { top: 72, left: 8, right: 8 } : 24}
+      mobileOffset={{ top: 72, left: 8, right: 8 }}
+      visibleToasts={3}
+      closeButton
+      containerAriaLabel="Notificações"
+      icons={{
+        success: <CircleCheckIcon className="size-4 text-success" />,
+        error: <CircleAlertIcon className="size-4 text-destructive" />,
+        warning: <TriangleAlertIcon className="size-4 text-warning" />,
+        info: <InfoIcon className="size-4 text-scheduled" />,
+        loading: <LoaderCircleIcon className="size-4 animate-spin text-muted-foreground" />,
+      }}
+      toastOptions={{
+        unstyled: true,
+        classNames: {
+          toast:
+            "group pointer-events-auto relative flex w-full items-start gap-3 rounded-lg border border-l-4 border-border bg-card p-4 pr-10 text-card-foreground shadow-lg sm:w-[356px] data-[type=success]:border-l-success data-[type=error]:border-l-destructive data-[type=warning]:border-l-warning data-[type=info]:border-l-scheduled data-[type=loading]:border-l-muted-foreground",
+          icon: "mt-0.5 shrink-0",
+          content: "flex min-w-0 flex-1 flex-col gap-0.5",
+          title: "text-sm font-semibold text-foreground",
+          description: "text-xs text-muted-foreground",
+          actionButton: "mt-2 inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary-hover",
+          cancelButton: "mt-2 inline-flex h-8 items-center rounded-md border border-border px-3 text-xs font-medium",
+          closeButton: "absolute top-2 right-2 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted",
+        },
+      }}
+    />
   );
 }

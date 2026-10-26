@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { useAuthSheet } from "../auth/auth-sheet";
 import { useSession } from "../auth/use-session";
 import { FAVORITES_KEY, getFavorites, PENDING_FAVORITE_KEY, setFavorite, type FavoritesView } from "./favorites-api";
+import { messageOf, notifyError, notifySuccess } from "@/lib/notify";
 
 /** Busca separada dos ids favoritos do usuário (só logado), para pintar os corações sem tocar no cache da vitrine. */
 export function useFavorites() {
@@ -15,7 +16,8 @@ export function useFavorites() {
 
 export function useToggleFavorite() {
   const client = useQueryClient();
-  return useMutation({
+  const undo = useRef<((vars: { lotId: string; favorite: boolean }) => void) | null>(null);
+  const mutation = useMutation({
     mutationFn: ({ lotId, favorite }: { lotId: string; favorite: boolean }) => setFavorite(lotId, favorite),
     onMutate: async ({ lotId, favorite }) => {
       await client.cancelQueries({ queryKey: FAVORITES_KEY });
@@ -26,11 +28,21 @@ export function useToggleFavorite() {
       }
       return { previous };
     },
-    onError: (_error, _vars, context) => {
+    onSuccess: (data, { lotId, favorite }) => {
+      if (favorite) notifySuccess(messageOf(data, "Adicionado aos favoritos."), { id: `favorito-${lotId}` });
+      // A rota PUT de favorito é idempotente: o "Desfazer" só refaz o favorito (G2).
+      else notifySuccess(messageOf(data, "Removido dos favoritos."), { id: `favorito-${lotId}`, action: { label: "Desfazer", onClick: () => undo.current?.({ lotId, favorite: true }) } });
+    },
+    onError: (error, _vars, context) => {
       if (context?.previous) client.setQueryData(FAVORITES_KEY, context.previous);
+      notifyError(error, "Não foi possível atualizar o favorito.");
     },
     onSettled: () => void client.invalidateQueries({ queryKey: FAVORITES_KEY }),
   });
+  useEffect(() => {
+    undo.current = mutation.mutate;
+  }, [mutation.mutate]);
+  return mutation;
 }
 
 /** Não logado: guarda a intenção e abre a Sheet Entrar. */

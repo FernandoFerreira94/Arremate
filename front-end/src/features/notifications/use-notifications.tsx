@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/app/toast";
+import { toast } from "sonner";
 import { formatBrl } from "@/lib/money";
 import { useSession } from "../auth/use-session";
 import {
@@ -47,7 +47,6 @@ export function useMarkRead() {
 /** N4: toast "O lote abriu" para notificações novas enquanto o site está aberto; nunca na sala do próprio lote. */
 export function NotificationToaster() {
   const query = useNotifications();
-  const toast = useToast();
   const pathname = usePathname();
   const seen = useRef<Set<string> | null>(null);
   const markRead = useMarkRead();
@@ -61,32 +60,33 @@ export function NotificationToaster() {
     const fresh = toastable(seen.current, items, pathname);
     seen.current = new Set([...(seen.current ?? []), ...items.map((item) => item.id)]);
     for (const item of fresh) {
-      toast.show({
+      // N4 → Sonner (T2.5): mesmo conteúdo; com ação, fica até fechar.
+      toast(<span className="font-semibold">O lote abriu</span>, {
         id: item.id,
-        durationMs: TOAST_MS,
-        render: (close) => (
-          <div className="flex gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element -- mídia local já validada pela API */}
-            <img src={item.imageUrl} alt="" className="size-14 shrink-0 rounded-md bg-muted object-cover" />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">O lote abriu</p>
-              <p className="truncate font-serif text-base">{item.title}</p>
-              <p className="text-xs text-muted-foreground">Lance inicial {formatBrl(item.initialCents)}</p>
-              <div className="mt-2 flex gap-2">
-                <Button asChild size="sm">
-                  <Link href={`/lotes/${item.lotId}`} onClick={() => { markRead.mutate(item.id); close(); }}>Dar lance</Link>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/lotes/${item.lotId}`} onClick={() => { markRead.mutate(item.id); close(); }}>Ver lote</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
+        duration: TOAST_MS,
+        classNames: { toast: "border-l-scheduled" },
+        icon: (
+          // eslint-disable-next-line @next/next/no-img-element -- mídia local já validada pela API
+          <img src={item.imageUrl} alt="" className="size-14 shrink-0 rounded-md bg-muted object-cover" />
+        ),
+        description: (
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate font-serif text-base text-foreground">{item.title}</span>
+            <span className="text-xs text-muted-foreground">Lance inicial {formatBrl(item.initialCents)}</span>
+            <span className="mt-2 flex gap-2">
+              <Button asChild size="sm">
+                <Link href={`/lotes/${item.lotId}`} onClick={() => { markRead.mutate(item.id); toast.dismiss(item.id); }}>Dar lance</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/lotes/${item.lotId}`} onClick={() => { markRead.mutate(item.id); toast.dismiss(item.id); }}>Ver lote</Link>
+              </Button>
+            </span>
+          </span>
         ),
       });
     }
     // markRead é estável o bastante para o clique; a leitura só reage a dados novos.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query.data, pathname, toast]);
+  }, [query.data, pathname]);
   return null;
 }

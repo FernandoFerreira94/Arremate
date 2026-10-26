@@ -27,6 +27,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatBrl } from "@/lib/money";
 import { cancelWithRefresh } from "./cancel-lot";
 import { cancelLot, getSellerSummary, listSellerLots, type LotView } from "./seller-api";
+import { notifyErrorText, notifySuccess } from "@/lib/notify";
 
 type Filter = "ALL" | LotState;
 const FILTERS: { value: Filter; label: string }[] = [
@@ -49,6 +50,8 @@ export function MyLotsPage() {
   async function onCancel(lot: LotView) {
     const outcome = await cancelWithRefresh(client, cancelLot, lot.id);
     setNotice(outcome.ok ? { ok: true, message: `“${lot.title}” foi cancelado e saiu da vitrine.` } : { ok: false, message: outcome.message });
+    if (outcome.ok) notifySuccess("Lote cancelado.");
+    else notifyErrorText(outcome.message);
   }
 
   return (

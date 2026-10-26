@@ -16,6 +16,7 @@ import { createIdempotentAction } from "@/lib/idempotent-action";
 import { formatBrl } from "@/lib/money";
 import { validateDeposit } from "./deposit-rules";
 import { deposit, getCards, removeCard, useTestCard, type WalletView } from "./wallet-api";
+import { messageOf, notifyError, notifySuccess } from "@/lib/notify";
 
 const SHORTCUTS = [{ label: "R$ 1.000", value: "1.000" }, { label: "R$ 5.000", value: "5.000" }, { label: "R$ 10.000", value: "10.000" }];
 export function DepositForm({ method, onMethod, onDone }: { method: "PIX" | "CARD"; onMethod: (method: "PIX" | "CARD") => void; onDone: (view: WalletView) => void }) {
@@ -37,18 +38,18 @@ export function DepositForm({ method, onMethod, onDone }: { method: "PIX" | "CAR
   }), []);
   const mutation = useMutation({
     mutationFn: async (body: string) => { await new Promise((resolve) => setTimeout(resolve, 1500)); return action.run(body); },
-    onSuccess: (view) => { onDone(view); setResult("Pagamento simulado aprovado. Saldo atualizado."); void client.invalidateQueries({ queryKey: ["wallet", "entries"] }); },
-    onError: () => { setResult("Não foi possível concluir o pagamento simulado. Tente de novo: o mesmo pedido não é creditado duas vezes."); void client.invalidateQueries({ queryKey: ["wallet"] }); },
+    onSuccess: (view) => { onDone(view); setResult("Pagamento simulado aprovado. Saldo atualizado."); notifySuccess(messageOf(view, "Depósito adicionado.")); void client.invalidateQueries({ queryKey: ["wallet", "entries"] }); },
+    onError: (error, body) => { notifyError(error, "Não foi possível depositar.", { retry: () => mutation.mutate(body) }); setResult("Não foi possível concluir o pagamento simulado. Tente de novo: o mesmo pedido não é creditado duas vezes."); void client.invalidateQueries({ queryKey: ["wallet"] }); },
   });
-  const save = useMutation({ mutationFn: useTestCard, onSuccess: () => void client.invalidateQueries({ queryKey: ["wallet", "cards"] }) });
-  const remove = useMutation({ mutationFn: () => removeCard(card?.id ?? ""), onSuccess: () => { setRemoving(false); void client.invalidateQueries({ queryKey: ["wallet", "cards"] }); } });
+  const save = useMutation({ mutationFn: useTestCard, onSuccess: (data) => { notifySuccess(messageOf(data, "Cartão de teste salvo.")); void client.invalidateQueries({ queryKey: ["wallet", "cards"] }); }, onError: (error) => notifyError(error, "Não foi possível salvar o cartão.") });
+  const remove = useMutation({ mutationFn: () => removeCard(card?.id ?? ""), onSuccess: () => { setRemoving(false); notifySuccess("Cartão removido."); void client.invalidateQueries({ queryKey: ["wallet", "cards"] }); }, onError: (error) => notifyError(error, "Não foi possível remover o cartão.") });
   useEffect(() => {
     if (!expiresAt) return;
     const timer = window.setInterval(() => setRemaining(Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000))), 1000);
     return () => window.clearInterval(timer);
   }, [expiresAt]);
   function amountChanged(value: string) { setText(value); setFieldError(undefined); setResult(undefined); setExpiresAt(Date.now() + 600_000); setRemaining(600); }
-  async function copy() { try { await navigator.clipboard.writeText(`DEMO-ARREMATE-${text.replace(/[^0-9]/g, "")}-SEM-VALOR`); setCopied("Código copiado."); } catch { setCopied("Não foi possível copiar o código."); } }
+  async function copy() { try { await navigator.clipboard.writeText(`DEMO-ARREMATE-${text.replace(/[^0-9]/g, "")}-SEM-VALOR`); setCopied("Código copiado."); notifySuccess("Código copiado."); } catch { setCopied("Não foi possível copiar o código."); } }
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (mutation.isPending) return;

@@ -5,7 +5,8 @@ import { useState } from "react";
 import { AuthSheetProvider } from "@/features/auth/auth-sheet";
 import { PendingFavoriteRunner } from "@/features/favorites/use-favorites";
 import { TourProvider } from "@/features/tour/tour";
-import { ToastProvider } from "@/components/app/toast";
+import { AppToaster } from "@/components/app/toast";
+import { ErrorListeners } from "@/components/app/error-listeners";
 import { NotificationToaster } from "@/features/notifications/use-notifications";
 import { PendingWatchRunner } from "@/features/notifications/use-watches";
 
@@ -21,12 +22,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={client}>
       <AuthSheetProvider>
         <TourProvider>
-          <ToastProvider>
-            <PendingFavoriteRunner />
-            <PendingWatchRunner />
-            <NotificationToaster />
-            {children}
-          </ToastProvider>
+          <ErrorListeners />
+          <PendingFavoriteRunner />
+          <PendingWatchRunner />
+          <NotificationToaster />
+          {children}
+          <AppToaster />
         </TourProvider>
       </AuthSheetProvider>
     </QueryClientProvider>

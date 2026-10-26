@@ -14,6 +14,7 @@ import { formatBrt } from "@/lib/datetime";
 import { formatBrl } from "@/lib/money";
 import { AuditStatusAlert } from "./audit-page";
 import { getReceipt } from "./lots-api";
+import { notifySuccess } from "@/lib/notify";
 
 export function ReceiptPage({ token }: { token: string }) {
   const receipt = useQuery({ queryKey: ["receipt", token], queryFn: () => getReceipt(token), retry: false });
@@ -29,6 +30,7 @@ export function ReceiptPage({ token }: { token: string }) {
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied("Link copiado.");
+      notifySuccess("Link do comprovante copiado.");
     } catch {
       setCopied("Não foi possível copiar; copie pela barra de endereço.");
     }

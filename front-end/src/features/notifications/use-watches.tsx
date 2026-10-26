@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { useAuthSheet } from "../auth/auth-sheet";
 import { useSession } from "../auth/use-session";
 import { getWatches, PENDING_WATCH_KEY, setWatch, WATCHES_KEY } from "./notifications-api";
+import { messageOf, notifyError, notifySuccess } from "@/lib/notify";
 
 /** Inscrições "Avise-me" do usuário logado (busca separada; a vitrine pública não muda). */
 export function useWatches() {
@@ -24,8 +25,12 @@ export function useToggleWatch() {
       }
       return { previous };
     },
-    onError: (_error, _vars, context) => {
+    onSuccess: (data, { lotId, watching }) => {
+      notifySuccess(messageOf(data, watching ? "Vamos avisar quando o lote abrir." : "Aviso desativado."), { id: `aviso-${lotId}` });
+    },
+    onError: (error, _vars, context) => {
       if (context?.previous) client.setQueryData(WATCHES_KEY, context.previous);
+      notifyError(error, "Não foi possível atualizar o aviso.");
     },
     onSettled: () => void client.invalidateQueries({ queryKey: WATCHES_KEY }),
   });

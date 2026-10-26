@@ -21,6 +21,7 @@ import { formatBrl, parseBrlInput } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { buildPublishBody, type PublishErrors, type PublishForm } from "./publish-form";
 import { publishLot, searchCatalog, type CatalogItem, type LotView } from "./seller-api";
+import { messageOf, notifyError, notifySuccess } from "@/lib/notify";
 
 const REASON: Record<string, string> = { LICENCA_RECUSADA: "Sem licença de domínio público", SEM_IMAGEM: "Sem imagem disponível" };
 const PUBLISH_ERRORS: Record<string, string> = {
@@ -51,10 +52,12 @@ export function NewLotPage() {
     mutationFn: (body: string) => action.run(body),
     onSuccess: (lot) => {
       setPublished(lot);
+      notifySuccess(messageOf(lot, "Lote publicado."));
       void client.invalidateQueries({ queryKey: ["seller"] });
     },
     onError: (error) => {
       const code = error instanceof ApiError ? error.code : "";
+      notifyError(error, "Não foi possível publicar o lote.");
       setPublishError(PUBLISH_ERRORS[code] ?? (error instanceof ApiError && error.statusCode !== 0 ? error.message : "Não confirmamos a publicação. Tente de novo: o mesmo pedido não cria lote duplicado."));
     },
   });

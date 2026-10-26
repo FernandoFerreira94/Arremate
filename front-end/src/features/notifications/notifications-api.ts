@@ -26,7 +26,8 @@ export const NOTIFICATIONS_KEY = ["notifications"] as const;
 export const PENDING_WATCH_KEY = "arremate.aviso.pendente";
 /** Decisão do Fernando (25/10): polling de 30 s, sem SSE novo. */
 export const NOTIFICATIONS_POLL_MS = 30_000;
-export const TOAST_MS = 8_000;
+/** Notificação com ação fica até fechar (G2). */
+export const TOAST_MS = Number.POSITIVE_INFINITY;
 
 export async function getNextLot(): Promise<NextLotView> {
   return (await apiFetch("/api/lots/next")) as NextLotView;

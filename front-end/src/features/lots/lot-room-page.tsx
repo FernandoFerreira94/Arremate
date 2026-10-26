@@ -36,6 +36,7 @@ import { LotDetailRows } from "./lot-details";
 import { RecentBidsTrigger } from "./recent-bids";
 import { bidShortcuts, clockOffset, formatCountdown, rankByBidder, remainingMs } from "./room-logic";
 import { useNow } from "./showcase-page";
+import { messageOf, notifyError, notifySuccess } from "@/lib/notify";
 
 const plain = (cents: string) => formatBrl(cents).replace(/^R\$\s?/, "");
 
@@ -233,12 +234,14 @@ function BidForm({ lot, availableCents, onDone }: { lot: PublicLot; availableCen
       setConfirm(null);
       setError(null);
       setNotice(accepted.extended ? "Lance confirmado. O prazo foi prorrogado." : "Lance confirmado. Você está ganhando.");
+      notifySuccess(messageOf(accepted, "Lance registrado."), { id: "lance" });
       onDone();
     },
     onError: (failure) => {
       setConfirm(null);
       setNotice(null);
       setError(failure instanceof ApiError ? failure.message : "Não conseguimos confirmar seu lance. Atualize o histórico antes de tentar de novo.");
+      notifyError(failure, "Não conseguimos confirmar seu lance.", { id: "lance" });
       onDone();
     },
   });

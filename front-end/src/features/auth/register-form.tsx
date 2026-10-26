@@ -16,6 +16,7 @@ import { currentSession, register } from "./auth-api";
 import { GoogleButton } from "./google-button";
 import { isPlausibleEmail, passwordStrength, STRENGTH_LABEL } from "./reset-logic";
 import { SESSION_KEY } from "./use-session";
+import { messageOf, notifySuccess } from "@/lib/notify";
 
 export function RegisterForm({ onGoToLogin, onDone }: { onGoToLogin: () => void; onDone: () => void }) {
   const [name, setName] = useState("");
@@ -41,6 +42,7 @@ export function RegisterForm({ onGoToLogin, onDone }: { onGoToLogin: () => void;
       setPassword("");
       setConfirmation("");
       onDone();
+      notifySuccess(messageOf(result, "Conta criada."));
       router.push(result.returnTo);
     } catch (failure) {
       setError(failure instanceof ApiError && failure.statusCode === 429 ? "Muitas tentativas. Aguarde alguns minutos." : "Não foi possível criar a conta. Verifique os dados ou tente entrar.");

@@ -15,6 +15,7 @@ import { currentSession, login, type Session } from "./auth-api";
 import { afterLoginFailure, safeReturnTo, type LoginValues } from "./login-state";
 import { GoogleButton } from "./google-button";
 import { SESSION_KEY } from "./use-session";
+import { messageOf, notifySuccess } from "@/lib/notify";
 
 /** Login rápido de teste: contas fictícias do seed com a senha pública de demo (docs/ambiente.md). Usa o login normal (mesmo limite de tentativas); ligado só por flag pública. */
 export const DEMO_LOGIN_ENABLED = process.env.NEXT_PUBLIC_DEMO_LOGIN === "true";
@@ -66,6 +67,7 @@ export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormPr
     // Na Sheet a página não navega: a query da sessão fica no cache (é atualizada abaixo) para o header ser notificado.
     client.removeQueries({ predicate: (query) => query.queryKey[0] !== "public" && (variant === "page" || query.queryKey[0] !== SESSION_KEY[0]) });
     client.setQueryData(SESSION_KEY, current);
+    notifySuccess(messageOf(session, "Login realizado."));
     if (onSuccess) {
       setSending(false);
       return onSuccess();
