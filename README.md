@@ -44,6 +44,7 @@ Extensões de 24/10:
 - **Entrada animada (D17, calibrada em D19):** splash temático com a marca, moldura latão e fundo papel, só no primeiro acesso da sessão; títulos, blocos e cards entram em sequência. Ver seção própria abaixo.
 - **Rodada 3 — pranchas R1–R10, hero e notificações (D22, registrada como D21 na branch):** adendo ao Freeze D12 (Sheet de auth, redefinição simulada, imagens contain, páginas novas), favoritos, tour, hero com carrossel dos próximos agendados (`GET /api/lots/upcoming`), Avise-me, notificações e rodapé F3-cor. Feito na branch local `feat/rodada-3` (último commit `c11f308`) e incorporado por merge local. Pendente de integração: botão Google, cadastro real, nome/e-mail/cartões no Perfil e links da Carteira por aba. **Pendentes de implementação funcional:** Pix/cartão simulado e login com Google. A revisão do código não encontrou esses fluxos em nenhuma das duas branches. Evidência: `docs/evidence/2026-10-24-rodada-3.md`.
 - **Cadastro, Google e pagamentos simulados (D24, 26/10/2026):** cadastro e login por e-mail (Argon2id, sessão e CSRF), Google OAuth por fetch, nome no header e no Perfil, cartão de teste que guarda só bandeira, final e validade, depósitos Pix e cartão simulados (idempotentes, em transação) e histórico de lances. Começado pelo Codex e concluído aqui. Google só funciona com `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` e `GOOGLE_REDIRECT_URI` no ambiente; sem elas o botão aparece desabilitado ("indisponível na demo"). Consentimento real do Google não testado.
+- **Zoom da obra (D28):** clique na imagem do lote para ampliar até 3x (4x com pinça no celular). As imagens ~2500px são geradas por `python scripts/zoom-hires.py .data/media/zoom` (Python 3 + Pillow; para o E2E, `.data/media-e2e/zoom`) e usadas só no zoom; sem elas, o zoom usa a imagem normal.
 
 **Recorte das branches.** A `feat/rodada-3` (`c11f308`) entrou na `chore/bootstrap` por merge local `--no-ff` em 25/10/2026, sem push. Na revisão dos conflitos, cada lado foi mantido.
 
@@ -70,14 +71,14 @@ Pasta canônica: `C:/Users/ferna/Desktop/WebCode/Projetos/casadeleilao` (a pasta
 2. Entrar como licitante e fazer um depósito simulado na carteira.
 3. Abrir um lote na vitrine e dar lances; em outra aba, com outro licitante, disputar o mesmo lote e ver a atualização em tempo real.
 4. Ao encerrar, conferir o comprovante e a auditoria pública do lote.
-5. Também verificável: login rápido de demo (atrás de flag); tour guiado no primeiro login; favoritos; hero do próximo leilão com “Avise-me quando abrir” e a notificação quando o lote abre; um produto por quadro na vitrine; página 404 própria.
+5. Também verificável: login rápido de demo (ligado por padrão, D27); tour guiado no primeiro login; favoritos; hero do próximo leilão com “Avise-me quando abrir” e a notificação quando o lote abre; um produto por quadro na vitrine; página 404 própria.
 
 ### Roteiro de auth, carteira e histórico
 
 Este roteiro descreve o comportamento existente no código; não é um relatório de execução. As contas são fictícias. Use apenas os bancos locais do projeto.
 
 1. **E-mail e senha:** após o seed, abra `/entrar` e use `licitante1@arremate.demo`. Consulte a senha pública de demonstração no [seed](back-end/prisma/seed.ts); se o ambiente usar `SEED_DEMO_PASSWORD`, use a senha local definida para o seed. Entre também como `leiloeiro@arremate.demo` e observe a navegação por papel.
-2. **Login rápido:** na `feat/rodada-3`, com `NEXT_PUBLIC_DEMO_LOGIN` habilitada na build, abra Entrar e escolha “Entrar como licitante de teste” ou “Entrar como leiloeiro de teste”. Os botões usam a senha pública padrão do seed; se ela foi substituída, use o formulário manual. Esses botões ainda não estão integrados à `chore/bootstrap`.
+2. **Login rápido:** abra Entrar e escolha “Entrar como licitante de teste” ou “Entrar como leiloeiro de teste”. Ligados por padrão (D27); `NEXT_PUBLIC_DEMO_LOGIN=false` na build os esconde. Os botões usam a senha pública padrão do seed; se ela foi substituída, use o formulário manual.
 3. **Mensagens neutras e sessão:** compare senha incorreta com e-mail inexistente: ambos devem produzir o mesmo erro de credenciais. Faça logout e tente abrir `/carteira`; a área privada deve exigir login. Confira os atributos do cookie sem copiar seu valor. `Secure` e `__Host-` são condicionais à produção.
 4. **CSRF e limites:** na aba Rede do navegador, confira Origin e `X-CSRF-Token` em uma mutação autenticada. Reenviar a mutação sem o cabeçalho deve resultar em 403. Tentativas de login acima do limite do [limitador](back-end/src/auth/rate-limit.ts) devem resultar em 429; o contador é local à instância da API.
 5. **Depósito simulado:** como licitante, abra `/carteira`, anote o saldo e use um atalho ou um valor válido. Confirme e confira o acréscimo no saldo. Na aba Rede, `POST /api/wallet/deposits` recebe `amountCents` e `Idempotency-Key`, sem dados de cartão. Reenviar a mesma requisição com a mesma chave não deve gerar novo crédito; alterar o corpo mantendo a chave deve gerar conflito.
@@ -131,6 +132,67 @@ Tarefas 4 a 7 sem migration nova.
 **Último registro anterior da branch feat/rodada-3:** unit da API 65/65, Vitest 71/71, integração 110/110, E2E 25/25.
 
 **Segurança das dependências.** Auditoria de runtime (`--omit=dev`): 0 alertas. Auditoria completa: 9 High derivados de braces 3.0.3, sem correção upstream, só em tooling (eslint-config-next/shadcn CLI); não aceitar patterns externos nessas ferramentas. ESLint 9.39.5 compatível com os peers do Next, com aviso de fim de suporte. Sem `audit fix --force` nem downgrade automático. Isso não é declaração de produção pronta.
+
+## Qualidade e verificações
+
+Trato cada entrega como não pronta até as suítes abaixo passarem na mesma árvore, no mesmo dia. Os números são da última rodada completa (26/10/2026, Node 26, Windows, banco PostgreSQL local).
+
+### Suítes e números atuais
+
+| Suíte | O que cobre | Resultado |
+|---|---|---|
+| Lint (`eslint`, front e API) | Regras do projeto, hooks do React, imports | sem erro |
+| Typecheck (`tsc --noEmit`, front, API e ferramentas) | Tipos de ponta a ponta, inclusive dos testes | sem erro |
+| Unit da API (Jest) | Regras puras: lances, dinheiro em centavos, CSRF, origens, nome exibido, relato de erros | 85/85 |
+| Unit do front (Vitest) | Hooks e lógica de tela: zoom, carteira, sala do lote, sessão, notificações | 117/117 |
+| Integração da API (Jest + PostgreSQL real) | Rotas HTTP com banco: idempotência, concorrência de lances, liquidação, auditoria, mídia, auth | 129/129 (23 suítes) |
+| E2E (Playwright, `--workers=1`) | Jornadas no navegador, desktop e celular (390px), contra o build de produção | 64/64 |
+| Build do front (`next build`) | Compilação de produção | ok |
+
+O E2E roda com um só worker de propósito: as jornadas dividem contas e o limite de 3 streams de tempo real por IP (B3), e em paralelo os testes disputariam esses recursos.
+
+### Revisão de segurança
+
+Uma revisão independente (Sentinela) leu o código e apontou dois achados médios e dois baixos. Todos foram corrigidos e têm teste (D26):
+
+- **M1, login travado por IP único:** atrás do proxy do Next, todo mundo parecia vir do mesmo IP. Agora o proxy repassa o IP real do cliente e a API só confia no salto local. O limite de login conta depois da checagem de Origin e CSRF, e há um limite por e-mail.
+- **M2, cabeçalhos do front:** CSP com nonce por requisição, `frame-ancestors 'none'`, `X-Frame-Options`, `nosniff`, `Referrer-Policy` e HSTS só em produção.
+- **B1:** erros do navegador têm cota própria no relato de erros e limite por IP real.
+- **B3:** no máximo 3 streams de tempo real por IP, liberados ao fechar.
+
+Antes disso, cada tarefa teve uma leitura de segurança registrada em `docs/evidence/`, sem achado alto ou crítico.
+
+### Rodadas de QA
+
+O QA navega como um usuário, em desktop e celular, e devolve achados com print e log. Cada achado vira teste antes de virar correção.
+
+- **Rodada de 26/10 (D29):**
+  - Imagens com 404: o banco local era compartilhado com outra cópia do projeto, que tinha os arquivos. A API agora restaura a imagem sob demanda a partir do The Met e confere o sha256 antes de salvar.
+  - Carteira a 390px passava da tela, e um cartão roubava o toque de "Adicionar saldo". Corrigido o layout; o QR do Pix não cobre mais o botão.
+  - Login e cadastro em `localhost:3300` davam erro de CSRF. As duas origens locais são aceitas fora de produção; em produção só vale a origem configurada.
+  - O header continuava logado depois de sair; agora troca na hora.
+  - Mensagens que faltavam: "Você foi superado" (sino e toast), saldo insuficiente no lance (com link para a carteira) e depósito de R$ 0.
+  - Contas demo mostram o papel no lugar de "Participante"; lote agendado tem Avise-me na sala; abas do suporte cabem no celular.
+  - A tela de erro é verificada no build de produção sem rota de teste.
+  - Meus arremates: verifiquei com uma conta com histórico; a aba funciona, e a lista vazia era de uma conta que nunca venceu. O texto do vazio agora diz isso.
+- **Rodadas anteriores:** mensagens de erro e toasts (D25), zoom da obra (D28) e os ajustes das pranchas da rodada 3 (D22), cada um com seu E2E.
+
+### Como rodar
+
+Da raiz do repositório, com o banco local no ar e o `.env` preenchido a partir do `.env.example`:
+
+```bash
+npm run lint
+npm run typecheck
+npm test                                   # unit da API
+npm run test:unit --workspace front-end    # Vitest do front
+npm run test:integration                   # integração, precisa do PostgreSQL local
+npx playwright test --workers=1            # E2E; sobe build e portas próprios (3310/4310)
+npx playwright test e2e/qa-fixes.spec.ts --workers=1   # só uma jornada
+npm run build --workspace front-end
+```
+
+O E2E usa banco, mídia (`.data/media-e2e`) e portas próprios, então não mexe nos dados de demonstração.
 
 ## Como o projeto foi construído
 
@@ -224,7 +286,7 @@ Somos um time de agentes de IA operando numa arquitetura projetada pelo Fernando
 | Crédito simulado com transação e idempotência (D05; `6e6ebe4`) | O backend valida o valor, bloqueia a carteira, grava `DEPOSIT` e atualiza o saldo na mesma transação. Mesma chave e corpo devolvem o resultado anterior; outro corpo gera conflito. A simulação substitui a cobrança por gateway real, sem pedir dados bancários. Fontes: [D05](docs/decisoes.md), [serviço](back-end/src/wallets/wallets.service.ts), [lançamento](back-end/src/wallets/wallets.repository.ts) e [idempotência](back-end/src/common/idempotency.ts). |
 | Participações e arremates consultados pela API (`566513f`) | O usuário da sessão determina quais lances e arremates entram na consulta. Disputa e resultado vêm do servidor; o comprovante vem da liquidação persistida. Filtrar os dados de todos os usuários no navegador foi descartado pelo acesso restrito na API. Fontes: [consultas](back-end/src/lots/settlement.repository.ts) e [tela](front-end/src/features/awards/my-awards-page.tsx). |
 | Supabase somente como PostgreSQL (D20; `07422af`) | `DATABASE_URL` atende o runtime; o CLI Prisma prefere `DIRECT_URL`, com fallback local. Regras, papéis e propriedade dos lotes ficam no NestJS. Usar Supabase Auth, PostgREST, Storage ou RLS como camada de autorização foi descartado para manter uma implementação das regras na API. Preparação não comprova conexão hospedada. Fontes: [D20](docs/decisoes.md#d20--supabase-somente-postgresql--24102026), [Prisma](back-end/prisma.config.ts) e [guard](back-end/src/auth/roles.guard.ts). |
-| Login rápido usa a autenticação normal (`bfc1c43`, `feat/rodada-3`) | Botões de demonstração enviam credenciais fictícias do seed ao mesmo endpoint de login, sob os mesmos limites. A flag pública `NEXT_PUBLIC_DEMO_LOGIN` controla sua exibição na build; não se concede sessão sem validar credenciais. Fonte: `front-end/src/features/auth/login-form.tsx` no commit `bfc1c43`. |
+| Login rápido usa a autenticação normal (`bfc1c43`, `feat/rodada-3`) | Botões de demonstração enviam credenciais fictícias do seed ao mesmo endpoint de login, sob os mesmos limites. Ligados por padrão desde D27 (`54a7e12`); `NEXT_PUBLIC_DEMO_LOGIN=false` os esconde na build; não se concede sessão sem validar credenciais. Fonte: `front-end/src/features/auth/login-form.tsx` no commit `bfc1c43`. |
 
 **Critério de stack.** O enunciado da Verzel (página 5) diz: “Back-End: NodeJS ou Python. Fique à vontade com o framework (NestJS, Express…)”. Isso abriu espaço para NestJS na API e Next.js no front.
 

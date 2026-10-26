@@ -156,3 +156,9 @@ Estado desta etapa: EM ANDAMENTO, sem commit. E2E bloqueado antes de iniciar pel
 - B1: cota própria para erros do navegador e limite de `/api/client-errors` por IP real. B3: 3 streams SSE por IP real.
 - API em 4300 agora roda o build (`node dist/main.js`) em console próprio; a queda vinha do `node --watch` reiniciando sozinho.
 - Verde: lint e typecheck sem erro, unit 81/81, vitest 100/100, integração 126/126 (23 suítes), E2E 48/48 com workers=1, build ok. O E2E de lances fecha os contextos que abre (cada um segura um SSE do limite de 3 por IP).
+
+## Zoom Z3 e correções do QA (D27, D28, D29, 26/10/2026)
+
+- D27: botões de conta demo ligados por padrão. D28: zoom da obra com hi-res só no zoom (32/36; 4 no maior tamanho disponível).
+- D29: mídia restaurada sob demanda, carteira a 390px, CSRF no localhost, logout sem recarregar, aviso de lance superado, saldo insuficiente, depósito zero, papel nas contas demo, Avise-me na sala, abas do suporte, tela de erro sem rota de teste.
+- Verde: lint e typecheck sem erro, unit 85/85, vitest 117/117, integração 129/129 (23 suítes), E2E 64/64 com workers=1, build ok.

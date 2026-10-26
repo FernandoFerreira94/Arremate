@@ -196,6 +196,29 @@ Pedido de Fernando autoriza etapa1 do adendo auth/pagamentos após entrega das p
 
 Pranchas em docs/design/pranchas/auth-pagamentos; A7 aplicada neste recorte. Cadastro/Google/Pix/cartão/histórico continuam para etapas próprias; visitante não recebe link Criar conta antes de a rota existir. Conflitos de proposta e Freeze registrados na evidência, sem alterar DECISOES-VISUAIS.md. Plano: superpowers/plans/2026-10-24-auth-pagamentos-etapa-1.md.
 
+## D27 — Botões de conta demo ligados por padrão — 26/10/2026
+
+Os botões "Entrar como licitante/leiloeiro de teste" só apareciam com `NEXT_PUBLIC_DEMO_LOGIN=true`, que nenhum ambiente define. Agora ficam ligados por padrão; `NEXT_PUBLIC_DEMO_LOGIN=false` os desliga na build. Usam o login normal, com os mesmos limites. Commit `54a7e12`.
+
+## D28 — Zoom da obra (prancha Z3) — 26/10/2026
+
+- Clique na imagem do lote abre um Dialog com zoom 1x→2x→3x, arrastar, barra −/+/reset e minimapa. No celular: tela cheia, pinça até 4x e toque duplo alterna 1x/2,5x. Teclado: Esc, +, −, 0 e setas; foco preso e devolvido ao gatilho.
+- Estados: placeholder borrado ao carregar, "Tentar de novo" no erro, sem animação com reduced-motion. Lógica no hook reutilizável `useZoom` (`lib/zoom.ts`).
+- Imagens ~2500px só no zoom (`/api/media/zoom/:key`, cache de 1h; sem a hi-res, volta à imagem normal). Geradas por `scripts/zoom-hires.py` em `.data/media/zoom`: 32 de 36; 4 obras (459080, 45585, 437853, 11417) ficam no maior tamanho que o The Met oferece.
+- Prancha em `docs/design/pranchas/zoom/`.
+
+## D29 — Correções do QA de 26/10 — 26/10/2026
+
+- **Mídia 404:** o banco local 5462 é compartilhado entre checkouts; os snapshots foram importados pela worktree `casadeleilao-r3`, cujo `.data/media` tem os arquivos, e o checkout principal só tinha 26. A API agora restaura sob demanda: busca a imagem da obra no The Met pelo `external_id`, confere sha256 e extensão com a chave e salva; se não bater ou o provedor cair, 404.
+- **Carteira a 390px:** grade em 1 coluna com `min-w-0`, barra fixa `z-40` com safe-area e QR do Pix isolado; sem rolagem lateral.
+- **CSRF no localhost:3300:** origens padrão `127.0.0.1:3300` e, fora de produção, `localhost:3300`. Produção continua só com a origem configurada.
+- **Logout:** a sessão no cache vira `null` na hora; o header mostra Entrar sem recarregar.
+- **Mensagens:** aviso "Você foi superado" (notificação `OUTBID` + toast com "Dar novo lance"); lance acima do saldo mostra alerta com link para a carteira; depósito de R$ 0 avisa na hora.
+- **Baixa:** contas sem nome mostram o papel (Licitante/Leiloeiro); lote agendado tem Avise-me na sala; abas do /suporte quebram linha em 390px.
+- **Tela de erro:** a rota `/teste-erro` saiu. O E2E prova o `error.tsx` no build de produção com uma resposta inesperada da API do lote.
+- **Meus arremates:** verificado com `licitante1` (4 arremates, 15 participações): a aba funciona; vazia era a conta nova do QA, que nunca venceu. O texto do vazio agora explica isso.
+- Sem migration, sem dependência nova, sem push.
+
 ### D20 — provisionamento autorizado no Supabase
 
 Fernando pediu verificar o ativo, pausar e criar o banco do teste; confirmou a organização webcode.ff. Só Custelo foi listado, já INACTIVE. Criado arremate-verzel (ref hrqqppepnmzxrrxxqnsf) em sa-east-1, PostgreSQL17.11, confirmado ACTIVE_HEALTHY, custo cotado US$0/mês. Nenhuma pausa desnecessária, conexão da aplicação, migration ou seed hospedada. Aprovação de criar o projeto não autoriza migration/seed/deploy.
