@@ -108,14 +108,17 @@ describe("avise-me e notificações (D21)", () => {
   it("inscreve, recusa lote aberto ou inexistente e cancelar apaga a inscrição", async () => {
     const session = await bidder();
     const id = await lot("scheduled");
-    expect((await session.mutate("put", `/api/lots/${id}/watch`)).body).toEqual({ lotId: id, watching: true });
+    expect((await session.mutate("put", `/api/lots/${id}/watch`)).body).toEqual({ lotId: id, watching: true, message: "Vamos avisar quando o lote abrir." });
     expect((await session.mutate("put", `/api/lots/${id}/watch`)).status).toBe(200);
     expect((await session.get("/api/me/watches")).body.lotIds).toEqual([id]);
-    expect((await session.mutate("delete", `/api/lots/${id}/watch`)).body).toEqual({ lotId: id, watching: false });
+    expect((await session.mutate("delete", `/api/lots/${id}/watch`)).body).toEqual({ lotId: id, watching: false, message: "Aviso desativado." });
     expect((await session.get("/api/me/watches")).body.lotIds).toEqual([]);
     const rows = await pool.query(`SELECT 1 FROM lot_watches WHERE lot_id = $1`, [id]);
     expect(rows.rowCount).toBe(0);
-    expect((await session.mutate("put", `/api/lots/${await lot("open")}/watch`)).status).toBe(409);
+    const opened = await session.mutate("put", `/api/lots/${await lot("open")}/watch`);
+    expect(opened.status).toBe(409);
+    // B0/B1: antes caía no fallback 409 → ERRO_INTERNO; agora tem código e mensagem próprios.
+    expect(opened.body).toMatchObject({ code: "LOTE_JA_ABERTO", message: "Este lote já abriu; acompanhe direto na sala do lote." });
     expect((await session.mutate("put", `/api/lots/${randomUUID()}/watch`)).status).toBe(404);
   });
 

@@ -3,6 +3,7 @@ import type { Request } from "express";
 import { ApiException } from "../auth/api.exception";
 import type { Actor } from "../auth/auth.service";
 import { Roles } from "../auth/roles.guard";
+import { depositMessage, SUCCESS_MESSAGES, withMessage } from "../common/messages";
 import { DepositDto, TestCardDto } from "./dto/deposit.dto";
 import { WalletsService } from "./wallets.service";
 import type { WalletView } from "./wallets.types";
@@ -25,7 +26,7 @@ export class WalletsController {
 
   @Post("cards")
   @Roles("BIDDER")
-  saveCard(@Body() _body: TestCardDto, @Req() request: ActorRequest) { return this.wallets.saveTestCard(actorOf(request)); }
+  async saveCard(@Body() _body: TestCardDto, @Req() request: ActorRequest) { return withMessage(await this.wallets.saveTestCard(actorOf(request)), SUCCESS_MESSAGES.CARTAO_SALVO); }
 
   @Delete("cards/:id")
   @Roles("BIDDER")
@@ -39,8 +40,9 @@ export class WalletsController {
   @Post("deposits")
   @Roles("BIDDER")
   @HttpCode(200)
-  deposit(@Body() body: DepositDto, @Headers("idempotency-key") key: string | undefined, @Req() request: ActorRequest): Promise<WalletView> {
-    return this.wallets.deposit(actorOf(request), body.amountCents, key, body.method, body.cardId);
+  async deposit(@Body() body: DepositDto, @Headers("idempotency-key") key: string | undefined, @Req() request: ActorRequest): Promise<WalletView & { message: string }> {
+    const view = await this.wallets.deposit(actorOf(request), body.amountCents, key, body.method, body.cardId);
+    return withMessage(view, depositMessage(String(body.amountCents)));
   }
 }
 

@@ -81,13 +81,13 @@ describe("favoritos (D21)", () => {
   it("favorita, é idempotente, lista e remove", async () => {
     const session = await bidder();
     const id = await lot("open");
-    expect((await session.mutate("put", `/api/lots/${id}/favorite`)).body).toEqual({ lotId: id, favorite: true });
+    expect((await session.mutate("put", `/api/lots/${id}/favorite`)).body).toEqual({ lotId: id, favorite: true, message: "Adicionado aos favoritos." });
     expect((await session.mutate("put", `/api/lots/${id}/favorite`)).status).toBe(200);
     const list = await session.get("/api/me/favorites");
     expect(list.status).toBe(200);
     expect(list.body.lotIds).toEqual([id]);
     expect(list.body.items[0].id).toBe(id);
-    expect((await session.mutate("delete", `/api/lots/${id}/favorite`)).body).toEqual({ lotId: id, favorite: false });
+    expect((await session.mutate("delete", `/api/lots/${id}/favorite`)).body).toEqual({ lotId: id, favorite: false, message: "Removido dos favoritos." });
     expect((await session.mutate("delete", `/api/lots/${id}/favorite`)).status).toBe(200);
     expect((await session.get("/api/me/favorites")).body.lotIds).toEqual([]);
   });

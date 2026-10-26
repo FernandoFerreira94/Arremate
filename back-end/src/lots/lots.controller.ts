@@ -5,6 +5,7 @@ import type { Actor } from "../auth/auth.service";
 import { Roles } from "../auth/roles.guard";
 import { Authenticated } from "../auth/session.guard";
 import { RejectExtraDto } from "../auth/dto/login.dto";
+import { bidMessage, SUCCESS_MESSAGES, withMessage } from "../common/messages";
 import { BiddingService } from "./bidding.service";
 import { CreateLotDto, PageQuery } from "./dto/create-lot.dto";
 import { PlaceBidDto } from "./dto/place-bid.dto";
@@ -88,15 +89,15 @@ export class LotsController {
   @Put("lots/:id/favorite")
   @Authenticated()
   @HttpCode(200)
-  favorite(@Param("id") id: string, @Req() request: ActorRequest) {
-    return this.lots.setFavorite(actorOf(request), id, true);
+  async favorite(@Param("id") id: string, @Req() request: ActorRequest) {
+    return withMessage(await this.lots.setFavorite(actorOf(request), id, true), SUCCESS_MESSAGES.FAVORITO_ADICIONADO);
   }
 
   @Delete("lots/:id/favorite")
   @Authenticated()
   @HttpCode(200)
-  unfavorite(@Param("id") id: string, @Req() request: ActorRequest) {
-    return this.lots.setFavorite(actorOf(request), id, false);
+  async unfavorite(@Param("id") id: string, @Req() request: ActorRequest) {
+    return withMessage(await this.lots.setFavorite(actorOf(request), id, false), SUCCESS_MESSAGES.FAVORITO_REMOVIDO);
   }
 
   @Get("me/watches")
@@ -108,15 +109,15 @@ export class LotsController {
   @Put("lots/:id/watch")
   @Authenticated()
   @HttpCode(200)
-  watch(@Param("id") id: string, @Req() request: ActorRequest) {
-    return this.lots.setWatch(actorOf(request), id, true);
+  async watch(@Param("id") id: string, @Req() request: ActorRequest) {
+    return withMessage(await this.lots.setWatch(actorOf(request), id, true), SUCCESS_MESSAGES.AVISO_ATIVADO);
   }
 
   @Delete("lots/:id/watch")
   @Authenticated()
   @HttpCode(200)
-  unwatch(@Param("id") id: string, @Req() request: ActorRequest) {
-    return this.lots.setWatch(actorOf(request), id, false);
+  async unwatch(@Param("id") id: string, @Req() request: ActorRequest) {
+    return withMessage(await this.lots.setWatch(actorOf(request), id, false), SUCCESS_MESSAGES.AVISO_DESATIVADO);
   }
 
   @Get("me/notifications")
@@ -128,22 +129,22 @@ export class LotsController {
   @Post("me/notifications/read-all")
   @Authenticated()
   @HttpCode(200)
-  readAll(@Req() request: ActorRequest) {
-    return this.lots.markRead(actorOf(request), null);
+  async readAll(@Req() request: ActorRequest) {
+    return withMessage(await this.lots.markRead(actorOf(request), null), SUCCESS_MESSAGES.NOTIFICACOES_LIDAS);
   }
 
   @Post("me/notifications/:id/read")
   @Authenticated()
   @HttpCode(200)
-  read(@Param("id") id: string, @Req() request: ActorRequest) {
-    return this.lots.markRead(actorOf(request), id);
+  async read(@Param("id") id: string, @Req() request: ActorRequest) {
+    return withMessage(await this.lots.markRead(actorOf(request), id), SUCCESS_MESSAGES.NOTIFICACAO_LIDA);
   }
 
   @Post("lots")
   @Roles("AUCTIONEER")
   @HttpCode(201)
-  create(@Body() body: CreateLotDto, @Headers("idempotency-key") key: string | undefined, @Req() request: ActorRequest) {
-    return this.lots.createLot(actorOf(request), body, key);
+  async create(@Body() body: CreateLotDto, @Headers("idempotency-key") key: string | undefined, @Req() request: ActorRequest) {
+    return withMessage(await this.lots.createLot(actorOf(request), body, key), SUCCESS_MESSAGES.LOTE_PUBLICADO);
   }
 
   @Post("lots/:id/bids")
@@ -152,7 +153,7 @@ export class LotsController {
   async bid(@Param("id") id: string, @Body() body: PlaceBidDto, @Headers("idempotency-key") key: string | undefined, @Req() request: ActorRequest) {
     const accepted = await this.bidding.placeBid(actorOf(request), id, body.amountCents, key);
     this.events.publish(id.toLowerCase());
-    return accepted;
+    return withMessage(accepted, bidMessage(accepted.bid.amountCents));
   }
 
   @Post("lots/:id/cancel")
@@ -161,7 +162,7 @@ export class LotsController {
   async cancel(@Param("id") id: string, @Body() _body: RejectExtraDto, @Req() request: ActorRequest) {
     const view = await this.lots.cancelLot(actorOf(request), id);
     this.events.publish(id.toLowerCase());
-    return view;
+    return withMessage(view, SUCCESS_MESSAGES.LOTE_CANCELADO);
   }
 }
 

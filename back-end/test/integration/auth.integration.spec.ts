@@ -115,7 +115,7 @@ describe("sessão HTTP", () => {
 
     const response = await postLogin(jar, { email: user.email, password: "senha-correta-demonstracao" });
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ role: "BIDDER", returnTo: "/" });
+    expect(response.body).toEqual({ role: "BIDDER", returnTo: "/", message: "Login realizado." });
     const session = jar.get("session");
     expect(session).toEqual(expect.any(String));
     expect(JSON.stringify(response.body)).not.toContain(session);

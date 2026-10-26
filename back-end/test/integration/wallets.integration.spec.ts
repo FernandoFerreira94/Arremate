@@ -78,7 +78,7 @@ describe("carteira", () => {
     const { session, id } = await login("BIDDER");
     const response = await deposit(session, "10000");
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ totalCents: "10000", committedCents: "0", availableCents: "10000", revision: 1 });
+    expect(response.body).toEqual({ totalCents: "10000", committedCents: "0", availableCents: "10000", revision: 1, message: "Depósito de R$ 100,00 adicionado à carteira." });
     expect((await session.get("/api/wallet")).body.totalCents).toBe("10000");
     expect(await ledger(id)).toEqual({ total: "10000", sum: "10000", entries: 1 });
   });
