@@ -1,4 +1,5 @@
 import type { LotState } from "@/components/app/lot-state-badge";
+import { formatBrl } from "../../lib/money";
 
 export type PublicBid = { alias: string; amountCents: string; sequence: number; acceptedAt: string };
 
@@ -48,4 +49,10 @@ export function showcaseTab(state: LotState): ShowcaseTab | null {
   if (state === "SCHEDULED") return "scheduled";
   if (state === "ENDED") return "ended";
   return null;
+}
+
+/** QA MÉDIA 5: mensagem do lance acima do disponível, com quanto falta. */
+export function insufficientBalanceMessage(bidCents: string, availableCents: string): string {
+  const missing = BigInt(bidCents) - BigInt(availableCents);
+  return `Saldo insuficiente: você tem ${formatBrl(availableCents)} disponível e faltam ${formatBrl(missing.toString())} para este lance.`;
 }

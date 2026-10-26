@@ -1,12 +1,12 @@
 "use client";
 
-import { ArtworkImage } from "@/components/app/artwork-image";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useId, useMemo, useState } from "react";
 import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon, FlaskConicalIcon, GavelIcon, ShieldCheckIcon, WifiOffIcon } from "lucide-react";
 import { LotStateBadge } from "@/components/app/lot-state-badge";
 import { FavoriteButton } from "../favorites/favorite-button";
+import { WatchButton } from "../notifications/watch-button";
 import { MoneyInput } from "@/components/app/money-input";
 import { ErrorState, LoadingRows } from "@/components/app/page-states";
 import { Alert } from "@/components/ui/alert";
@@ -32,11 +32,12 @@ import { createIdempotentAction } from "@/lib/idempotent-action";
 import { formatBrl, parseBrlInput } from "@/lib/money";
 import { useLotChannel } from "@/lib/realtime";
 import { bidsKey, getBids, getLot, lotKey, placeBid, SIMULATED_LABEL, type PublicLot } from "./lots-api";
+import { ArtworkZoom } from "./artwork-zoom";
 import { LotDetailRows } from "./lot-details";
 import { RecentBidsTrigger } from "./recent-bids";
-import { bidShortcuts, clockOffset, formatCountdown, rankByBidder, remainingMs } from "./room-logic";
+import { bidShortcuts, clockOffset, insufficientBalanceMessage, formatCountdown, rankByBidder, remainingMs } from "./room-logic";
 import { useNow } from "./showcase-page";
-import { messageOf, notifyError, notifySuccess } from "@/lib/notify";
+import { messageOf, notifyError, notifySuccess, notifyWarning } from "@/lib/notify";
 
 const plain = (cents: string) => formatBrl(cents).replace(/^R\$\s?/, "");
 
@@ -81,7 +82,7 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-7">
           <figure>
-            <ArtworkImage src={data.imageUrl} alt={`${data.title}, ${data.artist}`} width={1200} height={900} sizes="(min-width: 1360px) 728px, (min-width: 1024px) 58vw, 100vw" preload className="h-auto w-full rounded-lg bg-muted object-contain" />
+            <ArtworkZoom src={data.imageUrl} zoomSrc={`/api/media/zoom/${encodeURIComponent(data.externalId)}`} alt={`${data.title}, ${data.artist}`} title={data.title} credit={`${data.credit} · ${data.license}`} />
             <figcaption className="mt-2 text-xs text-muted-foreground">{data.credit} · {data.license}</figcaption>
           </figure>
           <AboutCard lot={data} />
@@ -117,6 +118,7 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
               ) : null}
               <MyStatus outcome={mine?.outcome ?? null} myTopCents={mine?.myTopCents ?? null} />
               <ResultBanner lot={data} />
+              {data.state === "SCHEDULED" ? <WatchButton lotId={data.id} title={data.title} /> : null}
             </CardContent>
           </Card>
           {data.state === "LIVE" ? (
@@ -227,6 +229,7 @@ function BidForm({ lot, availableCents, onDone }: { lot: PublicLot; availableCen
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [short, setShort] = useState(false);
   const action = useMemo(() => createIdempotentAction((cents, key) => placeBid(lot.id, cents, key)), [lot.id]);
   const mutation = useMutation({
     mutationFn: (cents: string) => action.run(cents),
@@ -251,7 +254,15 @@ function BidForm({ lot, availableCents, onDone }: { lot: PublicLot; availableCen
     const parsed = parseBrlInput(text);
     if (!parsed.ok) return setError(parsed.message);
     if (BigInt(parsed.cents) < BigInt(lot.minimumNextCents)) return setError(`O lance mínimo agora é ${formatBrl(lot.minimumNextCents)}.`);
-    if (availableCents !== null && BigInt(parsed.cents) > BigInt(availableCents)) return setError("Saldo disponível insuficiente para este lance.");
+    if (availableCents !== null && BigInt(parsed.cents) > BigInt(availableCents)) {
+      // QA MÉDIA 5: o lance acima do saldo não pode parecer um botão inerte.
+      const message = insufficientBalanceMessage(parsed.cents, availableCents);
+      setError(message);
+      setShort(true);
+      notifyWarning("Saldo insuficiente para este lance.", message);
+      return;
+    }
+    setShort(false);
     setError(null);
     setConfirm(parsed.cents);
   }
@@ -261,7 +272,7 @@ function BidForm({ lot, availableCents, onDone }: { lot: PublicLot; availableCen
       <CardContent className="pt-6">
         <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
           <label htmlFor={id} className="text-sm font-medium">Seu lance (R$)</label>
-          <MoneyInput id={id} value={text} onChange={setText} error={error ?? undefined} hint={`Mínimo ${formatBrl(lot.minimumNextCents)}`} disabled={mutation.isPending} />
+          <MoneyInput id={id} value={text} onChange={(value) => { setText(value); setShort(false); setError(null); }} error={error ?? undefined} hint={`Mínimo ${formatBrl(lot.minimumNextCents)}`} disabled={mutation.isPending} />
           <div className="grid grid-cols-3 gap-2">
             {bidShortcuts(lot.minimumNextCents, lot.incrementCents).map((cents) => (
               <Button key={cents} type="button" variant="outline" size="sm" onClick={() => setText(plain(cents))}>{formatBrl(cents)}</Button>
@@ -269,6 +280,15 @@ function BidForm({ lot, availableCents, onDone }: { lot: PublicLot; availableCen
           </div>
           <Button type="submit" size="lg" disabled={mutation.isPending}><GavelIcon /> {mutation.isPending ? "Enviando…" : "Dar lance"}</Button>
           {availableCents !== null ? <p className="text-xs text-muted-foreground">Disponível {formatBrl(availableCents)} · seu lance fica comprometido enquanto você lidera</p> : null}
+          {short ? (
+            <Alert variant="warning" data-testid="saldo-insuficiente">
+              <AlertTriangleIcon />
+              <div className="flex flex-col gap-2">
+                <p>Seu disponível não cobre este lance. Adicione saldo simulado e volte para a sala.</p>
+                <Button asChild variant="outline" size="sm" className="self-start"><Link href="/carteira">Adicionar saldo</Link></Button>
+              </div>
+            </Alert>
+          ) : null}
           <p role="status" aria-live="polite" className="text-sm text-success">{notice}</p>
         </form>
         <AlertDialog open={confirm !== null} onOpenChange={(open) => (!open && !mutation.isPending ? setConfirm(null) : undefined)}>

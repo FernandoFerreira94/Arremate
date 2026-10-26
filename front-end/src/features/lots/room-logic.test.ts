@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bidShortcuts, clockOffset, remainingMs, formatCountdown, rankByBidder, showcaseTab } from "./room-logic";
+import { bidShortcuts, clockOffset, remainingMs, formatCountdown, rankByBidder, showcaseTab, insufficientBalanceMessage } from "./room-logic";
 
 describe("bidShortcuts", () => {
   it("mínimo, +1 e +2 incrementos sobre o mínimo", () => {
@@ -38,5 +38,11 @@ describe("showcaseTab", () => {
     expect(showcaseTab("SCHEDULED")).toBe("scheduled");
     expect(showcaseTab("ENDED")).toBe("ended");
     expect(showcaseTab("CANCELLED")).toBeNull();
+  });
+});
+
+describe("insufficientBalanceMessage (QA MÉDIA 5)", () => {
+  it("diz o disponível e quanto falta", () => {
+    expect(insufficientBalanceMessage("2130000", "600000")).toBe("Saldo insuficiente: você tem R$ 6.000,00 disponível e faltam R$ 15.300,00 para este lance.");
   });
 });
