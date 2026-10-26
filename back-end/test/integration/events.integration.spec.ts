@@ -24,6 +24,27 @@ describe("SSE /api/events e auditoria pública", () => {
     await app.close();
   });
 
+  it("D26 (B3): no máximo 3 streams por IP real, liberados ao fechar", async () => {
+    const open = async (ip: string) => {
+      const controller = new AbortController();
+      const response = await fetch(`${base}/api/events?lotId=${LOT}`, { signal: controller.signal, headers: { "X-Forwarded-For": ip } });
+      return { response, close: () => controller.abort() };
+    };
+    const streams = [await open("203.0.113.60"), await open("203.0.113.60"), await open("203.0.113.60")];
+    for (const stream of streams) expect(stream.response.status).toBe(200);
+    const blocked = await open("203.0.113.60");
+    expect(blocked.response.status).toBe(429);
+    expect(await blocked.response.json()).toMatchObject({ code: "LIMITE_CONEXOES" });
+    const other = await open("203.0.113.61");
+    expect(other.response.status).toBe(200);
+    other.close();
+    for (const stream of streams) stream.close();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const again = await open("203.0.113.60");
+    expect(again.response.status).toBe(200);
+    again.close();
+  });
+
   it("lotId inválido responde 404 sem abrir stream", async () => {
     const response = await fetch(`${base}/api/events?lotId=x`);
     expect(response.status).toBe(404);

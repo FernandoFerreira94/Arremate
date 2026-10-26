@@ -1,4 +1,4 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { apiAs, authFile, deposit, publishLot, type ApiSession, type Role } from "./support/api-session";
 import { markTourSeen } from "./support/tour";
 
@@ -7,6 +7,17 @@ test.beforeEach(async ({ page }) => {
 });
 
 let seller: ApiSession;
+/** D26: cada contexto aberto à mão segura um SSE (limite 3 por IP); fecha ao fim do teste. */
+const contexts: BrowserContext[] = [];
+async function newContext(browser: Browser, options?: Parameters<Browser["newContext"]>[0]) {
+  const context = await browser.newContext(options);
+  contexts.push(context);
+  return context;
+}
+
+test.afterEach(async () => {
+  await Promise.all(contexts.splice(0).map((context) => context.close()));
+});
 
 test.beforeAll(async () => {
   seller = await apiAs("auctioneer");
@@ -15,7 +26,7 @@ test.beforeAll(async () => {
 
 /** Login pela tela já é coberto em private-journeys; aqui a aba abre com a sessão salva. */
 async function bidderPage(browser: Browser, role: Role, lotId: string): Promise<Page> {
-  const page = await (await browser.newContext({ storageState: authFile(role) })).newPage();
+  const page = await (await newContext(browser, { storageState: authFile(role) })).newPage();
   await markTourSeen(page);
   await page.goto(`/lotes/${lotId}`);
   await expect(page.getByRole("button", { name: "Dar lance" })).toBeVisible();
@@ -43,7 +54,7 @@ test("duas abas: lance aparece na outra sem recarregar, superado vê aviso, audi
   await expect(a.getByTestId("current-price")).toHaveText("R$ 120,00", { timeout: 8_000 });
   await expect(a.getByText("Você foi superado. Seu lance de R$ 100,00 voltou para o disponível.")).toBeVisible({ timeout: 8_000 });
 
-  const visitor = await (await browser.newContext()).newPage();
+  const visitor = await (await newContext(browser)).newPage();
   await visitor.goto(`/lotes/${lotId}`);
   await expect(visitor.getByRole("link", { name: "Entrar para dar lance" })).toBeVisible();
   await expect(visitor.getByText("e2e-licitante")).toHaveCount(0);
@@ -65,7 +76,7 @@ test("lance na reta final prorroga, encerra, liquida e o vencedor abre comprovan
   const token = awards.items.find((item) => item.lotId === lotId)?.receiptToken;
   expect(token).toBeTruthy();
 
-  const visitor = await (await browser.newContext()).newPage();
+  const visitor = await (await newContext(browser)).newPage();
   await visitor.goto(`/comprovantes/${token}`);
   await expect(visitor.getByRole("heading", { name: "Comprovante de arremate" })).toBeVisible();
   await expect(visitor.getByText("Simulação · sem valor fiscal ou de compra")).toBeVisible();
