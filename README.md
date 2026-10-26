@@ -97,12 +97,22 @@ Decisões e alternativas descartadas: [docs/decisoes.md](docs/decisoes.md).
 | Suíte | Comando | Última rodada (26/10) |
 | --- | --- | --- |
 | Unit da API (Jest) | `npm test` | 93/93 |
-| Unit do front (Vitest) | `npm run test:unit --workspace front-end` | 127/127 |
-| Integração com PostgreSQL real | `npm run test:integration` | 133/133 |
-| E2E (Playwright, build de produção, banco e portas próprios) | `npx playwright test --workers=1` | 82/82 |
+| Unit do front (Vitest) | `npm run test:unit --workspace front-end` | 132/132 |
+| Integração com PostgreSQL real | `npm run test:integration` | 134/134 |
+| E2E (Playwright, build de produção, banco e portas próprios) | `npx playwright test --workers=1` | 87/87 |
 | Lint, tipos e build | `npm run lint`, `npm run typecheck`, `npm run build` | ok |
 
 O CI (`.github/workflows/ci.yml`) migra um banco vazio, roda o seed duas vezes, audita dependências e roda todas as suítes.
+
+## Opcionais do PDF
+
+| Opcional | Situação |
+| --- | --- |
+| Busca e filtro | Feito: abas ao vivo, agendados, encerrados e "encerrando hoje", mais busca por nome da obra ou do artista no header (`GET /api/lots?q=`). |
+| Estorno no cancelamento | Não se aplica por regra: o leiloeiro só cancela lote **sem lances**, então não há saldo reservado para devolver. Permitir cancelar com lances mexeria nas regras de lance a dias da entrega; ficou de fora de propósito. |
+| Docker Compose | Feito: `compose.yaml` sobe os bancos para desenvolvimento; `compose.deploy.yaml` sobe PostgreSQL + site + API + Caddy com HTTPS ([docs/deploy.md](docs/deploy.md)). |
+| Testes | Feito: unit, integração em PostgreSQL real, E2E com Playwright e CI (seção acima). |
+| Dark mode | Feito: segue o sistema e tem alternador no header; a escolha fica salva no navegador. |
 
 ## Comportamentos que podem surpreender
 
@@ -114,6 +124,8 @@ O CI (`.github/workflows/ci.yml`) migra um banco vazio, roda o seed duas vezes, 
 - **Licitantes automáticos** (`DEMO_BOTS=1`) cobrem lances de pessoas até um teto, pelas mesmas regras e com a mesma auditoria.
 - **Seed sem internet:** obras do catálogo que falham geram só um aviso; o lote base continua sendo criado.
 - **Login com Google** aparece desabilitado sem `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_REDIRECT_URI`.
+- **Tema:** sem escolha salva, o site segue o tema claro/escuro do sistema operacional.
+- **Busca:** procura no título e no artista, sem diferenciar maiúsculas; `%` e `_` digitados contam como texto, não como curinga.
 - **Extras além do pedido:** cadastro, cartão de teste e Pix simulados na carteira, favoritos, “Avise-me”, notificações, zoom da obra e tour guiado.
 - **Não verificado:** Safari/Firefox e aparelho físico.
 
@@ -123,4 +135,4 @@ O CI (`.github/workflows/ci.yml`) migra um banco vazio, roda o seed duas vezes, 
 - **Como usei:** a IA escreveu a maior parte do código dentro de um processo que eu defini: cada entrega com testes e evidência em `docs/evidence/`, e nenhuma dependência, push ou deploy sem a minha validação. As escolhas relevantes estão registradas, com alternativas, em `docs/decisoes.md`.
 - **O que revisei e ajustei:** a revisão de segurança achou o login travado por um IP único atrás do proxy e cabeçalhos ausentes no front, corrigidos com teste. O QA achou a sala mostrando “superado” e “ganhando” ao mesmo tempo e recusas de regra exibidas como erro do sistema; corrigi e cobri com E2E. O cadastro, o Google e os pagamentos simulados foram começados pelo Codex e terminados com o Claude Code. Também corrigi o próprio README quando ele afirmava algo que o código não sustentava, como a chave de auditoria e a migration que faltavam no passo a passo.
 
-Como o projeto foi construído, tarefa a tarefa: [diário de construção](docs/diario-construcao.md).
+Como o projeto foi construído, tarefa a tarefa: [diário de construção](docs/diario-construcao.md). Roteiro para explicar as decisões em voz alta: [como explicar o projeto](docs/entrevista.md).
