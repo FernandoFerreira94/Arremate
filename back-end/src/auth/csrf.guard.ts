@@ -31,5 +31,5 @@ export class CsrfGuard implements CanActivate {
 export function isLogin(request: Request): boolean {
   if (request.method !== "POST") return false;
   const path = (request.originalUrl || request.url).split("?")[0] ?? "";
-  return path === "/api/auth/login";
+  return ["/api/auth/login", "/api/auth/register", "/api/auth/google/start"].includes(path);
 }

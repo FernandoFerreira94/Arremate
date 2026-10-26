@@ -11,7 +11,7 @@ import { hashPassword } from "../../src/auth/password-hash";
 const ORIGIN = "http://127.0.0.1:3300";
 const EMAIL_PREFIX = "tarefa3-";
 
-describe("sessão HTTP", () => {
+describe("sessÃ£o HTTP", () => {
   const connectionString = process.env.TEST_DATABASE_URL;
   if (!connectionString) throw new Error("Configure TEST_DATABASE_URL para testar PostgreSQL real.");
   const pool = new Pool({ connectionString, connectionTimeoutMillis: 3000, max: 4 });
@@ -95,11 +95,11 @@ describe("sessão HTTP", () => {
       [email, role, passwordHash],
     );
     const id = inserted.rows[0]?.id;
-    if (!id) throw new Error("usuário de teste não foi criado");
+    if (!id) throw new Error("usuÃ¡rio de teste nÃ£o foi criado");
     return { id, email };
   }
 
-  it("emite csrf e entra com credencial válida sem vazar cookie, e-mail ou id", async () => {
+  it("emite csrf e entra com credencial vÃ¡lida sem vazar cookie, e-mail ou id", async () => {
     const user = await createUser("BIDDER");
     const jar = new Map<string, string>();
     const csrfResponse = await request(app.getHttpServer()).get("/api/auth/csrf");
@@ -134,24 +134,24 @@ describe("sessão HTTP", () => {
 
     const me = await request(app.getHttpServer()).get("/api/auth/me").set("Cookie", cookieHeader(jar)).set("X-Role", "AUCTIONEER").set("X-User-Id", randomUUID());
     expect(me.status).toBe(200);
-    expect(me.body).toEqual({ role: "BIDDER" });
+    expect(me.body).toEqual({ role: "BIDDER", userId: user.id, name: "Participante" });
     expect(JSON.stringify(me.body)).not.toContain(session);
   });
 
-  it("responde credencial inválida do mesmo jeito para senha errada e e-mail desconhecido", async () => {
+  it("responde credencial invÃ¡lida do mesmo jeito para senha errada e e-mail desconhecido", async () => {
     const user = await createUser("BIDDER");
     const wrong = await postLogin(new Map(), { email: user.email, password: "senha-errada" });
     const missing = await postLogin(new Map(), { email: `${EMAIL_PREFIX}${randomUUID()}@example.com`, password: "senha-correta-demonstracao" });
     expect(wrong.status).toBe(401);
     expect(missing.status).toBe(401);
-    expect(wrong.body).toMatchObject({ code: "CREDENCIAIS_INVALIDAS", message: "E-mail ou senha inválidos." });
+    expect(wrong.body).toMatchObject({ code: "CREDENCIAIS_INVALIDAS", message: "E-mail ou senha invÃ¡lidos." });
     expect(missing.body).toMatchObject({ code: missing.body.code, message: wrong.body.message });
     expect(missing.body.code).toBe(wrong.body.code);
     expect(JSON.stringify(wrong.body)).not.toContain("senha-errada");
     expect(headerList(wrong).join(";")).not.toContain("session=");
   });
 
-  it("recusa sessão expirada e revogada com o mesmo 401", async () => {
+  it("recusa sessÃ£o expirada e revogada com o mesmo 401", async () => {
     const user = await createUser("BIDDER");
     const jar = new Map<string, string>();
     expect((await postLogin(jar, { email: user.email, password: "senha-correta-demonstracao" })).status).toBe(200);
@@ -169,7 +169,7 @@ describe("sessão HTTP", () => {
     expect(revoked.body.message).toBe(expired.body.message);
   });
 
-  it("revoga a sessão no logout e não aceita o cookie de novo", async () => {
+  it("revoga a sessÃ£o no logout e nÃ£o aceita o cookie de novo", async () => {
     const user = await createUser("BIDDER");
     const jar = new Map<string, string>();
     expect((await postLogin(jar, { email: user.email, password: "senha-correta-demonstracao" })).status).toBe(200);
@@ -187,7 +187,7 @@ describe("sessão HTTP", () => {
     expect(me.status).toBe(401);
   });
 
-  it("nega depósito e lance ao leiloeiro e criação ao licitante, sem gravar efeito", async () => {
+  it("nega depÃ³sito e lance ao leiloeiro e criaÃ§Ã£o ao licitante, sem gravar efeito", async () => {
     const auctioneer = await createUser("AUCTIONEER");
     const bidder = await createUser("BIDDER");
     const auctioneerJar = new Map<string, string>();
@@ -225,14 +225,14 @@ describe("sessão HTTP", () => {
       [`${EMAIL_PREFIX}${randomUUID()}`, `media/${randomUUID()}`],
     );
     const snapshotId = snapshot.rows[0]?.id;
-    if (!snapshotId) throw new Error("snapshot de teste não foi criado");
+    if (!snapshotId) throw new Error("snapshot de teste nÃ£o foi criado");
     const lot = await pool.query<{ id: string }>(
       `INSERT INTO lots (owner_id, snapshot_id, initial_cents, increment_cents, starts_at, ends_at)
        VALUES ($1, $2, 1000, 100, statement_timestamp(), statement_timestamp() + interval '1 hour') RETURNING id`,
       [owner.id, snapshotId],
     );
     const lotId = lot.rows[0]?.id;
-    if (!lotId) throw new Error("lote de teste não foi criado");
+    if (!lotId) throw new Error("lote de teste nÃ£o foi criado");
     const ownerJar = new Map<string, string>();
     const otherJar = new Map<string, string>();
     expect((await postLogin(ownerJar, { email: owner.email, password: "senha-correta-demonstracao" })).status).toBe(200);
@@ -254,7 +254,7 @@ describe("sessão HTTP", () => {
     expect(status.rows[0]?.status).toBe("CANCELLED");
   });
 
-  it("recusa role e userId no login e não promove o papel", async () => {
+  it("recusa role e userId no login e nÃ£o promove o papel", async () => {
     const user = await createUser("BIDDER");
     const response = await postLogin(new Map(), {
       email: user.email,
@@ -302,7 +302,7 @@ describe("sessão HTTP", () => {
     expect(wallet.body.returnTo).toBe("/carteira");
   });
 
-  it("não coloca o cookie no JSON nem no log e ignora X-Forwarded-For no limite", async () => {
+  it("nÃ£o coloca o cookie no JSON nem no log e ignora X-Forwarded-For no limite", async () => {
     const user = await createUser("BIDDER");
     const spies = ["error", "warn", "log", "debug", "verbose"].map((method) =>
       jest.spyOn(Logger.prototype, method as "error").mockImplementation((message: unknown) => {
@@ -347,7 +347,7 @@ describe("sessão HTTP", () => {
     expect(JSON.stringify(blocked.body)).not.toContain("198.51.100.20");
   });
 
-  it("usa cookie __Host- e Secure quando a API está em produção", async () => {
+  it("usa cookie __Host- e Secure quando a API estÃ¡ em produÃ§Ã£o", async () => {
     const user = await createUser("BIDDER");
     const prod = await createApplication({
       connectionString,

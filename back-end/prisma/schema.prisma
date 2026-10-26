@@ -1,5 +1,5 @@
 // CHECK de saldo, valores positivos, prazo e e-mail normalizado ficam na migration:
-// Prisma 7 não representa CHECK no schema nem no migrate diff.
+// Prisma 7 nÃ£o representa CHECK no schema nem no migrate diff.
 
 generator client {
   provider     = "prisma-client"
@@ -42,7 +42,12 @@ model User {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String   @unique @db.Text
   role         UserRole
-  passwordHash String   @map("password_hash") @db.Text
+  passwordHash String?  @map("password_hash") @db.Text
+  name         String   @default("Participante") @db.Text
+  googleSubject String? @unique @map("google_subject") @db.Text
+  termsAcceptedAt DateTime? @map("terms_accepted_at") @db.Timestamptz(3)
+  testCard     TestCard?
+  oauthStates  OAuthState[]
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   sessions    Session[]
@@ -99,7 +104,7 @@ model Lot {
   endsAt         DateTime  @map("ends_at") @db.Timestamptz(3)
   revision       Int       @default(0)
   status         LotStatus @default(PUBLISHED)
-  /// D17: estimativa e laudo são SIMULADOS para demonstração; nunca vêm do Met.
+  /// D17: estimativa e laudo sÃ£o SIMULADOS para demonstraÃ§Ã£o; nunca vÃªm do Met.
   estimateLowCents  BigInt? @map("estimate_low_cents")
   estimateHighCents BigInt? @map("estimate_high_cents")
   conditionReport   String? @map("condition_report") @db.Text
@@ -155,6 +160,8 @@ model WalletEntry {
   kind        WalletEntryKind
   amountCents BigInt          @map("amount_cents")
   reference   String          @unique @db.Text
+  method      String?         @db.Text
+  cardLast4   String?         @map("card_last4") @db.Text
   createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@index([walletId])
@@ -199,8 +206,8 @@ model IdempotencyRecord {
   @@map("idempotency_records")
 }
 
-/// D22 (R11): favoritos por usuário. Sem FK para lots de propósito: o reset do E2E faz TRUNCATE em lots
-/// sem listar tabelas dependentes; a API valida o lote no PUT e a leitura junta só lotes existentes.
+/// D22 (R11): favoritos por usuÃ¡rio. Sem FK para lots de propÃ³sito: o reset do E2E faz TRUNCATE em lots
+/// sem listar tabelas dependentes; a API valida o lote no PUT e a leitura junta sÃ³ lotes existentes.
 model Favorite {
   userId    String   @map("user_id") @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -213,7 +220,7 @@ model Favorite {
 }
 
 /// D22 (Fernando, 25/10/2026): "Avise-me quando abrir". Sem FK para lots (mesmo motivo de favorites: o TRUNCATE do E2E).
-/// A inscrição é apagada ao cancelar o aviso ou quando a notificação é gerada.
+/// A inscriÃ§Ã£o Ã© apagada ao cancelar o aviso ou quando a notificaÃ§Ã£o Ã© gerada.
 model LotWatch {
   userId    String   @map("user_id") @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -225,7 +232,7 @@ model LotWatch {
   @@map("lot_watches")
 }
 
-/// D22: notificação in-app "Lote abriu"; a API guarda as 20 mais recentes por usuário.
+/// D22: notificaÃ§Ã£o in-app "Lote abriu"; a API guarda as 20 mais recentes por usuÃ¡rio.
 model Notification {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String    @map("user_id") @db.Uuid
@@ -238,4 +245,32 @@ model Notification {
   @@unique([userId, lotId, kind])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+// D23: state OAuth efêmero; tokens Google não são persistidos.
+model OAuthState {
+  stateHash String @id @map("state_hash") @db.Text
+  browserHash String @map("browser_hash") @db.Text
+  codeVerifier String @map("code_verifier") @db.Text
+  nonce String @db.Text
+  returnTo String? @map("return_to") @db.Text
+  userId String? @map("user_id") @db.Uuid
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionHash String? @map("session_hash") @db.Text
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  @@index([expiresAt], map: "oauth_states_expiry")
+  @@index([userId], map: "oauth_states_user")
+  @@map("oauth_states")
+}
+
+// D23/A4: um cartão fixo simulado por usuário, sem PAN nem CVV.
+model TestCard {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand String @default("Visa") @db.Text
+  last4 String @default("4242") @db.Text
+  expiryMonth Int @default(12) @map("expiry_month")
+  expiryYear Int @default(2034) @map("expiry_year")
+  @@map("test_cards")
 }

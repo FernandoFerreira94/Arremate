@@ -7,6 +7,9 @@ import { APP_GUARD } from "@nestjs/core";
 import { NestFactory } from "@nestjs/core";
 import type { Request, Response, NextFunction } from "express";
 import helmet from "helmet";
+import { GoogleController } from "./auth/google.controller";
+import { GoogleRepository } from "./auth/google.repository";
+import { GoogleService, googleConfig, type GoogleConfig, type GoogleFetch } from "./auth/google.service";
 import { AuthController } from "./auth/auth.controller";
 import { AuthRepository } from "./auth/auth.repository";
 import { AuthService } from "./auth/auth.service";
@@ -44,6 +47,8 @@ import { HealthController } from "./health/health.controller";
 import { HttpErrorFilter } from "./common/http-error.filter";
 
 interface ApplicationOptions {
+  googleConfig?: GoogleConfig | null;
+  googleFetch?: GoogleFetch;
   database?: Pick<DatabaseRepository, "ping">;
   connectionString?: string;
   logger?: false;
@@ -55,9 +60,9 @@ interface ApplicationOptions {
   mediaDir?: string;
   auditKey?: Uint8Array | null;
   witnessDir?: string;
-  /** Intervalo do runner de liquidação; false desliga (padrão em NODE_ENV=test). */
+  /** Intervalo do runner de liquidaÃ§Ã£o; false desliga (padrÃ£o em NODE_ENV=test). */
   settlementIntervalMs?: number | false;
-  /** D22: intervalo da varredura agendado→aberto que gera notificações; false desliga (padrão em NODE_ENV=test). */
+  /** D22: intervalo da varredura agendadoâ†’aberto que gera notificaÃ§Ãµes; false desliga (padrÃ£o em NODE_ENV=test). */
   notificationIntervalMs?: number | false;
 }
 
@@ -66,7 +71,7 @@ class ApplicationModule {
   static register(options: ApplicationOptions): DynamicModule {
     return {
       module: ApplicationModule,
-      controllers: [HealthController, AuthController, CatalogController, LotsController, WalletsController, ReceiptsController, EventsController],
+      controllers: [HealthController, AuthController, GoogleController, CatalogController, LotsController, WalletsController, ReceiptsController, EventsController],
       providers: [
         {
           provide: DatabaseRepository,
@@ -78,6 +83,11 @@ class ApplicationModule {
           },
         },
         AuthRepository,
+        { provide: GoogleRepository, useFactory: (database: DatabaseRepository) => new GoogleRepository(database), inject: [DatabaseRepository] },
+        { provide: GoogleService, useFactory: (repository: GoogleRepository, auth: AuthService) => {
+          const production = options.productionCookies ?? process.env.NODE_ENV === "production";
+          return new GoogleService(repository,auth,options.googleConfig !== undefined ? options.googleConfig : googleConfig(options.allowedOrigins ?? defaultOrigins(),production),production,options.googleFetch);
+        }, inject: [GoogleRepository, AuthService] },
         { provide: RateLimiter, useFactory: () => new RateLimiter(options.now ?? Date.now) },
         {
           provide: AuthService,

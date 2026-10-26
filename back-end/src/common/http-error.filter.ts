@@ -4,6 +4,9 @@ import type { Response } from "express";
 
 const codes: Record<string, { status: number; message: string }> = {
   REQUISICAO_INVALIDA: { status: 400, message: "Requisição inválida." },
+  CADASTRO_RECUSADO: { status: 400, message: "Não foi possível criar a conta. Verifique os dados ou tente entrar." },
+  GOOGLE_INDISPONIVEL: { status: 503, message: "indisponível na demo" },
+  GOOGLE_RECUSADO: { status: 400, message: "Não foi possível entrar com o Google. Tente de novo." },
   CREDENCIAIS_INVALIDAS: { status: 401, message: "E-mail ou senha inválidos." },
   SESSAO_NECESSARIA: { status: 401, message: "Entre na sua conta para continuar." },
   ACESSO_NEGADO: { status: 403, message: "Você não tem permissão para esta ação." },

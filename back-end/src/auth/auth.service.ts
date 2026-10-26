@@ -3,11 +3,11 @@ import type { Request, Response } from "express";
 import { ApiException } from "./api.exception";
 import { AuthRepository } from "./auth.repository";
 import { csrfTokenForSession, safeEqual } from "./csrf-token";
-import { dummyPasswordHash, verifyPassword } from "./password-hash";
+import { dummyPasswordHash, hashPassword, verifyPassword } from "./password-hash";
 import { resolveReturnTo, type Role } from "./return-to";
 import { csrfCookie, readCookie, sessionCookie } from "./session-cookie";
 
-export type Actor = { userId: string; role: Role };
+export type Actor = { userId: string; role: Role; name?: string };
 export type PublicSession = { role: Role; returnTo: string };
 
 export class AuthService {
@@ -48,16 +48,25 @@ export class AuthService {
     const user = await this.repository.findUserByEmail(email);
     const encoded = user?.passwordHash ?? await dummyPasswordHash();
     const matches = await verifyPassword(encoded, input.password);
-    if (!user || !matches) throw new ApiException(401, "CREDENCIAIS_INVALIDAS");
+    if (!user || !user.passwordHash || !matches) throw new ApiException(401, "CREDENCIAIS_INVALIDAS");
     const destination = resolveReturnTo(input.returnTo, user.role);
     if (!destination.ok) throw new ApiException(400, "REQUISICAO_INVALIDA");
+    return this.establishSession(user.id, user.role, destination.path, response);
+  }
+
+  async register(input: { name: string; email: string; password: string }, response: Response): Promise<PublicSession> {
+    const user = await this.repository.register(input.name.trim(), input.email.trim().toLowerCase(), await hashPassword(input.password));
+    return this.establishSession(user.id, user.role, "/carteira?conta=criada", response);
+  }
+
+  async establishSession(userId: string, role: Role, returnTo: string, response: Response): Promise<PublicSession> {
     const token = randomBytes(32).toString("base64url");
-    await this.repository.createSession(user.id, createHash("sha256").update(token).digest("hex"));
+    await this.repository.createSession(userId, createHash("sha256").update(token).digest("hex"));
     const session = sessionCookie(this.productionCookies);
     response.cookie(session.name, token, session.options);
     const csrf = csrfCookie(this.productionCookies);
     response.cookie(csrf.name, "", { ...csrf.options, maxAge: 0 });
-    return { role: user.role, returnTo: destination.path };
+    return { role, returnTo };
   }
 
   async requireActor(request: Request): Promise<Actor> {

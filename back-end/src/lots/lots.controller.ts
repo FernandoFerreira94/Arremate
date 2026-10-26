@@ -28,13 +28,13 @@ export class LotsController {
     return this.lots.showcase(query.page);
   }
 
-  /** D22 (H2): próximo leilão agendado, público. */
+  /** D22 (H2): prÃ³ximo leilÃ£o agendado, pÃºblico. */
   @Get("lots/next")
   next() {
     return this.lots.nextScheduled();
   }
 
-  /** D22 (H2b): até 5 agendados para o carrossel do hero, público. */
+  /** D22 (H2b): atÃ© 5 agendados para o carrossel do hero, pÃºblico. */
   @Get("lots/upcoming")
   upcoming(@Query("limit") limit?: string) {
     return this.lots.upcoming(limit);
@@ -77,13 +77,6 @@ export class LotsController {
   @Roles("BIDDER")
   awards(@Query() query: PageQuery, @Req() request: ActorRequest) {
     return this.settlement.listAwards(actorOf(request), query.page);
-  }
-
-  /** D22 (R12): id do usuário para a chave local do tour (arremate.tour.v1.<id>). TODO(integração Codex): mover para /auth/me. */
-  @Get("me/id")
-  @Authenticated()
-  me(@Req() request: ActorRequest) {
-    return { userId: actorOf(request).userId };
   }
 
   @Get("me/favorites")
