@@ -62,6 +62,25 @@ test("duas abas: lance aparece na outra sem recarregar, superado vê aviso, audi
   await expect(visitor.getByText("Íntegro.")).toBeVisible();
 });
 
+test("QA N1 e N4: quem foi coberto vê só o superado, com toast ao vivo, e a confirmação antiga some", async ({ browser }) => {
+  const lotId = await publishLot(seller, { endsInMs: 30 * 60_000 });
+  const a = await bidderPage(browser, "bidder", lotId);
+  const b = await bidderPage(browser, "bidder2", lotId);
+
+  await bid(a, "R$ 100,00");
+  await expect(a.getByText("Lance confirmado. Você está ganhando.")).toBeVisible();
+  await expect(a.getByText("Você está ganhando. Seu lance de R$ 100,00")).toBeVisible();
+  await expect(b.getByText("Próximo lance mínimo R$ 110,00")).toBeVisible({ timeout: 8_000 });
+
+  await bid(b, "R$ 110,00");
+  await expect(b.getByText("Lance confirmado. Você está ganhando.")).toBeVisible();
+  await expect(a.locator("[data-sonner-toast]").getByText("Você foi superado")).toBeVisible({ timeout: 5_000 });
+  await expect(a.getByText("Você foi superado. Seu lance de R$ 100,00 voltou para o disponível.")).toBeVisible();
+  await expect(a.getByText("Lance confirmado. Você está ganhando.")).toHaveCount(0);
+  await expect(a.getByText(/Você está ganhando/)).toHaveCount(0);
+  await expect(b.getByText(/Você foi superado/)).toHaveCount(0);
+});
+
 test("lance na reta final prorroga, encerra, liquida e o vencedor abre comprovante público válido", async ({ browser }) => {
   test.setTimeout(240_000);
   const lotId = await publishLot(seller, { endsInMs: 20_000, externalId: "437329" });

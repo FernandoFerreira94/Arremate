@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon, FlaskConicalIcon, GavelIcon, ShieldCheckIcon, WifiOffIcon } from "lucide-react";
 import { LotStateBadge } from "@/components/app/lot-state-badge";
 import { FavoriteButton } from "../favorites/favorite-button";
@@ -35,7 +35,7 @@ import { bidsKey, getBids, getLot, lotKey, placeBid, SIMULATED_LABEL, type Publi
 import { ArtworkZoom } from "./artwork-zoom";
 import { LotDetailRows } from "./lot-details";
 import { RecentBidsTrigger } from "./recent-bids";
-import { bidShortcuts, clockOffset, insufficientBalanceMessage, formatCountdown, rankByBidder, remainingMs } from "./room-logic";
+import { becameOutbid, bidShortcuts, clockOffset, confirmationHolds, insufficientBalanceMessage, formatCountdown, rankByBidder, remainingMs } from "./room-logic";
 import { useNow } from "./showcase-page";
 import { messageOf, notifyError, notifySuccess, notifyWarning } from "@/lib/notify";
 
@@ -60,6 +60,17 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
   const channel = useLotChannel(lotId, refresh);
   const now = useNow();
 
+  // QA N4: o sino filtra o lote da sala aberta; aqui o toast sai do snapshot refeito pelo evento ao vivo.
+  const myRow = participations.data?.items.find((row) => row.lotId === lotId);
+  const lastOutcome = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (!myRow) return;
+    if (becameOutbid(lastOutcome.current, myRow.outcome)) {
+      notifyWarning("Você foi superado", `Seu lance de ${formatBrl(myRow.myTopCents ?? "0")} foi coberto e voltou para o disponível.`);
+    }
+    lastOutcome.current = myRow.outcome;
+  }, [myRow]);
+
   if (lot.isPending) return <LoadingRows label="Carregando lote" rows={4} />;
   if (lot.isError) {
     const missing = lot.error instanceof ApiError && lot.error.statusCode === 404;
@@ -68,7 +79,7 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
   const data = lot.data;
   const offset = clockOffset(data.serverNow, lot.dataUpdatedAt);
   const left = remainingMs(data.state === "SCHEDULED" ? data.startsAt : data.endsAt, now, offset);
-  const mine = participations.data?.items.find((row) => row.lotId === lotId) ?? null;
+  const mine = myRow ?? null;
   const ranking = rankByBidder(bids.data?.items ?? []);
 
   return (
@@ -228,21 +239,23 @@ function BidForm({ lot, availableCents, onDone }: { lot: PublicLot; availableCen
   const [text, setText] = useState(plain(lot.minimumNextCents));
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState<{ text: string; cents: string } | null>(null);
   const [short, setShort] = useState(false);
+  // QA N1: a confirmação local some assim que o lance atual (vindo do SSE) passa do valor confirmado.
+  const notice = confirmed && confirmationHolds(confirmed.cents, lot.currentCents) ? confirmed.text : null;
   const action = useMemo(() => createIdempotentAction((cents, key) => placeBid(lot.id, cents, key)), [lot.id]);
   const mutation = useMutation({
     mutationFn: (cents: string) => action.run(cents),
-    onSuccess: (accepted) => {
+    onSuccess: (accepted, cents) => {
       setConfirm(null);
       setError(null);
-      setNotice(accepted.extended ? "Lance confirmado. O prazo foi prorrogado." : "Lance confirmado. Você está ganhando.");
+      setConfirmed({ text: accepted.extended ? "Lance confirmado. O prazo foi prorrogado." : "Lance confirmado. Você está ganhando.", cents });
       notifySuccess(messageOf(accepted, "Lance registrado."), { id: "lance" });
       onDone();
     },
     onError: (failure) => {
       setConfirm(null);
-      setNotice(null);
+      setConfirmed(null);
       setError(failure instanceof ApiError ? failure.message : "Não conseguimos confirmar seu lance. Atualize o histórico antes de tentar de novo.");
       notifyError(failure, "Não conseguimos confirmar seu lance.", { id: "lance" });
       onDone();

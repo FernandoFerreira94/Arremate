@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bidShortcuts, clockOffset, remainingMs, formatCountdown, rankByBidder, showcaseTab, insufficientBalanceMessage } from "./room-logic";
+import { bidShortcuts, clockOffset, remainingMs, formatCountdown, rankByBidder, showcaseTab, insufficientBalanceMessage, confirmationHolds, becameOutbid } from "./room-logic";
 
 describe("bidShortcuts", () => {
   it("mínimo, +1 e +2 incrementos sobre o mínimo", () => {
@@ -44,5 +44,24 @@ describe("showcaseTab", () => {
 describe("insufficientBalanceMessage (QA MÉDIA 5)", () => {
   it("diz o disponível e quanto falta", () => {
     expect(insufficientBalanceMessage("2130000", "600000")).toBe("Saldo insuficiente: você tem R$ 6.000,00 disponível e faltam R$ 15.300,00 para este lance.");
+  });
+});
+
+describe("QA N1: confirmação do lance", () => {
+  it("vale enquanto o lance atual é o confirmado", () => {
+    expect(confirmationHolds("10000", "10000")).toBe(true);
+    expect(confirmationHolds("10000", null)).toBe(true);
+  });
+  it("some quando outro licitante cobre", () => {
+    expect(confirmationHolds("10000", "12000")).toBe(false);
+  });
+});
+
+describe("QA N4: virada para superado", () => {
+  it("só de LEADING para OUTBID", () => {
+    expect(becameOutbid("LEADING", "OUTBID")).toBe(true);
+    expect(becameOutbid(undefined, "OUTBID")).toBe(false);
+    expect(becameOutbid("OUTBID", "OUTBID")).toBe(false);
+    expect(becameOutbid("OUTBID", "LEADING")).toBe(false);
   });
 });

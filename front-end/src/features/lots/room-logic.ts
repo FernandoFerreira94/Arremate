@@ -56,3 +56,13 @@ export function insufficientBalanceMessage(bidCents: string, availableCents: str
   const missing = BigInt(bidCents) - BigInt(availableCents);
   return `Saldo insuficiente: você tem ${formatBrl(availableCents)} disponível e faltam ${formatBrl(missing.toString())} para este lance.`;
 }
+
+/** QA N1: o "Lance confirmado" só vale enquanto ninguém cobriu o valor confirmado. */
+export function confirmationHolds(confirmedCents: string, currentCents: string | null): boolean {
+  return currentCents === null || BigInt(currentCents) <= BigInt(confirmedCents);
+}
+
+/** QA N4: toast na sala só na virada de liderando para superado (não ao abrir a sala já superado). */
+export function becameOutbid(previous: string | null | undefined, next: string | null | undefined): boolean {
+  return previous === "LEADING" && next === "OUTBID";
+}
