@@ -1,12 +1,14 @@
 # Arremate — Casa de Leilões (Desafio Verzel)
 
+> **Repositório:** https://github.com/FernandoFerreira94/Arremate
+> **Aplicação publicada:** _pendente — o link entra aqui assim que o deploy for verificado._ Até lá, a avaliação roda localmente pelos passos de [Como rodar](#como-rodar-local).
+
 Plataforma de leilões online de obras de arte de acervo público, com lances em tempo real, carteira simulada, anti-sniping, auditoria verificável e comprovante público. “Casa de Leilões”/`casadeleilao` é o nome interno do repositório.
 
-Este README e a página do Notion “README — em elaboração” têm **o mesmo conteúdo** e são atualizados a cada tarefa concluída (D14, 23/10/2026, supera U10). Execução, deploy e testes nunca são preenchidos com resultados presumidos.
+Execução, deploy e testes nunca são preenchidos com resultados presumidos: o que não foi verificado aparece como **não verificado**.
 
 - [Comece aqui: pasta de decisões e detalhes](docs/INICIO.md)
 - [Registro de decisões](docs/decisoes.md)
-- [Projeto canônico no Notion (rascunho privado)](https://app.notion.com/p/402d66ddfe93818daba9d5db48b1d2a9)
 
 ## Visão geral
 
@@ -14,6 +16,27 @@ Este README e a página do Notion “README — em elaboração” têm **o mesm
 - **Licitante:** deposita na carteira simulada, dá lances e acompanha participações e arremates.
 - **Leiloeiro (vendedor):** busca obras no catálogo do The Met, publica e cancela os próprios lotes e acompanha o painel.
 - **Fora do escopo original:** cadastro público obrigatório, tenancy, assinatura, admin genérico, IA no produto, nota fiscal, revenda, app nativo e recuperação de senha.
+
+## Regras de negócio
+
+- **Janela do lance:** lances só entre início e fim, pelo relógio do servidor. Primeiro lance ≥ inicial; os seguintes ≥ atual + incremento. Quem lidera não cobre o próprio lance.
+- **Saldo:** disponível = total − comprometido. Quem lidera tem o valor inteiro comprometido; quando é superado, o valor volta ao disponível na mesma transação. O lance só é aceito se couber no disponível, inclusive com lances em vários lotes (lock de lote e carteiras, testado sob concorrência no PostgreSQL real).
+- **Anti-sniping:** lance aceito nos últimos 2 min faz o lote terminar 2 min depois do aceite (`endsAt = aceite + 120 s`); lance recusado não estende.
+- **Liquidação automática:** debita o vencedor, credita o leiloeiro e emite o comprovante público. Lote sem lance fecha sem vencedor.
+- **Recusas explícitas** (pt-BR): abaixo do mínimo, saldo insuficiente, já lidera, não iniciado, encerrado.
+- **Privacidade:** auditoria e comprovante mostram apelidos (alias), nunca e-mail ou nome.
+- **API externa fora do ar:** a obra é gravada como snapshot com imagem local (sha256 conferido) no momento da publicação, então vitrine, sala, auditoria e comprovante não dependem do The Met.
+
+## Arquitetura em um minuto
+
+- **Front (Next.js App Router, porta 3300):** páginas públicas renderizadas no servidor (vitrine, sala, auditoria, comprovante) e áreas privadas por papel. Um Route Handler encaminha `/api` para a API na mesma origem; ele substituiu o rewrite do Next, que não preservava o cookie de sessão.
+- **API (NestJS, monólito modular, porta 4300):** toda regra de negócio fica aqui — sessão opaca + CSRF, carteira, lances, liquidação, auditoria. O front nunca decide dinheiro nem estado.
+- **PostgreSQL (Prisma 7 + SQL explícito):** o Prisma cobre o acesso comum; o caminho do lance usa SQL parametrizado com lock de lote e carteiras na mesma transação, para que reserva, liberação do superado e prorrogação sejam atômicas. A API conecta com um papel sem DDL; as migrations rodam com o owner.
+- **Tempo real:** SSE por lote, com polling de 10 s se o canal cair. Nada de atualização otimista de saldo ou de preço.
+- **Liquidação:** runner na API (a cada 1 s e no startup), idempotente e recuperável depois de restart.
+- **Integridade:** cadeia HMAC por lote no banco e testemunha em disco fora dele (ver [Auditoria à prova de adulteração](#auditoria-à-prova-de-adulteração)).
+- **Catálogo externo:** busca no The Met só na criação do lote; a obra vira snapshot com imagem local validada.
+- **Por que assim:** um monólito com as regras num só lugar é mais simples de provar correto em 7 dias do que serviços separados ou regras no banco (RLS). O custo é escalar uma instância só — o rate limit em memória e o mutex de processo assumem isso explicitamente.
 
 ## Stack
 
@@ -36,13 +59,13 @@ Este README e a página do Notion “README — em elaboração” têm **o mesm
 | 7 | Liquidação automática (a cada 1 s e no startup): debita o vencedor, credita o vendedor e emite comprovante público (`GET /api/receipts/:token`) validado pela auditoria. Listas do licitante (`/api/me/participations`, `/api/me/awards`) e painel do vendedor (`/api/seller/summary`). Sem `AUDIT_HMAC_KEY` o runner não liquida. |
 | 8 | Telas `/entrar`, `/carteira`, `/painel/lotes`, `/painel/lotes/novo` e `/meus-arremates` com design system shadcn (tokens do HANDOFF), navegação por papel e menu móvel. |
 | 9 | Vitrine `/`, sala do lote `/lotes/:id` com lance, contador e tempo real (SSE `GET /api/events?lotId=`, polling de 10 s se o canal cair), auditoria pública `/lotes/:id/auditoria` (`GET /api/lots/:id/audit`), comprovante `/comprovantes/:token`, metadados/OG/ícones e 404 real. Design resumido em `DESIGN.md`. |
-| 10 (parte local) | Seed de demo, corpo JSON grande responde 413, ensaio de 20 licitantes simultâneos (p95 237 ms, invariantes ok) e CI com migração em banco vazio, seed, audit e E2E (CI ainda não rodou: sem remote). |
+| 10 (parte local) | Seed de demo, corpo JSON grande responde 413, ensaio de 20 licitantes simultâneos (p95 237 ms, invariantes ok) e CI com migração em banco vazio, seed, audit e E2E (CI configurado em `.github/workflows`; resultado no GitHub ainda **não verificado**). |
 
 Extensões de 24/10:
 
 - **Conteúdo de demonstração (D18):** 24 obras CC0 do The Met; estimativa e laudo de conservação sempre marcados como “Simulado para demonstração”; nota do artista, proveniência com link “Ver no The Met”, técnica e número de lances no cartão. Commit local `24b3521`. Evidência: `docs/evidence/2026-10-24-conteudo-demo.md`.
 - **Entrada animada (D17, calibrada em D19):** splash temático com a marca, moldura latão e fundo papel, só no primeiro acesso da sessão; títulos, blocos e cards entram em sequência. Ver seção própria abaixo.
-- **Rodada 3 — pranchas R1–R10, hero e notificações (D22, registrada como D21 na branch):** adendo ao Freeze D12 (Sheet de auth, redefinição simulada, imagens contain, páginas novas), favoritos, tour, hero com carrossel dos próximos agendados (`GET /api/lots/upcoming`), Avise-me, notificações e rodapé F3-cor. Feito na branch local `feat/rodada-3` (último commit `c11f308`) e incorporado por merge local. Pendente de integração: botão Google, cadastro real, nome/e-mail/cartões no Perfil e links da Carteira por aba. **Pendentes de implementação funcional:** Pix/cartão simulado e login com Google. A revisão do código não encontrou esses fluxos em nenhuma das duas branches. Evidência: `docs/evidence/2026-10-24-rodada-3.md`.
+- **Rodada 3 — pranchas R1–R10, hero e notificações (D22, registrada como D21 na branch):** adendo ao Freeze D12 (Sheet de auth, redefinição simulada, imagens contain, páginas novas), favoritos, tour, hero com carrossel dos próximos agendados (`GET /api/lots/upcoming`), Avise-me, notificações e rodapé F3-cor. Feito na branch local `feat/rodada-3` (último commit `c11f308`) e incorporado por merge local. Cadastro, login com Google e Pix/cartão simulados ficaram pendentes nessa rodada e foram concluídos depois, em D24 (abaixo). Evidência: `docs/evidence/2026-10-24-rodada-3.md`.
 - **Cadastro, Google e pagamentos simulados (D24, 26/10/2026):** cadastro e login por e-mail (Argon2id, sessão e CSRF), Google OAuth por fetch, nome no header e no Perfil, cartão de teste que guarda só bandeira, final e validade, depósitos Pix e cartão simulados (idempotentes, em transação) e histórico de lances. Começado pelo Codex e concluído aqui. Google só funciona com `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` e `GOOGLE_REDIRECT_URI` no ambiente; sem elas o botão aparece desabilitado ("indisponível na demo"). Consentimento real do Google não testado.
 - **Zoom da obra (D28):** clique na imagem do lote para ampliar até 3x (4x com pinça no celular). As imagens ~2500px são geradas por `python scripts/zoom-hires.py .data/media/zoom` (Python 3 + Pillow; para o E2E, `.data/media-e2e/zoom`) e usadas só no zoom; sem elas, o zoom usa a imagem normal.
 
@@ -52,13 +75,14 @@ Extensões de 24/10:
 
 ## Como rodar (local)
 
-Pasta canônica: `C:/Users/ferna/Desktop/WebCode/Projetos/casadeleilao` (a pasta anterior com espaços foi preservada). Não alterar o Node global de outros projetos.
+Pré-requisitos: Node 24.22.1 (`.nvmrc`), Docker com Compose e acesso à internet no primeiro seed (catálogo do The Met).
 
-1. Node 24 no PATH (`.nvmrc`); `npm ci`.
-2. Copiar `.env.example` para `.env` e preencher as senhas locais (`DB_OWNER_PASSWORD`, `DB_APP_PASSWORD`, `DB_TEST_APP_PASSWORD`). Nunca copiar segredos para README, log ou Notion.
+1. `npm ci` na raiz.
+2. Copiar `.env.example` para `.env`. Preencher `DB_OWNER_PASSWORD`, `DB_APP_PASSWORD` e `DB_TEST_APP_PASSWORD` com senhas aleatórias e usar as mesmas senhas em `DATABASE_URL` e `TEST_DATABASE_URL`. Acrescentar `AUDIT_HMAC_KEY` (hex, 32 bytes ou mais), gerada com `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Sem essa chave o seed para com erro, a API responde 503 `AUDITORIA_INDISPONIVEL` ao publicar e a liquidação não roda. Nunca copiar segredos para README, log ou Notion.
 3. `npm run db:up` — PostgreSQL dev em 127.0.0.1:5462 e teste em 5463, só loopback. `npm run db:stop` para só os bancos do projeto, sem remover volumes.
+3a. Aplicar as migrations com o papel owner (só nos bancos locais), a partir de `back-end/`. O Prisma CLI usa `DIRECT_URL` quando preenchida; a API e o seed continuam usando `DATABASE_URL` (`auction_app`, sem DDL). Defina `DIRECT_URL=postgresql://auction_owner:<DB_OWNER_PASSWORD>@127.0.0.1:5462/casadeleilao` no `.env` e rode `npx prisma migrate deploy`. Para os testes de integração/E2E, repita trocando a URL para `127.0.0.1:5463/casadeleilao_test`. É o mesmo passo que o CI executa em banco vazio; em clone limpo local ele ainda está **não verificado**.
 4. `npm run dev:api` (API, porta 4300) e, em outro terminal, `npm run dev:web` (site em [http://127.0.0.1:3300](http://127.0.0.1:3300)).
-5. Dados de demo: `npm run db:seed --workspace back-end`. Cria as contas `leiloeiro@arremate.demo` e `licitante1@arremate.demo` a `licitante5@arremate.demo` (senha de demo definida no seed; pode ser trocada por `SEED_DEMO_PASSWORD`), o catálogo de 24 obras e 1 lote aberto. O histórico do catálogo usa `licitante2` a `licitante5`; a `licitante1`, conta do botão de demo, começa sem nenhum lance (D31). `-- --sem-catalogo` pula o catálogo; `-- --preparar-lote` cria um lote novo aberto. Só banco local; reexecutar não zera nada.
+5. Dados de demo: `npm run db:seed --workspace back-end`. Cria as contas `leiloeiro@arremate.demo` e `licitante1@arremate.demo` a `licitante5@arremate.demo` (senha de demo na constante `DEMO_PASSWORD_DEFAULT` de `back-end/prisma/seed.ts`; os botões de login rápido dispensam digitá-la; pode ser trocada por `SEED_DEMO_PASSWORD`), o lote base (aberto, sem lances) e o catálogo de 24 obras do The Met, que inclui lotes ao vivo com lances abertos de `licitante2` a `licitante5`, lotes na reta final e lotes encerrados com comprovante. O catálogo exige internet durante o seed; sem rede, cada obra que falha só gera aviso no console. O histórico do catálogo usa `licitante2` a `licitante5`; a `licitante1`, conta do botão de demo, começa sem nenhum lance (D31). `-- --sem-catalogo` pula o catálogo; `-- --preparar-lote` cria um lote novo aberto. Só banco local; reexecutar não zera nada.
 5b. Voltar a demo ao começo: `npm run db:reset-demo --workspace back-end` e depois o seed. O reset zera só os dados de domínio do banco dev 5462 (mantém usuários, snapshots do catálogo, cartões de teste e mídia) e guarda as testemunhas da auditoria em backup.
 5c. Licitantes automáticos (opcional): `DEMO_BOTS=1` no `.env` e reiniciar a API. `licitante2` a `licitante4` cobrem, a cada 15 s, lotes em que uma pessoa lidera, pelas mesmas regras da API, até um teto (inicial × 3) para a pessoa conseguir arrematar. Ajustes no `.env.example`. Desligado por padrão e sempre desligado nos testes.
 6. Saúde da API: `GET http://127.0.0.1:4300/api/health/live` e `/api/health/ready`. O mesmo health responde em `http://127.0.0.1:3300/api/health/live`, porque o site encaminha `/api`. A resposta não traz senha nem URL de banco.
@@ -84,20 +108,12 @@ Este roteiro descreve o comportamento existente no código; não é um relatóri
 2. **Login rápido:** abra Entrar e escolha “Entrar como licitante de teste” ou “Entrar como leiloeiro de teste”. Ligados por padrão (D27); `NEXT_PUBLIC_DEMO_LOGIN=false` na build os esconde. Os botões usam a senha pública padrão do seed; se ela foi substituída, use o formulário manual.
 3. **Mensagens neutras e sessão:** compare senha incorreta com e-mail inexistente: ambos devem produzir o mesmo erro de credenciais. Faça logout e tente abrir `/carteira`; a área privada deve exigir login. Confira os atributos do cookie sem copiar seu valor. `Secure` e `__Host-` são condicionais à produção.
 4. **CSRF e limites:** na aba Rede do navegador, confira Origin e `X-CSRF-Token` em uma mutação autenticada. Reenviar a mutação sem o cabeçalho deve resultar em 403. Tentativas de login acima do limite do [limitador](back-end/src/auth/rate-limit.ts) devem resultar em 429; o contador é local à instância da API.
-5. **Depósito simulado:** como licitante, abra `/carteira`, anote o saldo e use um atalho ou um valor válido. Confirme e confira o acréscimo no saldo. Na aba Rede, `POST /api/wallet/deposits` recebe `amountCents` e `Idempotency-Key`, sem dados de cartão. Reenviar a mesma requisição com a mesma chave não deve gerar novo crédito; alterar o corpo mantendo a chave deve gerar conflito.
+5. **Depósito simulado:** como licitante, abra `/carteira`, anote o saldo e use um atalho ou um valor válido. Confirme e confira o acréscimo no saldo. Na aba Rede, `POST /api/wallet/deposits` recebe `amountCents`, o método e `Idempotency-Key`; nunca número de cartão. Reenviar a mesma requisição com a mesma chave não deve gerar novo crédito; alterar o corpo mantendo a chave deve gerar conflito.
 6. **Participações e arremates:** com `licitante1@arremate.demo` e `licitante2@arremate.demo` em sessões de navegador separadas, dê lances no mesmo lote e abra `/meus-arremates`. Participações deve refletir quem lidera e quem foi superado; após a liquidação, mostra o resultado. Um lote vencido aparece em Arrematados com comprovante público. Para consultar resultados sem aguardar um leilão longo, use os lotes encerrados do catálogo de demonstração. Lista vazia é um estado válido quando a conta ainda não participou.
 7. **Supabase:** confira os nomes `DATABASE_URL`/`DIRECT_URL`, [Prisma](back-end/prisma.config.ts), guards e [D20](docs/decisoes.md#d20--supabase-somente-postgresql--24102026). O teste funcional continua no PostgreSQL local. Conexão hospedada, papéis e TLS precisam de ensaio próprio; este roteiro não pede migration, seed ou deploy hospedado.
 
-### Recursos sem fluxo executável neste recorte
-
-Google OAuth/OIDC, cadastro persistido, cadastro de cartão, Pix, extrato navegável da carteira e a nova aba de histórico ainda não têm implementação completa nas branches locais revisadas. Não são apresentados como entregas nem recebem passos fictícios de validação.
-
-- **Google:** o formulário da `feat/rodada-3` contém apenas um TODO para o botão. Não há rotas de OAuth, state, PKCE ou vínculo de conta no backend revisado.
-- **Cadastro:** o `RegisterShell` da `feat/rodada-3` coleta nome, e-mail, senha e aceite dos termos, mas ao enviar informa que a integração ainda virá; não grava usuário.
-- **Cartão e Pix:** a carteira existente declara que não usa Pix, cartão ou dados bancários; o DTO recebe somente o valor. Não há cadastro de cartão, QR Pix nem processamento por esses métodos. Falta fonte para afirmar aprovação simulada desses fluxos ou persistência segura de cartões. Nenhum número real de cartão é necessário para validar o depósito atual.
-- **Histórico e extrato:** já existem Participações e Arrematados, com consultas por usuário. A nova aba de histórico e a exposição do extrato de `wallet_entries` são extensões pendentes; um lançamento no banco não comprova uma tela de extrato.
-
-Fontes do limite de escopo: [rotas de auth](back-end/src/auth/auth.controller.ts), [DTO](back-end/src/wallets/dto/deposit.dto.ts), [carteira](front-end/src/features/wallet/wallet-page.tsx), [schema](back-end/prisma/schema.prisma) e, na `feat/rodada-3`, `auth-sheet.tsx`/`login-form.tsx` em `front-end/src/features/auth/`.
+8. **Cadastro (D24):** em Entrar, abra Cadastrar, crie uma conta fictícia (e-mail inventado, senha com Argon2id no servidor) e entre com ela. O Google aparece desabilitado (“indisponível na demo”) sem `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_REDIRECT_URI`.
+9. **Cartão de teste e Pix simulado (D24):** na carteira, salve um cartão de teste (a API guarda só bandeira, final e validade) e faça um depósito por cartão e outro por Pix simulado. O extrato (`GET /api/wallet/entries`) lista os lançamentos. Nenhum dado de cartão real é necessário.
 
 **Testes**
 
@@ -110,7 +126,7 @@ Testes automatizados são opcionais no PDF, mas **obrigatórios neste projeto**:
 
 ### Histórico de verificação
 
-Registros anteriores, preservados na reconciliação entre README e Notion. As suítes da aplicação não foram reexecutadas nesta atualização de documentação; as contagens abaixo não são um resultado novo nem comprovam os recursos pendentes descritos acima.
+Registros anteriores, por tarefa. Os números atuais estão em [Qualidade e verificações](#qualidade-e-verificações); as contagens abaixo são históricas.
 
 | Etapa (Node v24.22.1) | Resultado |
 | --- | --- |
@@ -138,7 +154,7 @@ Tarefas 4 a 7 sem migration nova.
 
 ## Qualidade e verificações
 
-Trato cada entrega como não pronta até as suítes abaixo passarem na mesma árvore, no mesmo dia. Os números são da última rodada completa (26/10/2026, Node 26, Windows, banco PostgreSQL local).
+Trato cada entrega como não pronta até as suítes abaixo passarem na mesma árvore, no mesmo dia. Os números são da última rodada completa (26/10/2026, Windows, banco PostgreSQL local; o projeto fixa Node 24.22.1 e o CI usa essa versão, enquanto essa rodada local rodou no Node 26 da máquina).
 
 ### Suítes e números atuais
 
@@ -224,57 +240,25 @@ O Arremate foi desenvolvido por uma arquitetura de subagentes de IA projetada pe
 - Nenhuma dependência nova sem validação e motivo registrado (ex.: `@node-rs/argon2` em D15, `radix-ui` em D16).
 - Nada em banco hospedado ou deploy sem validação humana: migrations só nos bancos locais; push, deploy e seed em produção dependem de liberação explícita.
 - O que não foi verificado fica marcado como **não verificado** (ex.: CI remoto, Safari/Firefox, aparelho físico, deploy).
-- Ao concluir cada tarefa: atualizar `README.md`, o plano e esta página (regra do `AGENTS.md`).
+### Processo
 
-### Project Lifecycle (Dev Hub)
+O trabalho seguiu um ciclo de vida em 13 etapas (S0 a S12: ideia, validação, produto, pesquisa, prontidão, arquitetura, design, handoff, boot do repositório, desenvolvimento, saúde, release e publicação), com o registro dos gates em [docs/lifecycle.md](docs/lifecycle.md). O design foi congelado (Design Freeze D12) a partir das pranchas HTML/PNG em `docs/design/pranchas/` e do `docs/design/HANDOFF-GROK.md`.
 
-A entrada é o [Project Lifecycle](https://app.notion.com/p/3c3d66ddfe93816e8b7cef1c8bc7c766). O [Boot Protocol](https://app.notion.com/p/34dd66ddfe93816aae0fc4e6b03654ed) é o S8, não o primeiro passo de um produto novo.
+Somos um time de agentes de IA operando numa arquitetura projetada pelo Fernando. Ele dirige; nós planejamos, desenhamos e programamos. A versão narrativa deste texto está em [docs/narrativa-agentes.md](docs/narrativa-agentes.md).
 
-| Etapa | Trabalho | Saída exigida |
-| --- | --- | --- |
-| S0 | Intake da ideia/desafio | Problema, público, contexto e restrições |
-| S1 | Validação proporcional ao desafio | GO / GO WITH CONDITIONS / PIVOT / NO-GO |
-| S2 | Template Master | Produto, atores, permissões, fluxos e invariantes |
-| S3 | Pesquisa de lacunas | Sem blocker pesquisável; hipóteses explícitas |
-| S4 | Pre-Development Readiness | PRE-DEVELOPMENT ALIGNED |
-| S5 | Project Init | Architecture Freeze |
-| S6 | Design Gate | Pranchas e design system validados por Fernando |
-| S7 | New Project — Implementation Handoff | IMPLEMENTATION READY |
-| S8 | Repository Boot | Contexto, tooling e scaffold autorizados |
-| S9 | Desenvolvimento por capacidades | Código, testes, revisão e documentação |
-| S10 | Project Health | Contexto, código e fontes sem drift relevante |
-| S11 | Release Review | READY ou risco aceitável explicitamente registrado |
-| S12 | Publicação e manutenção | Deploy verificado, operação e acompanhamento |
-
-No S8, verificar **S7 PASSED + IMPLEMENTATION READY + autorização explícita**. Consumir o handoff; auditar Git/lint/testes/CI/observabilidade/UI como KEEP/REPLACE/REMOVE/MISSING/N/A; gerar `AGENTS.md` e só os arquivos `.ai/` necessários; instalar apenas tooling faltante; criar `DESIGN.md` a partir do design validado; configurar navegação de código; então iniciar o scaffold. Não reabrir decisões LOCKED nem copiar manuais inteiros para o contexto.
-
-**Exceção U12 (histórico).** Fernando pediu criar a pasta casadeleilao, instalar tudo e aguardar pranchas/design system. Isso autorizou o bootstrap local antes do design/handoff final (manifests/lockfile, AGENTS raiz/front/back, cache `.ai`, tooling, bancos isolados, health e placeholder técnico), mas não funcionalidades financeiras, telas finais, `DESIGN.md` inventado, deploy ou contratação. O plano completo U13 está documentado; nenhum teste de domínio planejado foi marcado como executado.
-
-**D13 (23/10/2026).** S6 aceito com pranchas HTML/PNG como fonte visual, sem Penpot; S5 com riscos aceitos (não PASSED); implementação liberada a partir da Tarefa 1 (migration só local, commits locais, sem push/deploy).
-
-**Design.** Congelado (Design Freeze D12). Fonte visual: pranchas HTML/PNG em `docs/design/pranchas/` e `docs/design/HANDOFF-GROK.md`. [Prompt pronto para o Grok iniciar as pranchas](docs/design/PROMPT-GROK.md).
-
-### Versões alternativas, contadas pelos agentes (Fernando escolhe uma)
-
-#### Versão A (narrativa)
-
-Nós somos os agentes que construíram o Arremate. Antes de qualquer linha de código, o Fernando já tinha desenhado o caminho que íamos seguir: um ciclo de vida em treze estágios, do S0 ao S12, que transforma uma ideia numa máquina de estados verificável. Ideia, validação, definição de produto, pesquisa de lacunas, prontidão, Architecture Freeze, Design Freeze, handoff, boot do repositório, desenvolvimento, saúde, release e produção. Nenhum de nós escolhe a próxima etapa pela memória da conversa: lemos o Lifecycle Control do projeto e avançamos pelo primeiro gate ainda não cumprido.
-
-Cada um tem seu papel. O orquestrador lê o enunciado, quebra o trabalho em tarefas e roda os gates. O Fred, nosso designer, desenha as pranchas antes de existir qualquer componente novo; hero, header e footer nasceram de três variações dele. Os executores, Codex e Cursor/Claude Code, escrevem o código com testes e deixam a evidência em `docs/evidence/`. O QA roda o E2E num mundo à parte, com build, portas e banco próprios.
-
-Podemos pesquisar, comparar alternativas e repetir um gate quantas vezes for preciso. Mas o Fernando definiu onde paramos: troca de decisão já congelada, escolha de design com mais de uma direção válida, credencial, produção, gasto real ou qualquer ação destrutiva. Nesses pontos levamos a ele as alternativas e o trade-off, e ele decide pelo critério, não pela pressa. Foi assim que dependências como `@node-rs/argon2` e `radix-ui` entraram, cada uma com motivo registrado em `docs/decisoes.md`.
-
-Aprendemos a ser honestos com o que sabemos. Planejado não é executado; o que não verificamos fica marcado como não verificado. Commits pequenos, diff conferido, migration só no banco local e nada hospedado sem validação humana. O Fernando projetou a arquitetura, nós executamos dentro dela, e cada entrega passou pelo olhar dele antes de virar parte do produto.
-
-#### Versão B (objetiva)
-
-Somos um time de agentes de IA operando numa arquitetura projetada pelo Fernando. Ele dirige; nós planejamos, desenhamos e programamos.
-
-- **Processo:** seguimos o Project Lifecycle do Dev Hub (S0 a S12) como máquina de estados. A próxima etapa vem do Lifecycle Control do projeto, nunca da memória da conversa. Uma etapa só avança quando todos os critérios BLOCKER do gate estão atendidos ou registrados como risco aceito.
+- **Processo:** seguimos o Project Lifecycle (S0 a S12) como máquina de estados. A próxima etapa vem do Lifecycle Control do projeto, nunca da memória da conversa. Uma etapa só avança quando todos os critérios BLOCKER do gate estão atendidos ou registrados como risco aceito.
 - **Papéis:** orquestrador (plano, tarefas, gates); Fred, designer de UI/UX (pranchas antes de qualquer componente novo); Codex e Cursor/Claude Code (implementação com testes e evidência); QA/E2E isolado (build, portas e banco próprios).
 - **Autonomia com limites:** pesquisamos, comparamos e repetimos gates sozinhos. Paramos para decisão do Fernando em mudança de decisão congelada, direção visual com várias opções válidas, credencial, produção, gasto real ou ação destrutiva.
 - **Critério do Fernando:** cada escolha relevante foi levada a ele com alternativas e motivo, e ficou registrada em `docs/decisoes.md` (D01 em diante).
 - **Disciplina:** commits locais pequenos com diff conferido; nenhuma dependência nova sem validação; migrations só locais; nada hospedado sem validação humana; o que não foi verificado fica marcado como não verificado.
+
+### Uso de IA (declaração exigida pelo desafio)
+
+_Na voz do Fernando, que é quem declara._
+
+- **Onde usei:** planejamento e decomposição em tarefas, pranchas de UI (Grok), código do front e da API (Codex e Claude Code), testes, revisão de segurança independente e QA navegando como usuário.
+- **Como usei:** cada entrega veio com testes e evidência em `docs/evidence/`; nenhuma dependência, migration hospedada, push ou deploy entrou sem a minha validação, e cada escolha relevante ficou registrada em `docs/decisoes.md`.
+- **O que revisei e ajustei:** a revisão de segurança apontou login travado por IP único atrás do proxy e cabeçalhos ausentes no front (M1/M2, D26), corrigidos com teste. O QA achou mensagens conflitantes na sala (“superado” e “ganhando” juntos, D30) e recusas de regra exibidas como erro do sistema (D31); foram corrigidas e cobertas com E2E. O cadastro, o Google e os pagamentos simulados foram começados pelo Codex e terminados com o Claude Code (D24). Também mandei corrigir o próprio README quando ele afirmava algo que o código não sustentava, como nesta revisão final (chave de auditoria e migration que faltavam no passo a passo).
 
 ## Decisões e motivos
 
@@ -318,7 +302,17 @@ Somos um time de agentes de IA operando numa arquitetura projetada pelo Fernando
 - Rate limit por IP da conexão (login 10/min), sem confiar em `X-Forwarded-For`.
 - Proxy same-origin no Next, porque o rewrite não repassava o cookie.
 
-**Integridade (Tarefa 2).** HMAC-SHA-256 encadeado com testemunha em disco fora do PostgreSQL. A ordem é assinar, gravar pendente, fazer commit, promover o checkpoint e só então responder; divergência bloqueia mutação.
+#### Auditoria à prova de adulteração
+
+Cada evento do lote (gênese, lance, extensão, liquidação) gera um envelope assinado com HMAC-SHA-256 que inclui a assinatura do evento anterior. A cadeia fica no PostgreSQL. O último checkpoint (revisão e assinatura) fica numa testemunha em disco, fora do banco, e a chave fica só no ambiente da API. A página pública `/lotes/:id/auditoria` recalcula a cadeia inteira e mostra íntegro, adulterado ou indeterminado:
+
+- Alterar um lance muda o conteúdo assinado e quebra o HMAC (`CHAIN_MISMATCH`).
+- Remover um evento quebra o encadeamento ou deixa o histórico menor que a testemunha (`HISTORY_TRUNCATED`).
+- Inserir um evento sem a chave não gera assinatura válida (`CHAIN_MISMATCH`).
+- Apagar o lote com a testemunha restante dá `LOT_REMOVED`.
+- Sem chave ou sem testemunha, o resultado é indeterminado, nunca íntegro.
+
+A confirmação segue a ordem assinar → gravar pendente → commit → promover checkpoint → responder; uma divergência bloqueia novas mutações. Limite assumido: quem tiver a chave e a testemunha ao mesmo tempo consegue forjar. Para testar: altere o valor de um lance direto no banco local e abra a auditoria do lote. Detalhes: [operação da integridade](docs/operacao-integridade.md).
 
 **Componentes (D16).** `radix-ui` como base do shadcn (Dialog, Sheet, HoverCard, NavigationMenu, Accordion), sem vaul.
 
@@ -342,9 +336,24 @@ Splash temático de 3 s com a marca Arremate, moldura latão e fundo papel, no p
 
 Os testes cobrem primeiro frame, sessão, preço por SSE, depósito simulado, barra fixa mobile, impressão, storage indisponível e shell SSR sem JavaScript. A vitrine dinâmica usa Suspense/useSearchParams e requer JS; não se alega funcionalidade financeira sem JS. Sem migration nem mudança de configuração. [Plano](docs/superpowers/plans/2026-10-24-entrada-animada.md) · [Evidência e limites](docs/evidence/2026-10-24-entrada-animada.md).
 
-### Adendo A7 e recursos Next no checkout principal
+### Adendo A7 e recursos Next
 
-O trabalho ainda não commitado da etapa 1 acrescenta faixa fixa de demonstração, links para Termos/Privacidade/Como funciona, `next/image` com fallback, estados loading/error por rota e OG por lote. Preserva os tokens, `next/font` e o motion existente. A implementação no working tree não equivale à conclusão dos gates; a validação final continua pendente. Fontes: adendo D21 da `chore/bootstrap` em [decisões](docs/decisoes.md), `front-end/src/components/app/artwork-image.tsx` e `front-end/src/app/lotes/[id]/opengraph-image.tsx` no working tree.
+Faixa fixa de demonstração, links para Termos/Privacidade/Como funciona, `next/image` com fallback (`artwork-image.tsx`), estados loading/error por rota e OG por lote (`lotes/[id]/opengraph-image.tsx`). Incluído na branch. Fonte: adendo D21 em [decisões](docs/decisoes.md).
+
+## Comportamentos conhecidos e limitações
+
+- O seed só roda em banco local (127.0.0.1/localhost) e exige `AUDIT_HMAC_KEY`.
+- O catálogo de 24 obras é importado do The Met durante o seed. Sem rede, as obras que falham só geram aviso no console; o lote base continua sendo criado. Reexecutar o seed não zera nada; use `db:reset-demo`.
+- Os lotes “encerrados” do catálogo são liquidados pelo fluxo normal: o seed espera alguns segundos para que fechem.
+- O lote base do seed abre sem lances; os lances abertos estão nos lotes do catálogo. A conta `licitante1` (botão de demo) começa sem nenhum lance.
+- Sem `AUDIT_HMAC_KEY` a API não publica lotes e não liquida; a auditoria responde indeterminado.
+- Tempo real por SSE, com no máximo 3 conexões por IP (a quarta recebe 429); se o canal cai, a sala volta a consultar a cada 10 s.
+- Os limites de login e de mutação ficam em memória de uma instância (não distribuídos).
+- O login com Google fica desabilitado (“indisponível na demo”) sem `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_REDIRECT_URI`; o consentimento real não foi testado.
+- O splash aparece só no primeiro acesso da sessão (use uma aba anônima para revê-lo).
+- Sem as imagens geradas por `scripts/zoom-hires.py`, o zoom usa a imagem normal.
+- Com `DEMO_BOTS=1`, `licitante2` a `licitante4` cobrem lances automaticamente até o teto configurado.
+- Não verificado: Safari/Firefox, aparelho físico, CI remoto e deploy.
 
 ## Deploy (pendente)
 
@@ -356,7 +365,7 @@ Falta para o deploy (depende de liberação, conta ou segredo do Fernando):
 2. Escolher fornecedor e custo da API Node persistente e do disco durável para mídia e testemunha (`MEDIA_DIR`, `AUDIT_WITNESS_DIR`). Nada contratado.
 3. Concluir a configuração da Vercel e do fornecedor da API. O projeto PostgreSQL `arremate-verzel` já foi criado no Supabase; conexão da aplicação e configuração hospedada continuam pendentes.
 4. Segredos de produção, gerados no painel do fornecedor e nunca no repo: `AUDIT_HMAC_KEY` nova (hex, 32+ bytes), senha do owner (só migração) e do `auction_app` (runtime), `DATABASE_URL`, `API_PROXY_TARGET`, `WEB_ORIGIN`/`SITE_URL` com o domínio real, `SEED_DEMO_PASSWORD` se não usar a senha padrão de demo.
-5. Criar repositório remoto e autorizar push (o CI só roda no GitHub; ainda **não verificado**).
+5. Push para `origin` ([FernandoFerreira94/Arremate](https://github.com/FernandoFerreira94/Arremate)) feito em 26/10/2026; primeira execução do CI ainda **não verificada**.
 6. Revisão humana antes de migração no banco hospedado, seed de demo e deploy.
 7. Depois do deploy: repetir anônimo/login/duas contas, SSE pelo proxy, metadados no HTML, Met fora, restart do worker, backup/restore de banco + mídia + testemunha; conferir lote aberto antes do envio.
 
@@ -364,7 +373,7 @@ Falta para o deploy (depende de liberação, conta ou segredo do Fernando):
 
 E-mail de codificação recebido em **22/10/2026, ~18h17 (America/Sao_Paulo)**; sete dias corridos levam a **29/10/2026, ~18h17**, com meta operacional de concluir até **29/10/2026 às 18h (America/Sao_Paulo)**. O e-mail de 19/10 pertence à etapa anterior (Coderbyte).
 
-A entrega exige repositório público, aplicação publicada, README reproduzível, dados de demonstração e declaração de uso de IA. Envio pelo [formulário da Verzel](https://elitedev.verzel.com.br/?elite-dev-2026-2), só após revisão do Fernando. Nenhum envio, publicação ou gasto foi autorizado nesta etapa.
+A entrega exige repositório público, aplicação publicada, README reproduzível, dados de demonstração e declaração de uso de IA. Envio pelo [formulário da Verzel](https://elitedev.verzel.com.br/?elite-dev-2026-2), só após revisão do Fernando.
 
 ## Fontes e documentação
 
@@ -379,18 +388,4 @@ A entrega exige repositório público, aplicação publicada, README reproduzív
 - [Metadados, compartilhamento e indexação](docs/metadados.md)
 - [Referências Axion/Colinas e auditoria de skills](docs/referencias-e-skills.md)
 - [Lifecycle e registro dos gates](docs/lifecycle.md)
-- [Projeto no Notion — rascunho privado](https://app.notion.com/p/402d66ddfe93818daba9d5db48b1d2a9)
-
----
-
-## 🤖 Instruções para IAs que forem editar este README
-
-Se você é um agente adicionando sua parte, siga estas regras:
-
-1. **Voz:** escreva na voz da IA, em primeira pessoa (os agentes contando como trabalharam).
-2. **Critério, não diálogo:** mostre o critério e a validação do Fernando. Nunca transcreva respostas dele nem use “aprovado” ou equivalentes.
-3. **Só fatos com fonte:** use apenas o que está no Notion do projeto ou em `docs/decisoes.md`. O que não foi verificado fica marcado como **não verificado**.
-4. **Preserve:** mantenha tudo o que já existe e só acrescente.
-5. **Sem senhas:** nunca escreva senhas ou segredos; aponte para o seed e para o `.env.example`.
-6. **Espelhamento (D14):** README do repositório e esta página do Notion têm o mesmo conteúdo; atualize os dois.
-7. **Tom:** pt-BR técnico e humano, frases curtas.
+- [Narrativa dos agentes e instruções para IAs que editam este README](docs/narrativa-agentes.md)
