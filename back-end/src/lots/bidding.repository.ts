@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { NOTIFICATIONS_KEPT } from "./lots.repository";
 
 export type LockedLot = {
   status: string;
@@ -54,6 +55,24 @@ export class BiddingRepository {
     if (existing.rows[0]) return existing.rows[0].alias;
     const count = await client.query<{ n: number }>(`SELECT count(DISTINCT user_id)::int AS n FROM bids WHERE lot_id = $1`, [lotId]);
     return `Licitante ${(count.rows[0]?.n ?? 0) + 1}`;
+  }
+
+  /**
+   * QA MÉDIA 5: avisa quem foi superado (notificação in-app, a mesma do sino e do toast).
+   * Uma por usuário e lote (chave única); ser superado de novo reabre a mesma notificação como não lida.
+   */
+  async notifyOutbid(client: PoolClient, userId: string, lotId: string): Promise<void> {
+    await client.query(
+      `INSERT INTO notifications (user_id, lot_id, kind) VALUES ($1, $2, 'OUTBID')
+       ON CONFLICT (user_id, lot_id, kind) DO UPDATE SET created_at = clock_timestamp(), read_at = NULL`,
+      [userId, lotId],
+    );
+    await client.query(
+      `DELETE FROM notifications n
+       WHERE n.user_id = $1
+         AND n.id NOT IN (SELECT k.id FROM notifications k WHERE k.user_id = $1 ORDER BY k.created_at DESC, k.id DESC LIMIT $2)`,
+      [userId, NOTIFICATIONS_KEPT],
+    );
   }
 
   async moveReservation(client: PoolClient, walletId: string, kind: "RESERVE" | "RELEASE", amount: bigint, reference: string): Promise<number> {

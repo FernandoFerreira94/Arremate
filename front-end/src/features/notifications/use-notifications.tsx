@@ -16,6 +16,7 @@ import {
   NOTIFICATIONS_POLL_MS,
   TOAST_MS,
   toastable,
+  toastKey,
   type NotificationsView,
 } from "./notifications-api";
 
@@ -58,13 +59,14 @@ export function NotificationToaster() {
     const items = query.data?.items;
     if (!items) return;
     const fresh = toastable(seen.current, items, pathname);
-    seen.current = new Set([...(seen.current ?? []), ...items.map((item) => item.id)]);
+    seen.current = new Set([...(seen.current ?? []), ...items.map(toastKey)]);
     for (const item of fresh) {
-      // N4 → Sonner (T2.5): mesmo conteúdo; com ação, fica até fechar.
-      toast(<span className="font-semibold">O lote abriu</span>, {
+      const outbid = item.kind === "OUTBID";
+      // N4 → Sonner (T2.5): mesmo conteúdo; com ação, fica até fechar. QA MÉDIA 5: o mesmo toast avisa quem foi superado.
+      toast(<span className="font-semibold">{outbid ? "Você foi superado" : "O lote abriu"}</span>, {
         id: item.id,
         duration: TOAST_MS,
-        classNames: { toast: "border-l-scheduled" },
+        classNames: { toast: outbid ? "border-l-danger" : "border-l-scheduled" },
         icon: (
           // eslint-disable-next-line @next/next/no-img-element -- mídia local já validada pela API
           <img src={item.imageUrl} alt="" className="size-14 shrink-0 rounded-md bg-muted object-cover" />
@@ -72,10 +74,10 @@ export function NotificationToaster() {
         description: (
           <span className="flex min-w-0 flex-col">
             <span className="truncate font-serif text-base text-foreground">{item.title}</span>
-            <span className="text-xs text-muted-foreground">Lance inicial {formatBrl(item.initialCents)}</span>
+            <span className="text-xs text-muted-foreground">{outbid ? "Seu lance foi coberto e o valor voltou para o disponível." : `Lance inicial ${formatBrl(item.initialCents)}`}</span>
             <span className="mt-2 flex gap-2">
               <Button asChild size="sm">
-                <Link href={`/lotes/${item.lotId}`} onClick={() => { markRead.mutate(item.id); toast.dismiss(item.id); }}>Dar lance</Link>
+                <Link href={`/lotes/${item.lotId}`} onClick={() => { markRead.mutate(item.id); toast.dismiss(item.id); }}>{outbid ? "Dar novo lance" : "Dar lance"}</Link>
               </Button>
               <Button asChild size="sm" variant="outline">
                 <Link href={`/lotes/${item.lotId}`} onClick={() => { markRead.mutate(item.id); toast.dismiss(item.id); }}>Ver lote</Link>

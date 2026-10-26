@@ -95,6 +95,7 @@ export class BiddingService {
             const previousWallet = wallets.get(replaced.user_id);
             if (!previousWallet) throw new Error("carteira do líder anterior ausente");
             await this.bids.moveReservation(tx, previousWallet.id, "RELEASE", BigInt(replaced.amount_cents), `release:${replaced.id}`);
+            await this.bids.notifyOutbid(tx, replaced.user_id, lotId);
           }
           const walletRevision = await this.bids.moveReservation(tx, own.id, "RESERVE", amount, `reserve:${bidId}`);
           const result: AcceptedBid = {

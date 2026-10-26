@@ -162,6 +162,7 @@ export class BiddingFixture {
   async cleanup(): Promise<void> {
     const users = `SELECT id FROM users WHERE email LIKE $1`;
     const p = [`${this.prefix}%`];
+    await this.pool.query(`DELETE FROM notifications WHERE user_id IN (${users})`, p);
     await this.pool.query(`DELETE FROM wallet_entries WHERE wallet_id IN (SELECT id FROM wallets WHERE user_id IN (${users}))`, p);
     await this.pool.query(`DELETE FROM wallets WHERE user_id IN (${users})`, p);
     await this.pool.query(`DELETE FROM idempotency_records WHERE user_id IN (${users})`, p);

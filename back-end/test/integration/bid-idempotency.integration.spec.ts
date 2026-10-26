@@ -86,4 +86,23 @@ describe("idempotência do lance", () => {
     const denied = await sellerSession.post(`/api/lots/${lotId}/bids`, { amountCents: "20000" }, { "Idempotency-Key": randomUUID() });
     expect(denied.status).toBe(403);
   });
+
+  it("QA MÉDIA 5: quem é superado ganha uma notificação OUTBID; ser superado de novo reabre a mesma", async () => {
+    const lotId = await fx.lot(seller);
+    const first = await fx.bidder(50000n);
+    const second = await fx.bidder(50000n);
+    const rows = (userId: string) =>
+      fx.pool.query<{ kind: string; read_at: Date | null }>(`SELECT kind, read_at FROM notifications WHERE user_id = $1 AND lot_id = $2`, [userId, lotId]);
+    await fx.service.placeBid(first, lotId, money(10000n), randomUUID());
+    expect((await rows(first.userId)).rows).toEqual([]);
+    await fx.service.placeBid(second, lotId, money(10500n), randomUUID());
+    expect((await rows(first.userId)).rows).toEqual([{ kind: "OUTBID", read_at: null }]);
+    expect((await rows(second.userId)).rows).toEqual([]);
+    await fx.pool.query(`UPDATE notifications SET read_at = clock_timestamp() WHERE user_id = $1`, [first.userId]);
+    await fx.service.placeBid(first, lotId, money(11000n), randomUUID());
+    await fx.service.placeBid(second, lotId, money(11500n), randomUUID());
+    expect((await rows(first.userId)).rows).toEqual([{ kind: "OUTBID", read_at: null }]);
+    expect((await rows(second.userId)).rows).toEqual([{ kind: "OUTBID", read_at: null }]);
+    await fx.assertInvariants([lotId]);
+  });
 });

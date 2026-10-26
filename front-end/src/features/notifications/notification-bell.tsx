@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { formatBrt } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
-import { badgeLabel, type NotificationItem } from "./notifications-api";
+import { badgeLabel, notificationLabel, type NotificationItem } from "./notifications-api";
 import { useMarkRead, useNotifications } from "./use-notifications";
 
 function useIsDesktop(): boolean {
@@ -97,7 +97,7 @@ function NotificationPanel({ items, unread, onNavigate }: { items: NotificationI
                 <img src={item.imageUrl} alt="" className="size-12 shrink-0 rounded-md bg-muted object-cover" />
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Lote abriu{item.readAt === null ? <span className="sr-only"> (não lida)</span> : null}
+                    {notificationLabel(item.kind)}{item.readAt === null ? <span className="sr-only"> (não lida)</span> : null}
                   </span>
                   <span className="block truncate text-sm font-medium">{item.title}</span>
                   <span className="block text-xs text-muted-foreground">{formatBrt(item.createdAt)}</span>

@@ -6,7 +6,7 @@ export type NextLotView = { lot: PublicLot | null; serverNow: string };
 export type UpcomingView = { items: PublicLot[]; serverNow: string };
 export type NotificationItem = {
   id: string;
-  kind: "LOT_OPENED" | string;
+  kind: "LOT_OPENED" | "OUTBID" | string;
   lotId: string;
   title: string;
   imageUrl: string;
@@ -56,6 +56,11 @@ export async function markAllNotificationsRead(): Promise<NotificationsView> {
   return (await apiFetch("/api/me/notifications/read-all", { method: "POST" })) as NotificationsView;
 }
 
+/** QA MÉDIA 5: rótulo do sino por tipo de notificação. */
+export function notificationLabel(kind: string): string {
+  return kind === "OUTBID" ? "Você foi superado" : "Lote abriu";
+}
+
 /** Badge do sino: some em 0, 1–9 e "9+". */
 export function badgeLabel(unread: number): string | null {
   if (unread <= 0) return null;
@@ -66,9 +71,12 @@ export function badgeLabel(unread: number): string | null {
  * Notificações que viram toast: só as novas desde a primeira leitura desta aba (offline vê só o contador)
  * e nunca a do lote cuja sala está aberta.
  */
+/** Chave do toast: o aviso OUTBID reaproveita a linha (mesmo id) e só renova createdAt a cada novo superado. */
+export const toastKey = (item: Pick<NotificationItem, "id" | "createdAt">): string => `${item.id}@${item.createdAt}`;
+
 export function toastable(previous: ReadonlySet<string> | null, items: readonly NotificationItem[], pathname: string): NotificationItem[] {
   if (previous === null) return [];
-  return items.filter((item) => !previous.has(item.id) && item.readAt === null && pathname !== `/lotes/${item.lotId}`);
+  return items.filter((item) => !previous.has(toastKey(item)) && item.readAt === null && pathname !== `/lotes/${item.lotId}`);
 }
 
 /** Contagem regressiva em partes (h, min, s), com horas acumuladas. */
