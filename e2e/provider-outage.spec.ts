@@ -31,7 +31,14 @@ test("com o The Met inacessível, vitrine, sala e imagem continuam vindo do snap
   await expect.poll(() => image.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true);
   await expect(page.getByText(/The Met|Metropolitan/).first()).toBeVisible();
 
-  await page.goto("/");
+  // A vitrine pagina todos os lotes pelo término; na suíte completa os specs anteriores empurram este para outra página.
+  let showcasePage = 1;
+  for (; showcasePage <= 50; showcasePage += 1) {
+    const res = await page.request.get(`/api/lots?page=${showcasePage}`);
+    const body = (await res.json()) as { items: { id: string }[] };
+    if (body.items.some((lot) => lot.id === lotId) || body.items.length === 0) break;
+  }
+  await page.goto(`/?page=${showcasePage}`);
   await expect(page.getByRole("link", { name: /./ }).filter({ has: page.locator(`[href="/lotes/${lotId}"]`) }).or(page.locator(`a[href="/lotes/${lotId}"]`)).first()).toBeVisible();
   expect(external).toEqual([]);
 });

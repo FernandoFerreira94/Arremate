@@ -69,7 +69,11 @@ test("tour abre no primeiro acesso logado, navega por teclado, Esc pula e não v
   await page.getByRole("button", { name: "Menu da conta" }).click();
   await page.getByRole("menuitem", { name: "Ver tour de novo" }).click();
   await expect(page.getByRole("dialog", { name: "Navegação" })).toBeVisible();
-  for (let i = 0; i < 6; i += 1) await page.getByRole("button", { name: /Próximo/ }).click();
+  // Espera cada passo aparecer antes do próximo clique (cliques seguidos pulavam a transição).
+  for (let step = 2; step <= 7; step += 1) {
+    await page.getByRole("button", { name: /Próximo/ }).click();
+    await expect(page.getByRole("dialog").getByText(`${step}/7`)).toBeVisible();
+  }
   await expect(page.getByRole("dialog", { name: "Seu perfil" })).toBeVisible();
   await page.getByRole("button", { name: "Concluir" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
