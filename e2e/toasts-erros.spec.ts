@@ -20,6 +20,17 @@ async function bidderPage(browser: Browser, viewport: { width: number; height: n
   return page;
 }
 
+/**
+ * Tela de erro sem rota de teste: o build de produção é o mesmo do usuário, e a API "devolve" um corpo
+ * inesperado para o lote (null). A sala quebra na renderização e o error.tsx assume, como num erro real.
+ */
+async function breakLotRoom(page: Page): Promise<string> {
+  const lotId = await publishLot(await apiAs("auctioneer"), { endsInMs: 30 * 60_000 });
+  await page.route(new RegExp(`/api/lots/${lotId}$`), (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
+  await page.goto(`/lotes/${lotId}`);
+  return lotId;
+}
+
 const toasts = (page: Page) => page.locator("[data-sonner-toast]");
 
 for (const { name, viewport } of VIEWPORTS) {
@@ -62,9 +73,9 @@ for (const { name, viewport } of VIEWPORTS) {
     await page.context().close();
   });
 
-  test(`tela de erro inesperado (${name})`, async ({ browser }) => {
+  test(`tela de erro inesperado no build de produção, sem rota de teste (${name})`, async ({ browser }) => {
     const page = await bidderPage(browser, viewport);
-    await page.goto("/teste-erro");
+    await breakLotRoom(page);
     await expect(page.getByRole("heading", { name: "Algo deu errado" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Voltar à vitrine", exact: true })).toBeVisible();
@@ -89,11 +100,12 @@ test("remover favorito mostra Desfazer, que refaz o favorito", async ({ browser 
   await page.context().close();
 });
 
-test("relato de erro do navegador chega à API (202) e /teste-erro relata", async ({ page }) => {
+test("relato de erro do navegador chega à API (202) quando a tela de erro aparece", async ({ page }) => {
   const reported = page.waitForRequest((request) => request.url().endsWith("/api/client-errors") && request.method() === "POST");
   await markTourSeen(page);
-  await page.goto("/teste-erro");
+  await breakLotRoom(page);
   await expect(page.getByRole("heading", { name: "Algo deu errado" })).toBeVisible();
   const response = await (await reported).response();
   expect(response?.status()).toBe(202);
+  expect((await page.request.get("/teste-erro")).status()).toBe(404);
 });
