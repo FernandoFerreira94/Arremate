@@ -59,10 +59,11 @@ test("assets sociais e robots com status e MIME corretos; robots não bloqueia l
   const og = await request.get("/opengraph-image");
   expect(og.status()).toBe(200);
   expect(og.headers()["content-type"]).toBe("image/png");
-  for (const path of ["/icon", "/apple-icon"]) {
+  // Logo L3: favicon, ícone SVG, ícone 512 e apple-touch são arquivos estáticos do app.
+  for (const [path, mime] of [["/favicon.ico", "image/x-icon"], ["/icon.svg", "image/svg+xml"], ["/icon1.png", "image/png"], ["/apple-icon.png", "image/png"]]) {
     const icon = await request.get(path);
     expect(icon.status(), path).toBe(200);
-    expect(icon.headers()["content-type"], path).toBe("image/png");
+    expect(icon.headers()["content-type"], path).toContain(mime);
   }
   const robots = await request.get("/robots.txt");
   expect(robots.status()).toBe(200);
