@@ -94,7 +94,7 @@ export function ShowcasePage() {
         </Tabs>
         <p className="text-xs text-muted-foreground">Término mais próximo primeiro · cancelados não aparecem</p>
       </div>
-      <LotSearch className="lg:hidden" />
+      <LotSearch className="xl:hidden" />
       {q ? (
         <div className="flex flex-wrap items-center gap-2 text-sm" role="status">
           <span>
