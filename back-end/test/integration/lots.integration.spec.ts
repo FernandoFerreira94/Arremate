@@ -289,4 +289,23 @@ describe("lotes", () => {
     expect((await request(app.getHttpServer()).get(`/api/lots/${randomUUID()}`)).status).toBe(404);
     expect((await request(app.getHttpServer()).get("/api/lots?page=0")).status).toBe(400);
   });
+
+  it("busca na vitrine por obra ou artista, sem tratar % e _ como curinga", async () => {
+    const owner = await login("AUCTIONEER");
+    const tag = randomBytes(4).toString("hex");
+    const byTitle = await publish(owner.session, body(work({ title: `Marinha ${tag} ao luar` })));
+    const byArtist = await publish(owner.session, body(work({ title: "Retrato", artistDisplayName: `Pintora ${tag}` })));
+    expect(byTitle.status).toBe(201);
+    expect(byArtist.status).toBe(201);
+
+    const search = (q: string) => request(app.getHttpServer()).get(`/api/lots?q=${encodeURIComponent(q)}`);
+    const found = await search(`  ${tag.toUpperCase()} `);
+    expect(found.status).toBe(200);
+    expect(found.body.items.map((item: { id: string }) => item.id).sort()).toEqual([byTitle.body.id, byArtist.body.id].sort());
+    expect(found.body.total).toBe(2);
+
+    const wildcard = await search(`${tag}%`);
+    expect(wildcard.body.total).toBe(0);
+    expect((await search("x".repeat(81))).status).toBe(400);
+  });
 });

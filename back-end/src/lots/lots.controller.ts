@@ -7,7 +7,7 @@ import { Authenticated } from "../auth/session.guard";
 import { RejectExtraDto } from "../auth/dto/login.dto";
 import { bidMessage, SUCCESS_MESSAGES, withMessage } from "../common/messages";
 import { BiddingService } from "./bidding.service";
-import { CreateLotDto, PageQuery } from "./dto/create-lot.dto";
+import { CreateLotDto, PageQuery, ShowcaseQuery } from "./dto/create-lot.dto";
 import { PlaceBidDto } from "./dto/place-bid.dto";
 import { LotEventsService } from "./lot-events.service";
 import { LotsService } from "./lots.service";
@@ -25,8 +25,8 @@ export class LotsController {
   ) {}
 
   @Get("lots")
-  showcase(@Query() query: PageQuery) {
-    return this.lots.showcase(query.page);
+  showcase(@Query() query: ShowcaseQuery) {
+    return this.lots.showcase(query.page, query.q);
   }
 
   /** D22 (H2): próximo leilão agendado, público. */
