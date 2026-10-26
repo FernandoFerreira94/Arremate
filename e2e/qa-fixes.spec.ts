@@ -76,7 +76,10 @@ test("lance superado gera aviso e toast para quem perdeu a liderança", async ({
   await deposit(second, "500000");
   const lotId = await publishLot(await apiAs("auctioneer"), { endsInMs: 30 * 60_000 });
   const page = await pageAs(browser, "bidder");
+  // O toast só sai para avisos novos depois da primeira leitura do sino; o lance antes dela viraria só contador.
+  const firstRead = page.waitForResponse((r) => r.url().includes("/api/me/notifications") && r.request().method() === "GET");
   await page.goto("/");
+  await firstRead;
   await first.post(`/api/lots/${lotId}/bids`, { amountCents: "12000" });
   await second.post(`/api/lots/${lotId}/bids`, { amountCents: "15000" });
   await expect(page.locator("[data-sonner-toast]").filter({ hasText: "Você foi superado" })).toBeVisible({ timeout: 45_000 }); // o sino consulta a cada 30 s
