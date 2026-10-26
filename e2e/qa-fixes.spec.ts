@@ -161,3 +161,22 @@ for (const [code, message] of [
     await expect(page.locator("[data-sonner-toast][data-type='error']")).toHaveCount(0);
   });
 }
+
+test("D31: leiloeiro recebe toast e sino quando um licitante dá lance no lote dele", async ({ browser }) => {
+  test.setTimeout(90_000);
+  const bidder = await apiAs("bidder");
+  await deposit(bidder, "500000");
+  const lotId = await publishLot(await apiAs("auctioneer"), { endsInMs: 30 * 60_000 });
+  const context = await browser.newContext({ storageState: authFile("auctioneer"), viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  await markTourSeen(page);
+  await page.goto("/painel/lotes");
+  await expect(page.getByRole("button", { name: /Notificações/ })).toBeVisible();
+  await bidder.post(`/api/lots/${lotId}/bids`, { amountCents: "10000" });
+  const toast = page.locator("[data-sonner-toast]").filter({ hasText: "Novo lance no seu lote" });
+  await expect(toast).toBeVisible({ timeout: 45_000 }); // o sino consulta a cada 30 s
+  await expect(toast.getByRole("link", { name: "Ver lote" })).toHaveAttribute("href", `/lotes/${lotId}`);
+  await page.getByRole("button", { name: /Notificações/ }).click();
+  await expect(page.getByText("Novo lance no seu lote").last()).toBeVisible();
+  await context.close();
+});

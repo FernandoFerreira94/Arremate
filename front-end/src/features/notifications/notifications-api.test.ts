@@ -34,5 +34,6 @@ describe("notificationLabel (QA MÉDIA 5)", () => {
   it("diferencia superado de lote aberto", () => {
     expect(notificationLabel("OUTBID")).toBe("Você foi superado");
     expect(notificationLabel("LOT_OPENED")).toBe("Lote abriu");
+    expect(notificationLabel("NEW_BID")).toBe("Novo lance no seu lote");
   });
 });

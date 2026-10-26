@@ -98,6 +98,7 @@ export class BiddingService {
             await this.bids.notifyOutbid(tx, replaced.user_id, lotId);
           }
           const walletRevision = await this.bids.moveReservation(tx, own.id, "RESERVE", amount, `reserve:${bidId}`);
+          await this.bids.notifyNewBid(tx, lot.owner_id, lotId);
           const result: AcceptedBid = {
             bidId,
             bid: { alias, amountCents: amount.toString(), sequence: accepted.sequence, acceptedAt },

@@ -8,6 +8,7 @@ export type LockedLot = {
   initial_cents: string;
   increment_cents: string;
   revision: number;
+  owner_id: string;
 };
 
 export type LeaderBid = { id: string; user_id: string; amount_cents: string };
@@ -18,7 +19,7 @@ export class BiddingRepository {
   async lockLot(client: PoolClient, lotId: string): Promise<LockedLot | null> {
     const result = await client.query<LockedLot>(
       `SELECT status::text AS status, starts_at, ends_at, initial_cents::text AS initial_cents,
-              increment_cents::text AS increment_cents, revision
+              increment_cents::text AS increment_cents, revision, owner_id
        FROM lots WHERE id = $1 FOR UPDATE`,
       [lotId],
     );
@@ -62,10 +63,19 @@ export class BiddingRepository {
    * Uma por usuário e lote (chave única); ser superado de novo reabre a mesma notificação como não lida.
    */
   async notifyOutbid(client: PoolClient, userId: string, lotId: string): Promise<void> {
+    await this.notify(client, userId, lotId, "OUTBID");
+  }
+
+  /** D31: o leiloeiro é avisado de novo lance no lote dele (mesma linha por lote, reaberta a cada lance). */
+  async notifyNewBid(client: PoolClient, ownerId: string, lotId: string): Promise<void> {
+    await this.notify(client, ownerId, lotId, "NEW_BID");
+  }
+
+  private async notify(client: PoolClient, userId: string, lotId: string, kind: "OUTBID" | "NEW_BID"): Promise<void> {
     await client.query(
-      `INSERT INTO notifications (user_id, lot_id, kind) VALUES ($1, $2, 'OUTBID')
+      `INSERT INTO notifications (user_id, lot_id, kind) VALUES ($1, $2, $3)
        ON CONFLICT (user_id, lot_id, kind) DO UPDATE SET created_at = clock_timestamp(), read_at = NULL`,
-      [userId, lotId],
+      [userId, lotId, kind],
     );
     await client.query(
       `DELETE FROM notifications n

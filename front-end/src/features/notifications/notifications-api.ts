@@ -6,7 +6,7 @@ export type NextLotView = { lot: PublicLot | null; serverNow: string };
 export type UpcomingView = { items: PublicLot[]; serverNow: string };
 export type NotificationItem = {
   id: string;
-  kind: "LOT_OPENED" | "OUTBID" | string;
+  kind: "LOT_OPENED" | "OUTBID" | "NEW_BID" | string;
   lotId: string;
   title: string;
   imageUrl: string;
@@ -56,9 +56,11 @@ export async function markAllNotificationsRead(): Promise<NotificationsView> {
   return (await apiFetch("/api/me/notifications/read-all", { method: "POST" })) as NotificationsView;
 }
 
-/** QA MÉDIA 5: rótulo do sino por tipo de notificação. */
+/** QA MÉDIA 5: rótulo do sino por tipo de notificação. D31: NEW_BID avisa o leiloeiro de lance no lote dele. */
 export function notificationLabel(kind: string): string {
-  return kind === "OUTBID" ? "Você foi superado" : "Lote abriu";
+  if (kind === "OUTBID") return "Você foi superado";
+  if (kind === "NEW_BID") return "Novo lance no seu lote";
+  return "Lote abriu";
 }
 
 /** Badge do sino: some em 0, 1–9 e "9+". */

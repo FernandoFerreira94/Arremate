@@ -30,6 +30,7 @@ import { LotsController } from "./lots/lots.controller";
 import { LotsRepository } from "./lots/lots.repository";
 import { LotsService } from "./lots/lots.service";
 import { SettlementRepository } from "./lots/settlement.repository";
+import { DemoBotRunner, demoBotConfig, type DemoBotConfig } from "./lots/demo-bot-runner";
 import { NotificationRunner } from "./lots/notification-runner";
 import { SettlementRunner } from "./lots/settlement-runner";
 import { SettlementService } from "./lots/settlement.service";
@@ -66,6 +67,8 @@ interface ApplicationOptions {
   settlementIntervalMs?: number | false;
   /** D22: intervalo da varredura agendado→aberto que gera notificações; false desliga (padrão em NODE_ENV=test). */
   notificationIntervalMs?: number | false;
+  /** D31: licitantes automáticos da demo; padrão vem do ambiente (DEMO_BOTS=1), sempre desligado em NODE_ENV=test. */
+  demoBots?: DemoBotConfig | false;
   /** D25: relator de erros (padrão: só log). */
   errorReporter?: ErrorReporter;
 }
@@ -161,6 +164,12 @@ class ApplicationModule {
           provide: WalletsService,
           useFactory: (database: DatabaseRepository, wallets: WalletsRepository) => new WalletsService(database, wallets),
           inject: [DatabaseRepository, WalletsRepository],
+        },
+        {
+          provide: DemoBotRunner,
+          useFactory: (database: DatabaseRepository, bidding: BiddingService, wallets: WalletsService, events: LotEventsService) =>
+            new DemoBotRunner(database, bidding, wallets, events, options.demoBots !== undefined ? options.demoBots : demoBotConfig()),
+          inject: [DatabaseRepository, BiddingService, WalletsService, LotEventsService],
         },
         { provide: APP_GUARD, useClass: CsrfGuard },
         { provide: APP_GUARD, useClass: SessionGuard },
