@@ -196,9 +196,14 @@ function auditKeyFromEnv(): Uint8Array | null {
   return Buffer.from(raw, "hex");
 }
 
-function defaultOrigins(): string[] {
+/**
+ * Origens aceitas pelo CSRF. Em produção, só 127.0.0.1:3300 e WEB_ORIGIN (regra de antes).
+ * QA ALTA 3: fora de produção também aceita http://localhost:3300, o mesmo front local por outro nome.
+ */
+export function defaultOrigins(env: NodeJS.ProcessEnv = process.env): string[] {
   const origins = ["http://127.0.0.1:3300"];
-  const extra = process.env.WEB_ORIGIN;
+  if (env.NODE_ENV !== "production") origins.push("http://localhost:3300");
+  const extra = env.WEB_ORIGIN;
   if (typeof extra === "string" && /^https?:\/\/[a-z0-9.-]+(?::\d+)?$/i.test(extra) && !origins.includes(extra)) origins.push(extra);
   return origins;
 }
