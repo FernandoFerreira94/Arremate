@@ -228,6 +228,16 @@ Os botões "Entrar como licitante/leiloeiro de teste" só apareciam com `NEXT_PU
 - E2E completo: 65/66 com `--workers=1`; `provider-outage` não achou o lote novo na vitrine e passou ao rodar sozinho. Os commits não tocam a vitrine. **Não verificado:** N2 e N3 vistos a olho num navegador a 390px.
 - Sem migration, sem dependência nova, sem push.
 
+## D31 — Rodada final de 26/10: testes estáveis, logo, recusas como aviso, demo do zero e licitantes automáticos — 26/10/2026
+
+- **E2E estável (`5ccb523`):** `provider-outage` falhava sempre na suíte completa porque a vitrine pagina todos os lotes pelo término e os lotes dos specs anteriores empurravam o lote novo para outra página; o teste agora acha a página em `/api/lots`. `favoritos-tour` clicava "Próximo" 6 vezes seguidas e às vezes pulava a transição; agora espera `n/7` a cada passo. Só testes mudaram.
+- **Logo L3 em tudo (`0cf1f0a`, `dbb97e2`):** footer com a variante para fundo bordô; splash de entrada, erro global e imagens OG trocaram o selo "A" pelo martelo. E2E cobre header, footer, tela de entrar e splash.
+- **Recusa por regra vira aviso (`1a2c1aa`):** a API já respondia 409 `ALREADY_LEADING`; o front tratava todo erro da API como vermelho com código para suporte e deixava o botão "Dar lance" ativo para quem liderava. Agora 4xx é aviso amarelo sem código (código só em 5xx/erro inesperado) e o botão fica desabilitado com o motivo enquanto a pessoa lidera.
+- **Licitantes automáticos:** `DemoBotRunner` (opt-in `DEMO_BOTS=1`, nunca em `NODE_ENV=test`) cobre, a cada intervalo, lotes ao vivo em que uma pessoa lidera e às vezes abre lotes sem lance. Cada lance passa pelo `BiddingService` (reserva, incremento, prorrogação, trilha de auditoria) e o saldo do robô vem do `WalletsService`; o runner só lê o banco. Nunca cobre outro robô e para no teto (inicial × `DEMO_BOT_CEILING`), para a pessoa conseguir arrematar. Contas: `licitante2..4@arremate.demo` (ou `DEMO_BOT_EMAILS`).
+- **Aviso ao leiloeiro:** todo lance aceito grava a notificação `NEW_BID` para o dono do lote (mesma tabela e regra de linha única do `OUTBID`, sem migration); sino e toast mostram "Novo lance no seu lote". Quem é coberto continua recebendo `OUTBID` (toast na sala e no site, sino).
+- **Demo do zero:** `npm run db:reset-demo --workspace back-end` zera só os dados de domínio do banco dev 5462 (mesmo molde do reset do E2E; mantém usuários, snapshots, cartões e mídia; testemunhas vão para backup) e depois `npm run db:seed --workspace back-end` recria o catálogo pelos serviços. O histórico do catálogo usa `licitante5` no lugar de `licitante1`, a conta do botão de demo, que começa sem nenhum lance.
+- Sem migration, sem dependência nova, sem push.
+
 ### D20 — provisionamento autorizado no Supabase
 
 Fernando pediu verificar o ativo, pausar e criar o banco do teste; confirmou a organização webcode.ff. Só Custelo foi listado, já INACTIVE. Criado arremate-verzel (ref hrqqppepnmzxrrxxqnsf) em sa-east-1, PostgreSQL17.11, confirmado ACTIVE_HEALTHY, custo cotado US$0/mês. Nenhuma pausa desnecessária, conexão da aplicação, migration ou seed hospedada. Aprovação de criar o projeto não autoriza migration/seed/deploy.

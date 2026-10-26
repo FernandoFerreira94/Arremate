@@ -187,7 +187,8 @@ async function main(): Promise<void> {
       const hashed = await demoPasswordHash(password);
       const ownerId = await ensureUser(pool, "leiloeiro@arremate.demo", "AUCTIONEER", hashed);
       const bidderIds: string[] = [];
-      for (const n of [1, 2, 3, 4]) bidderIds.push(await ensureUser(pool, `licitante${n}@arremate.demo`, "BIDDER", hashed));
+      // D31: o histórico do catálogo usa licitante5 no lugar de licitante1, a conta do botão de demo, que começa sem lance.
+      for (const n of [5, 2, 3, 4]) bidderIds.push(await ensureUser(pool, `licitante${n}@arremate.demo`, "BIDDER", hashed));
       const catalog = new CatalogService(new MetCatalogClient(), database, media);
       const catalogResult = await runCatalogSeed({
         pool,
