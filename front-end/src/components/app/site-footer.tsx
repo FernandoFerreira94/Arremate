@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 /**
@@ -42,9 +43,9 @@ export function SiteFooter() {
           </nav>
         </div>
         <div className="flex flex-col gap-3 border-t border-accent pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/" className="inline-flex min-h-11 items-center gap-2.5" aria-label="Arremate, voltar à vitrine">
-            <span aria-hidden className="grid size-8 place-items-center rounded-md border border-accent font-serif text-lg font-bold leading-none">A</span>
-            <span className="font-serif text-xl font-semibold">Arremate</span>
+          <Link href="/" className="inline-flex min-h-11 items-center" aria-label="Arremate, voltar à vitrine">
+            {/* Logo L3 (martelo) na variante para fundo bordô: quadrado e nome em papel. */}
+            <Image src="/brand/l3-horizontal-bordo.svg" alt="" width={135} height={32} className="h-8 w-auto" />
           </Link>
           <p className="text-xs opacity-80">Obras: domínio público (CC0) · The Metropolitan Museum of Art Open Access · valores simulados · horário de Brasília (UTC−3)</p>
         </div>
