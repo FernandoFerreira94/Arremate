@@ -17,3 +17,8 @@ export function safeReturnTo(value: string | null | undefined): string | undefin
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return undefined;
   return value;
 }
+
+/** D27: botões de conta demo aparecem a menos que a build traga NEXT_PUBLIC_DEMO_LOGIN=false (antes exigiam "true" e sumiam numa build sem a variável). */
+export function demoLoginEnabled(value: string | undefined): boolean {
+  return value?.trim().toLowerCase() !== "false";
+}

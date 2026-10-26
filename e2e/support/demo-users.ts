@@ -37,3 +37,26 @@ export async function ensureE2eUsers(): Promise<E2eUsers> {
   }
   return users;
 }
+
+/** D27: contas demo do seed (licitante1 e leiloeiro) no banco LOCAL de teste, com a senha pública de demo, para o E2E dos botões de login rápido. */
+export const DEMO_ACCOUNTS = { bidder: "licitante1@arremate.demo", auctioneer: "leiloeiro@arremate.demo" } as const;
+export async function ensureDemoAccounts(): Promise<void> {
+  const envFile = resolve(__dirname, "../../.env");
+  if (!process.env.TEST_DATABASE_URL && existsSync(envFile)) process.loadEnvFile(envFile);
+  const url = e2eDatabaseUrl(process.env.TEST_DATABASE_URL);
+  const host = new URL(url).hostname;
+  if (host !== "127.0.0.1" && host !== "localhost") throw new Error("E2E só prepara contas em banco local");
+  const passwordHash = await hash("arremate-demo-2026", { algorithm: Algorithm.Argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 });
+  const pool = new Pool({ connectionString: url, max: 1 });
+  try {
+    for (const [email, role] of [[DEMO_ACCOUNTS.bidder, "BIDDER"], [DEMO_ACCOUNTS.auctioneer, "AUCTIONEER"]] as const) {
+      await pool.query(
+        `INSERT INTO users (email, role, password_hash) VALUES ($1, $2, $3)
+         ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role`,
+        [email, role, passwordHash],
+      );
+    }
+  } finally {
+    await pool.end();
+  }
+}

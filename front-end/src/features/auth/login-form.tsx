@@ -12,13 +12,13 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/app/password-input";
 import { Label } from "@/components/ui/label";
 import { currentSession, login, type Session } from "./auth-api";
-import { afterLoginFailure, safeReturnTo, type LoginValues } from "./login-state";
+import { afterLoginFailure, demoLoginEnabled, safeReturnTo, type LoginValues } from "./login-state";
 import { GoogleButton } from "./google-button";
 import { SESSION_KEY } from "./use-session";
 import { messageOf, notifySuccess } from "@/lib/notify";
 
-/** Login rápido de teste: contas fictícias do seed com a senha pública de demo (docs/ambiente.md). Usa o login normal (mesmo limite de tentativas); ligado só por flag pública. */
-export const DEMO_LOGIN_ENABLED = process.env.NEXT_PUBLIC_DEMO_LOGIN === "true";
+/** Login rápido de teste: contas fictícias do seed com a senha pública de demo (docs/ambiente.md). Usa o login normal (mesmo limite de tentativas). D27: ligado por padrão; NEXT_PUBLIC_DEMO_LOGIN=false desliga na build. */
+export const DEMO_LOGIN_ENABLED = demoLoginEnabled(process.env.NEXT_PUBLIC_DEMO_LOGIN);
 const DEMO_PASSWORD = "arremate-demo-2026";
 const DEMO_ACCOUNTS = [
   { email: "licitante1@arremate.demo", label: "Entrar como licitante de teste", Icon: UserIcon },
