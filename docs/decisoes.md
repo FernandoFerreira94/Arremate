@@ -238,6 +238,13 @@ Os botões "Entrar como licitante/leiloeiro de teste" só apareciam com `NEXT_PU
 - **Demo do zero:** `npm run db:reset-demo --workspace back-end` zera só os dados de domínio do banco dev 5462 (mesmo molde do reset do E2E; mantém usuários, snapshots, cartões e mídia; testemunhas vão para backup) e depois `npm run db:seed --workspace back-end` recria o catálogo pelos serviços. O histórico do catálogo usa `licitante5` no lugar de `licitante1`, a conta do botão de demo, que começa sem nenhum lance.
 - Sem migration, sem dependência nova, sem push.
 
+## D32 — Feed de lances ao vivo — 26/10/2026
+
+- Cada lance de outra pessoa sobe um card no canto inferior direito: um círculo se desenha com o martelo da L3, o card entra da direita só com o nome da obra e abre como accordion com valor, apelido e "Ver lote". Some em 7 s (pausa com mouse ou foco), tem botão de fechar e aria-live educado; com movimento reduzido aparece pronto. Até 3 cards no desktop e 1 no celular, fila de 12.
+- **Fonte por polling, não SSE:** `GET /api/me/activity` (com sessão) a cada 4 s. O SSE existente é por lote e limitado a 3 conexões por IP (D26/B3); um stream global em toda página estouraria esse limite com várias abas e nos E2E. Alternativas avaliadas: SSE global com limite próprio (mais imediato, mas mexe no limite de segurança) e feed só a partir do SSE da sala (só funcionaria dentro de uma sala).
+- A API não devolve os lances da própria pessoa nem o passado (sem cursor devolve só o relógio). O front ignora o lote cuja sala está aberta, que já mostra o lance e o toast de superado.
+- Testes: unit da fila, integração do endpoint e E2E a 1440px e 390px. Commit `8236925`. Sem migration e sem dependência nova.
+
 ### D20 — provisionamento autorizado no Supabase
 
 Fernando pediu verificar o ativo, pausar e criar o banco do teste; confirmou a organização webcode.ff. Só Custelo foi listado, já INACTIVE. Criado arremate-verzel (ref hrqqppepnmzxrrxxqnsf) em sa-east-1, PostgreSQL17.11, confirmado ACTIVE_HEALTHY, custo cotado US$0/mês. Nenhuma pausa desnecessária, conexão da aplicação, migration ou seed hospedada. Aprovação de criar o projeto não autoriza migration/seed/deploy.

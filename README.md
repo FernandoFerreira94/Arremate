@@ -58,7 +58,9 @@ Pasta canônica: `C:/Users/ferna/Desktop/WebCode/Projetos/casadeleilao` (a pasta
 2. Copiar `.env.example` para `.env` e preencher as senhas locais (`DB_OWNER_PASSWORD`, `DB_APP_PASSWORD`, `DB_TEST_APP_PASSWORD`). Nunca copiar segredos para README, log ou Notion.
 3. `npm run db:up` — PostgreSQL dev em 127.0.0.1:5462 e teste em 5463, só loopback. `npm run db:stop` para só os bancos do projeto, sem remover volumes.
 4. `npm run dev:api` (API, porta 4300) e, em outro terminal, `npm run dev:web` (site em [http://127.0.0.1:3300](http://127.0.0.1:3300)).
-5. Dados de demo: `npm run db:seed --workspace back-end`. Cria as contas `leiloeiro@arremate.demo` e `licitante1@arremate.demo` a `licitante4@arremate.demo` (senha de demo definida no seed; pode ser trocada por `SEED_DEMO_PASSWORD`), o catálogo de 24 obras e 1 lote aberto. `-- --sem-catalogo` pula o catálogo; `-- --preparar-lote` cria um lote novo aberto. Só banco local; reexecutar não zera nada.
+5. Dados de demo: `npm run db:seed --workspace back-end`. Cria as contas `leiloeiro@arremate.demo` e `licitante1@arremate.demo` a `licitante5@arremate.demo` (senha de demo definida no seed; pode ser trocada por `SEED_DEMO_PASSWORD`), o catálogo de 24 obras e 1 lote aberto. O histórico do catálogo usa `licitante2` a `licitante5`; a `licitante1`, conta do botão de demo, começa sem nenhum lance (D31). `-- --sem-catalogo` pula o catálogo; `-- --preparar-lote` cria um lote novo aberto. Só banco local; reexecutar não zera nada.
+5b. Voltar a demo ao começo: `npm run db:reset-demo --workspace back-end` e depois o seed. O reset zera só os dados de domínio do banco dev 5462 (mantém usuários, snapshots do catálogo, cartões de teste e mídia) e guarda as testemunhas da auditoria em backup.
+5c. Licitantes automáticos (opcional): `DEMO_BOTS=1` no `.env` e reiniciar a API. `licitante2` a `licitante4` cobrem, a cada 15 s, lotes em que uma pessoa lidera, pelas mesmas regras da API, até um teto (inicial × 3) para a pessoa conseguir arrematar. Ajustes no `.env.example`. Desligado por padrão e sempre desligado nos testes.
 6. Saúde da API: `GET http://127.0.0.1:4300/api/health/live` e `/api/health/ready`. O mesmo health responde em `http://127.0.0.1:3300/api/health/live`, porque o site encaminha `/api`. A resposta não traz senha nem URL de banco.
 
 **Banco e segredos.** A API usa `DATABASE_URL` com o papel `auction_app`, sem DDL nem privilégio administrativo. O owner só roda bootstrap/migration, nos bancos 5462 e 5463. Não apontar a API para o owner nem aplicar migration fora do loopback. `AUDIT_HMAC_KEY` (hex, 32+ bytes), `AUDIT_WITNESS_DIR` e `MEDIA_DIR` (padrão `.data/witness` e `.data/media`) ficam fora do banco e do Git; publicar e liquidar exigem `AUDIT_HMAC_KEY`. Sessão e CSRF não usam segredo novo. `API_PROXY_TARGET` (padrão `http://127.0.0.1:4300`) e `WEB_ORIGIN` são opcionais.
@@ -71,7 +73,8 @@ Pasta canônica: `C:/Users/ferna/Desktop/WebCode/Projetos/casadeleilao` (a pasta
 2. Entrar como licitante e fazer um depósito simulado na carteira.
 3. Abrir um lote na vitrine e dar lances; em outra aba, com outro licitante, disputar o mesmo lote e ver a atualização em tempo real.
 4. Ao encerrar, conferir o comprovante e a auditoria pública do lote.
-5. Também verificável: login rápido de demo (ligado por padrão, D27); tour guiado no primeiro login; favoritos; hero do próximo leilão com “Avise-me quando abrir” e a notificação quando o lote abre; um produto por quadro na vitrine; página 404 própria.
+5. Com `DEMO_BOTS=1`: dê um lance e espere ser coberto por um licitante automático. Chegam o toast “Você foi superado”, o sino e, no canto inferior direito, o feed de lances ao vivo dos outros licitantes. Como leiloeiro, o sino e o toast avisam “Novo lance no seu lote”.
+6. Também verificável: login rápido de demo (ligado por padrão, D27); tour guiado no primeiro login; favoritos; hero do próximo leilão com “Avise-me quando abrir” e a notificação quando o lote abre; um produto por quadro na vitrine; página 404 própria.
 
 ### Roteiro de auth, carteira e histórico
 
@@ -143,10 +146,10 @@ Trato cada entrega como não pronta até as suítes abaixo passarem na mesma ár
 |---|---|---|
 | Lint (`eslint`, front e API) | Regras do projeto, hooks do React, imports | sem erro |
 | Typecheck (`tsc --noEmit`, front, API e ferramentas) | Tipos de ponta a ponta, inclusive dos testes | sem erro |
-| Unit da API (Jest) | Regras puras: lances, dinheiro em centavos, CSRF, origens, nome exibido, relato de erros | 85/85 |
-| Unit do front (Vitest) | Hooks e lógica de tela: zoom, carteira, sala do lote, sessão, notificações | 121/121 |
-| Integração da API (Jest + PostgreSQL real) | Rotas HTTP com banco: idempotência, concorrência de lances, liquidação, auditoria, mídia, auth | 129/129 (23 suítes) |
-| E2E (Playwright, `--workers=1`) | Jornadas no navegador, desktop e celular (390px), contra o build de produção | 65/66 na rodada completa; o que falhou (`provider-outage`) passou ao rodar sozinho |
+| Unit da API (Jest) | Regras puras: lances, dinheiro em centavos, CSRF, origens, nome exibido, relato de erros, licitantes automáticos | 90/90 |
+| Unit do front (Vitest) | Hooks e lógica de tela: zoom, carteira, sala do lote, sessão, notificações, recusas como aviso, feed ao vivo | 127/127 |
+| Integração da API (Jest + PostgreSQL real) | Rotas HTTP com banco: idempotência, concorrência de lances, liquidação, auditoria, mídia, auth, licitantes automáticos, feed | 133/133 (25 suítes) |
+| E2E (Playwright, `--workers=1`) | Jornadas no navegador, desktop e celular (390px), contra o build de produção | 82/82 na rodada completa |
 | Build do front (`next build`) | Compilação de produção | ok |
 
 O E2E roda com um só worker de propósito: as jornadas dividem contas e o limite de 3 streams de tempo real por IP (B3), e em paralelo os testes disputariam esses recursos.
@@ -180,6 +183,12 @@ O QA navega como um usuário, em desktop e celular, e devolve achados com print 
   - Quem estava na sala do lote não recebia o toast de lance superado. A sala dispara o toast ao vivo quando a participação passa de liderando para superado; o sino segue como antes.
   - Na Sheet de saldo a 390px, o selo "Simulado" cobria o X de fechar. O cabeçalho reserva o espaço do X só no celular.
   - A dica do zoom dizia só "até 3×". Agora cita clique até 3× e pinça até 4×, e acima de 3× mostra a escala real.
+- **Terceira rodada de 26/10 (D31, D32):**
+  - O E2E completo ficou estável. `provider-outage` falhava sempre na suíte completa porque a vitrine pagina os lotes pelo término e os lotes dos testes anteriores empurravam o lote novo para outra página; agora o teste acha a página certa. O tour clicava "Próximo" rápido demais; agora espera cada passo.
+  - A logo de martelo (L3) chegou ao footer, ao splash de entrada, à página de erro global e às imagens de compartilhamento, que ainda mostravam o selo "A". Conferi 7 telas a 1440px e 390px.
+  - "Você já lidera este lote" aparecia como erro vermelho com código para suporte. A API já respondia certo (409); o front tratava toda resposta de erro como falha do sistema e deixava o botão de lance ativo para quem liderava. Agora recusa por regra é aviso amarelo, sem código, e o botão fica desabilitado com o motivo.
+  - Na demo ninguém cobria o lance, então quem lançava ficava liderando para sempre. Criei licitantes automáticos opcionais que passam pelas mesmas regras e pela mesma trilha de auditoria, o aviso de novo lance para o leiloeiro e o feed de lances ao vivo no canto inferior direito.
+  - A demo pode voltar ao começo com a conta do botão de demo sem nenhum lance.
 - **Rodadas anteriores:** mensagens de erro e toasts (D25), zoom da obra (D28) e os ajustes das pranchas da rodada 3 (D22), cada um com seu E2E.
 
 ### Como rodar
@@ -193,6 +202,7 @@ npm test                                   # unit da API
 npm run test:unit --workspace front-end    # Vitest do front
 npm run test:integration                   # integração, precisa do PostgreSQL local
 npx playwright test --workers=1            # E2E; sobe build e portas próprios (3310/4310)
+npm run db:reset-demo --workspace back-end # zera a demo local (5462); depois rode o seed
 npx playwright test e2e/qa-fixes.spec.ts --workers=1   # só uma jornada
 npm run build --workspace front-end
 ```
