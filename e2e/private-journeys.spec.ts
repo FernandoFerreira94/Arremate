@@ -45,22 +45,15 @@ test("licitante: redireciona, preserva email, deposita uma vez, não vê painel 
   const before = await walletTotal(page);
   const amount = page.getByLabel("Valor (R$)");
   await amount.fill("0,50");
-  await page.getByRole("button", { name: "Adicionar saldo" }).click();
+  await page.getByRole("button", { name: "Simular pagamento aprovado" }).click();
   await expect(page.getByText("Entre R$ 1,00 e R$ 100.000,00 por depósito.").last()).toBeVisible();
   await expect(amount).toHaveAttribute("aria-invalid", "true");
 
   await page.getByRole("button", { name: "R$ 1.000" }).click();
   await expect(page.getByText("Valor entendido: R$ 1.000,00")).toBeVisible();
-  const submit = page.getByRole("button", { name: "Adicionar saldo" });
-  await submit.click();
-  await expect(page.getByRole("alertdialog")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("alertdialog")).toBeHidden();
-  await expect(submit).toBeFocused();
-
-  await submit.click();
-  await page.getByRole("button", { name: "Confirmar depósito" }).click();
-  await expect(page.getByText("Depósito de R$ 1.000,00 confirmado.")).toBeVisible();
+  // Auth/pagamentos (Codex): o depósito passou a ser "pagamento simulado aprovado", sem diálogo de confirmação.
+  await page.getByRole("button", { name: "Simular pagamento aprovado" }).click();
+  await expect(page.getByText("Pagamento simulado aprovado. Saldo atualizado.")).toBeVisible();
   expect((await walletTotal(page)) - before).toBe(100000n);
 
   await page.goto("/painel/lotes");

@@ -146,9 +146,8 @@ test("preço ao vivo e saldo confirmado mudam sem reiniciar montagem", async ({ 
     const before = await total.textContent();
     await countNewEntries(page);
     await page.getByRole("button", { name: "R$ 1.000", exact: true }).click();
-    await page.getByRole("button", { name: "Adicionar saldo", exact: true }).click();
-    await page.getByRole("button", { name: "Confirmar depósito", exact: true }).click();
-    await expect(page.getByText("Depósito de R$ 1.000,00 confirmado.")).toBeVisible();
+    await page.getByRole("button", { name: "Simular pagamento aprovado", exact: true }).click();
+    await expect(page.getByText("Pagamento simulado aprovado. Saldo atualizado.")).toBeVisible();
     await expect(total).not.toHaveText(before ?? "");
     await expect(page.locator(".page-entrance")).toHaveAttribute("data-new-entries", "0");
 
