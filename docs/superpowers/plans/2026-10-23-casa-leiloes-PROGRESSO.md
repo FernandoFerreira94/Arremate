@@ -162,3 +162,9 @@ Estado desta etapa: EM ANDAMENTO, sem commit. E2E bloqueado antes de iniciar pel
 - D27: botões de conta demo ligados por padrão. D28: zoom da obra com hi-res só no zoom (32/36; 4 no maior tamanho disponível).
 - D29: mídia restaurada sob demanda, carteira a 390px, CSRF no localhost, logout sem recarregar, aviso de lance superado, saldo insuficiente, depósito zero, papel nas contas demo, Avise-me na sala, abas do suporte, tela de erro sem rota de teste.
 - Verde: lint e typecheck sem erro, unit 85/85, vitest 117/117, integração 129/129 (23 suítes), E2E 64/64 com workers=1, build ok.
+
+## Segunda rodada do QA (D30, 26/10/2026)
+
+- N1+N4: sala do lote mostra um estado só quando o lance é coberto e dispara o toast de superado ao vivo (`1f894c4`). N2: selo Simulado não cobre o X a 390px (`7041ddc`). N3: dica do zoom cita 3× e 4× (`fa70cad`).
+- Verde: lint e typecheck sem erro, unit 85/85, vitest 121/121, integração 129/129, E2E 65/66 com workers=1 (`provider-outage` passou sozinho), `next build` ok dentro do E2E.
+- NÃO VERIFICADO: N2 e N3 a olho no navegador; espelho do README no Notion (D14).

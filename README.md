@@ -144,9 +144,9 @@ Trato cada entrega como não pronta até as suítes abaixo passarem na mesma ár
 | Lint (`eslint`, front e API) | Regras do projeto, hooks do React, imports | sem erro |
 | Typecheck (`tsc --noEmit`, front, API e ferramentas) | Tipos de ponta a ponta, inclusive dos testes | sem erro |
 | Unit da API (Jest) | Regras puras: lances, dinheiro em centavos, CSRF, origens, nome exibido, relato de erros | 85/85 |
-| Unit do front (Vitest) | Hooks e lógica de tela: zoom, carteira, sala do lote, sessão, notificações | 117/117 |
+| Unit do front (Vitest) | Hooks e lógica de tela: zoom, carteira, sala do lote, sessão, notificações | 121/121 |
 | Integração da API (Jest + PostgreSQL real) | Rotas HTTP com banco: idempotência, concorrência de lances, liquidação, auditoria, mídia, auth | 129/129 (23 suítes) |
-| E2E (Playwright, `--workers=1`) | Jornadas no navegador, desktop e celular (390px), contra o build de produção | 64/64 |
+| E2E (Playwright, `--workers=1`) | Jornadas no navegador, desktop e celular (390px), contra o build de produção | 65/66 na rodada completa; o que falhou (`provider-outage`) passou ao rodar sozinho |
 | Build do front (`next build`) | Compilação de produção | ok |
 
 O E2E roda com um só worker de propósito: as jornadas dividem contas e o limite de 3 streams de tempo real por IP (B3), e em paralelo os testes disputariam esses recursos.
@@ -175,6 +175,11 @@ O QA navega como um usuário, em desktop e celular, e devolve achados com print 
   - Contas demo mostram o papel no lugar de "Participante"; lote agendado tem Avise-me na sala; abas do suporte cabem no celular.
   - A tela de erro é verificada no build de produção sem rota de teste.
   - Meus arremates: verifiquei com uma conta com histórico; a aba funciona, e a lista vazia era de uma conta que nunca venceu. O texto do vazio agora diz isso.
+- **Segunda rodada de 26/10 (D30):**
+  - Quando outro licitante cobria o lance, a sala mostrava "Você foi superado" e "Lance confirmado. Você está ganhando." ao mesmo tempo. A confirmação agora guarda o valor confirmado e some assim que o tempo real traz um lance maior.
+  - Quem estava na sala do lote não recebia o toast de lance superado. A sala dispara o toast ao vivo quando a participação passa de liderando para superado; o sino segue como antes.
+  - Na Sheet de saldo a 390px, o selo "Simulado" cobria o X de fechar. O cabeçalho reserva o espaço do X só no celular.
+  - A dica do zoom dizia só "até 3×". Agora cita clique até 3× e pinça até 4×, e acima de 3× mostra a escala real.
 - **Rodadas anteriores:** mensagens de erro e toasts (D25), zoom da obra (D28) e os ajustes das pranchas da rodada 3 (D22), cada um com seu E2E.
 
 ### Como rodar

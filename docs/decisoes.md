@@ -219,6 +219,15 @@ Os botões "Entrar como licitante/leiloeiro de teste" só apareciam com `NEXT_PU
 - **Meus arremates:** verificado com `licitante1` (4 arremates, 15 participações): a aba funciona; vazia era a conta nova do QA, que nunca venceu. O texto do vazio agora explica isso.
 - Sem migration, sem dependência nova, sem push.
 
+## D30 — Segunda rodada do QA de 26/10 — 26/10/2026
+
+- **N1 (médio):** com o lance coberto, a sala mostrava "Você foi superado" e "Lance confirmado. Você está ganhando." juntos. A confirmação vivia em estado local do formulário e nada a limpava com o SSE. Agora guarda o valor confirmado e só aparece enquanto o lance atual não passar dele (`confirmationHolds` em `room-logic.ts`). Commit `1f894c4`.
+- **N4:** o `NotificationRunner` ignora o lote da sala aberta, então quem estava nela não via toast. A sala dispara o toast na virada de LEADING para OUTBID da participação, refeita pelo evento SSE (`becameOutbid`). O sino segue no polling. Mesmo commit do N1, provado pelo E2E de dois contextos.
+- **N2:** o selo "Simulado" cobria o X da Sheet de saldo a 390px. O cabeçalho do `DepositForm` reserva o espaço do X só abaixo de `lg`; o selo não mudou de lugar. E2E a 390px. Commit `7041ddc`.
+- **N3:** a dica do zoom vem de `zoomHint()` em `lib/zoom.ts`, a partir de `DESKTOP_MAX` (3, clique) e `TOUCH_MAX` (4, pinça); acima de 3× mostra a escala real. Teste de unidade. Commit `fa70cad`.
+- E2E completo: 65/66 com `--workers=1`; `provider-outage` não achou o lote novo na vitrine e passou ao rodar sozinho. Os commits não tocam a vitrine. **Não verificado:** N2 e N3 vistos a olho num navegador a 390px.
+- Sem migration, sem dependência nova, sem push.
+
 ### D20 — provisionamento autorizado no Supabase
 
 Fernando pediu verificar o ativo, pausar e criar o banco do teste; confirmou a organização webcode.ff. Só Custelo foi listado, já INACTIVE. Criado arremate-verzel (ref hrqqppepnmzxrrxxqnsf) em sa-east-1, PostgreSQL17.11, confirmado ACTIVE_HEALTHY, custo cotado US$0/mês. Nenhuma pausa desnecessária, conexão da aplicação, migration ou seed hospedada. Aprovação de criar o projeto não autoriza migration/seed/deploy.
