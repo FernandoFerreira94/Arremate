@@ -7,6 +7,8 @@ import { APP_GUARD } from "@nestjs/core";
 import { NestFactory } from "@nestjs/core";
 import type { Request, Response, NextFunction } from "express";
 import helmet from "helmet";
+import { ClientErrorsController } from "./observability/client-errors.controller";
+import { ErrorReporter, errorReporterFromEnv } from "./observability/error-reporter.service";
 import { GoogleController } from "./auth/google.controller";
 import { GoogleRepository } from "./auth/google.repository";
 import { GoogleService, googleConfig, type GoogleConfig, type GoogleFetch } from "./auth/google.service";
@@ -64,6 +66,8 @@ interface ApplicationOptions {
   settlementIntervalMs?: number | false;
   /** D22: intervalo da varredura agendado→aberto que gera notificações; false desliga (padrão em NODE_ENV=test). */
   notificationIntervalMs?: number | false;
+  /** D25: relator de erros (padrão: só log). */
+  errorReporter?: ErrorReporter;
 }
 
 @Module({})
@@ -71,7 +75,7 @@ class ApplicationModule {
   static register(options: ApplicationOptions): DynamicModule {
     return {
       module: ApplicationModule,
-      controllers: [HealthController, AuthController, GoogleController, CatalogController, LotsController, WalletsController, ReceiptsController, EventsController],
+      controllers: [HealthController, AuthController, GoogleController, CatalogController, LotsController, WalletsController, ReceiptsController, EventsController, ClientErrorsController],
       providers: [
         {
           provide: DatabaseRepository,
@@ -88,6 +92,7 @@ class ApplicationModule {
           const production = options.productionCookies ?? process.env.NODE_ENV === "production";
           return new GoogleService(repository,auth,options.googleConfig !== undefined ? options.googleConfig : googleConfig(options.allowedOrigins ?? defaultOrigins(),production),production,options.googleFetch);
         }, inject: [GoogleRepository, AuthService] },
+        { provide: ErrorReporter, useFactory: () => options.errorReporter ?? errorReporterFromEnv() },
         { provide: RateLimiter, useFactory: () => new RateLimiter(options.now ?? Date.now) },
         {
           provide: AuthService,
@@ -179,7 +184,7 @@ export async function createApplication(options: ApplicationOptions = {}): Promi
     next();
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
-  app.useGlobalFilters(new HttpErrorFilter());
+  app.useGlobalFilters(new HttpErrorFilter(app.get(ErrorReporter)));
   app.enableShutdownHooks();
   return app;
 }

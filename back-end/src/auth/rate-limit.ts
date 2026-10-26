@@ -1,5 +1,5 @@
 const WINDOW_MS = 60_000;
-const LIMITS = { login: 10, mutation: 60, catalog: 30, audit: 30 } as const;
+const LIMITS = { login: 10, mutation: 60, catalog: 30, audit: 30, clientError: 20 } as const;
 
 export type RateBucket = keyof typeof LIMITS;
 

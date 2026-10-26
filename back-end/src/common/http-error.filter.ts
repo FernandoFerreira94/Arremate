@@ -1,48 +1,15 @@
 import { Catch, HttpException, Logger } from "@nestjs/common";
 import type { ArgumentsHost, ExceptionFilter } from "@nestjs/common";
-import type { Response } from "express";
+import type { Request, Response } from "express";
+import { ErrorReporter } from "../observability/error-reporter.service";
+import { ERROR_MESSAGES as codes } from "./messages";
 
-const codes: Record<string, { status: number; message: string }> = {
-  REQUISICAO_INVALIDA: { status: 400, message: "Requisição inválida." },
-  CADASTRO_RECUSADO: { status: 400, message: "Não foi possível criar a conta. Verifique os dados ou tente entrar." },
-  GOOGLE_INDISPONIVEL: { status: 503, message: "indisponível na demo" },
-  GOOGLE_RECUSADO: { status: 400, message: "Não foi possível entrar com o Google. Tente de novo." },
-  CREDENCIAIS_INVALIDAS: { status: 401, message: "E-mail ou senha inválidos." },
-  SESSAO_NECESSARIA: { status: 401, message: "Entre na sua conta para continuar." },
-  ACESSO_NEGADO: { status: 403, message: "Você não tem permissão para esta ação." },
-  CSRF_RECUSADO: { status: 403, message: "Não foi possível confirmar esta requisição." },
-  NAO_ENCONTRADO: { status: 404, message: "Recurso não encontrado." },
-  LIMITE_EXCEDIDO: { status: 429, message: "Muitas tentativas. Aguarde um momento." },
-  BANCO_INDISPONIVEL: { status: 503, message: "Banco de dados temporariamente indisponível." },
-  IDEMPOTENCIA_INVALIDA: { status: 400, message: "Envie uma chave de idempotência válida." },
-  VALOR_INVALIDO: { status: 400, message: "Informe valores em centavos maiores que zero e dentro do limite." },
-  DATAS_INVALIDAS: { status: 400, message: "Confira as datas: o início não pode estar no passado e o fim deve vir depois do início." },
-  OBRA_NAO_ENCONTRADA: { status: 404, message: "Obra não encontrada no acervo." },
-  IDEMPOTENCIA_CONFLITO: { status: 409, message: "Esta chave já foi usada com outros dados." },
-  CAPACIDADE_EXCEDIDA: { status: 409, message: "O saldo chegou ao limite técnico da carteira." },
-  LOTE_NAO_CANCELAVEL: { status: 409, message: "Este lote não pode mais ser cancelado." },
-  LOTE_COM_LANCES: { status: 409, message: "Lotes com lances não podem ser cancelados." },
-  LICENCA_RECUSADA: { status: 422, message: "Esta obra não está em domínio público." },
-  IMAGEM_INVALIDA: { status: 422, message: "A imagem da obra não pôde ser validada." },
-  ORIGEM_RECUSADA: { status: 502, message: "O acervo indicou uma origem não permitida." },
-  PROVEDOR_RESPOSTA_INVALIDA: { status: 502, message: "O acervo respondeu de forma inesperada." },
-  PROVEDOR_INDISPONIVEL: { status: 503, message: "O acervo do museu está indisponível. Tente novamente em instantes." },
-  AUDITORIA_INDISPONIVEL: { status: 503, message: "Auditoria indisponível; publicação suspensa." },
-  BID_BELOW_MINIMUM: { status: 409, message: "O lance precisa ser igual ou maior que o mínimo atual." },
-  INSUFFICIENT_FUNDS: { status: 409, message: "Saldo disponível insuficiente para reservar este lance." },
-  ALREADY_LEADING: { status: 409, message: "Você já lidera este lote; aguarde ser superado." },
-  LOT_NOT_STARTED: { status: 409, message: "Este lote ainda não abriu para lances." },
-  LOT_ENDED: { status: 409, message: "Este lote já encerrou." },
-  LOT_CANCELLED: { status: 409, message: "Este lote foi cancelado." },
-  LOTE_BLOQUEADO: { status: 409, message: "Lote bloqueado: a auditoria não confere." },
-  CONFIRMATION_PENDING: { status: 503, message: "Confirmação pendente. Repita com a mesma chave para saber o resultado." },
-  CORPO_GRANDE_DEMAIS: { status: 413, message: "O conteúdo enviado é grande demais." },
-  ERRO_INTERNO: { status: 500, message: "Não foi possível concluir a operação." },
-};
 
 @Catch()
 export class HttpErrorFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpErrorFilter.name);
+
+  constructor(private readonly reporter: ErrorReporter | null = null) {}
 
   catch(error: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
@@ -50,7 +17,12 @@ export class HttpErrorFilter implements ExceptionFilter {
     const safe = this.safeBody(error, statusCode);
     const header = response.getHeader("x-request-id");
     const requestId = typeof header === "string" ? header : undefined;
-    if (statusCode >= 500 && statusCode !== 503) this.logger.error("Falha interna na requisição.", requestId);
+    if (statusCode >= 500 && statusCode !== 503) {
+      this.logger.error("Falha interna na requisição.", requestId);
+      const http = host.switchToHttp();
+      const request = typeof http.getRequest === "function" ? http.getRequest<Request | undefined>() : undefined;
+      this.reporter?.capture(error, { source: "api", requestId, method: request?.method, path: request?.originalUrl ?? request?.url, statusCode });
+    }
     response.status(statusCode).json({ statusCode, ...safe, requestId });
   }
 

@@ -23,9 +23,15 @@ export class CsrfGuard implements CanActivate {
       }
     }
     if (request.method === "GET" || request.method === "HEAD" || request.method === "OPTIONS") return true;
+    // A6: o relato de erro do navegador confere Origin no próprio controlador (sendBeacon não manda X-CSRF-Token).
+    if (isClientErrorReport(request)) return true;
     this.auth.assertCsrf(request);
     return true;
   }
+}
+
+export function isClientErrorReport(request: Request): boolean {
+  return request.method === "POST" && ((request.originalUrl || request.url).split("?")[0] ?? "") === "/api/client-errors";
 }
 
 export function isLogin(request: Request): boolean {

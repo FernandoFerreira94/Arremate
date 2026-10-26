@@ -17,6 +17,10 @@ export class AuthService {
     private readonly productionCookies: boolean,
   ) {}
 
+  isAllowedOrigin(origin: string): boolean {
+    return this.allowedOrigins.includes(origin);
+  }
+
   issueCsrf(request: Request, response: Response): { csrfToken: string } {
     const sessionToken = this.sessionToken(request);
     if (sessionToken) return { csrfToken: csrfTokenForSession(sessionToken) };
