@@ -2,55 +2,57 @@
 
 import { ArtworkImage } from "@/components/app/artwork-image";
 import Link from "next/link";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useId, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Suspense, useState, useSyncExternalStore } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2Icon, ChevronRightIcon, InfoIcon, LockIcon, PlusIcon, WalletIcon } from "lucide-react";
-import { MoneyInput } from "@/components/app/money-input";
 import { EmptyState, ErrorState, LoadingRows } from "@/components/app/page-states";
 import { PageShell } from "@/components/app/page-shell";
 import { Alert } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ApiError } from "@/lib/api-error";
-import { createIdempotentAction } from "@/lib/idempotent-action";
-import { formatBrl, parseBrlInput } from "@/lib/money";
+import { formatBrl } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { listParticipations } from "../awards/awards-api";
-import { deposit, getWallet, type WalletView } from "./wallet-api";
+import { getWallet, type WalletView } from "./wallet-api";
 
-const MIN_DEPOSIT = BigInt(100);
-const MAX_DEPOSIT = BigInt(10000000);
-const SHORTCUTS = [{ label: "R$ 1.000", value: "1.000" }, { label: "R$ 5.000", value: "5.000" }, { label: "R$ 10.000", value: "10.000" }];
+import { DepositForm } from "./deposit-form";
+import { WalletLedger } from "./wallet-ledger";
 
-export function validateDeposit(text: string): { ok: true; cents: string } | { ok: false; message: string } {
-  const parsed = parseBrlInput(text);
-  if (!parsed.ok) return parsed;
-  const cents = BigInt(parsed.cents);
-  if (cents < MIN_DEPOSIT || cents > MAX_DEPOSIT) return { ok: false, message: "Entre R$ 1,00 e R$ 100.000,00 por depósito." };
-  return parsed;
-}
+export { validateDeposit } from "./deposit-rules";
 
 export function WalletPage() {
+  return <Suspense fallback={<LoadingRows label="Carregando carteira" />}><WalletContent /></Suspense>;
+}
+
+function subscribeMobile(onChange: () => void): () => void {
+  const media = window.matchMedia("(max-width: 1023px)");
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
+
+function WalletContent() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const method = params.get("aba") === "cartao" ? "CARD" : "PIX";
+  const mobile = useSyncExternalStore(subscribeMobile, () => window.matchMedia("(max-width: 1023px)").matches, () => false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  const depositRequested = params.get("aba") === "pix" || params.get("aba") === "cartao";
+  const sheetOpen = mobile && (mobileOpen || (depositRequested && dismissed !== params.toString()));
+  function changeSheet(open: boolean) { setMobileOpen(open); setDismissed(open ? null : params.toString()); }
+  const setMethod = (next: "PIX" | "CARD") => router.replace(`/carteira?aba=${next === "CARD" ? "cartao" : "pix"}`, { scroll: false });
   const client = useQueryClient();
   const wallet = useQuery({ queryKey: ["wallet"], queryFn: getWallet });
   const participations = useQuery({ queryKey: ["me", "participations", 1], queryFn: () => listParticipations(1) });
   const leading = (participations.data?.items ?? []).filter((row) => row.outcome === "LEADING");
 
   return (
-    <PageShell title="Minha carteira" description="Saldo simulado da demonstração. Sem Pix, cartão ou dados bancários.">
+    <PageShell title="Minha carteira" description="Saldo simulado · pagamentos por Pix ou cartão de teste, sem cobrança real.">
+      {params.get("conta") === "criada" ? <Alert variant="success" className="mb-6"><CheckCircle2Icon /><p role="status">Conta criada. Adicione saldo simulado para dar lances.</p></Alert> : null}
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-8">
           {wallet.isPending ? (
@@ -60,6 +62,7 @@ export function WalletPage() {
           ) : (
             <Balances wallet={wallet.data} />
           )}
+          <WalletLedger />
           <Alert variant="info">
             <InfoIcon />
             <div>
@@ -115,20 +118,20 @@ export function WalletPage() {
         <div className="hidden lg:col-span-4 lg:block">
           <Card className="sticky top-24">
             <CardContent>
-              <DepositForm onDone={(view) => client.setQueryData(["wallet"], view)} />
+              <DepositForm method={method} onMethod={setMethod} onDone={(view) => client.setQueryData(["wallet"], view)} />
             </CardContent>
           </Card>
         </div>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-10 border-t bg-card p-4 lg:hidden">
-        <Sheet>
+        <Sheet open={sheetOpen} onOpenChange={changeSheet}>
           <SheetTrigger asChild>
             <Button size="lg" className="w-full"><PlusIcon /> Adicionar saldo</Button>
           </SheetTrigger>
-          <SheetContent side="bottom">
+          <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto lg:hidden">
             <SheetTitle className="sr-only">Adicionar saldo</SheetTitle>
             <SheetDescription className="sr-only">Depósito simulado</SheetDescription>
-            <DepositForm onDone={(view) => client.setQueryData(["wallet"], view)} />
+            <DepositForm method={method} onMethod={setMethod} onDone={(view) => client.setQueryData(["wallet"], view)} />
           </SheetContent>
         </Sheet>
       </div>
@@ -157,95 +160,3 @@ function Balances({ wallet }: { wallet: WalletView }) {
   );
 }
 
-function DepositForm({ onDone }: { onDone: (view: WalletView) => void }) {
-  const amountId = useId();
-  const submitRef = useRef<HTMLButtonElement>(null);
-  const client = useQueryClient();
-  const [text, setText] = useState("");
-  const [fieldError, setFieldError] = useState<string | undefined>();
-  const [confirming, setConfirming] = useState<string | null>(null);
-  const [result, setResult] = useState<{ kind: "success" | "error" | "unknown"; message: string } | null>(null);
-  const action = useMemo(() => createIdempotentAction((cents, key) => deposit(cents, key)), []);
-  const mutation = useMutation({
-    mutationFn: (cents: string) => action.run(cents),
-    onSuccess: (view, cents) => {
-      onDone(view);
-      setResult({ kind: "success", message: `Depósito de ${formatBrl(cents)} confirmado.` });
-      setText("");
-    },
-    onError: (error) => {
-      if (error instanceof ApiError && (error.statusCode === 0 || error.statusCode >= 500)) {
-        setResult({ kind: "unknown", message: "Não confirmamos o depósito. Tente de novo: o mesmo pedido não é creditado duas vezes." });
-      } else {
-        setResult({ kind: "error", message: error instanceof ApiError ? error.message : "Não foi possível depositar." });
-      }
-      void client.invalidateQueries({ queryKey: ["wallet"] });
-    },
-  });
-
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const checked = validateDeposit(text);
-    if (!checked.ok) {
-      setFieldError(checked.message);
-      return;
-    }
-    setFieldError(undefined);
-    setResult(null);
-    setConfirming(checked.cents);
-  }
-
-  return (
-    <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="font-serif text-lg font-semibold">Adicionar saldo</h2>
-        <Badge variant="warning">Simulado</Badge>
-      </div>
-      <CardDescription>Dinheiro fictício para a demonstração. Sem Pix, cartão e dados bancários.</CardDescription>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor={amountId}>Valor (R$)</Label>
-        <MoneyInput id={amountId} value={text} onChange={setText} error={fieldError} hint="Entre R$ 1,00 e R$ 100.000,00 por depósito" disabled={mutation.isPending} />
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {SHORTCUTS.map((shortcut) => (
-          <Button key={shortcut.value} type="button" variant="outline" size="sm" onClick={() => setText(shortcut.value)} disabled={mutation.isPending}>
-            {shortcut.label}
-          </Button>
-        ))}
-      </div>
-      <Button ref={submitRef} type="submit" size="lg" disabled={mutation.isPending}>
-        <PlusIcon /> {mutation.isPending ? "Depositando…" : "Adicionar saldo"}
-      </Button>
-      {result ? (
-        <Alert variant={result.kind === "success" ? "success" : result.kind === "unknown" ? "warning" : "destructive"}>
-          {result.kind === "success" ? <CheckCircle2Icon /> : <InfoIcon />}
-          <p>{result.message}</p>
-        </Alert>
-      ) : null}
-      <AlertDialog open={confirming !== null} onOpenChange={(open) => !open && setConfirming(null)}>
-        <AlertDialogContent
-          onCloseAutoFocus={(event) => {
-            event.preventDefault();
-            submitRef.current?.focus();
-          }}
-        >
-          <AlertDialogTitle>Confirmar depósito simulado</AlertDialogTitle>
-          <AlertDialogDescription>
-            Adicionar {confirming ? formatBrl(confirming) : ""} ao seu saldo. É dinheiro fictício, só para a demonstração.
-          </AlertDialogDescription>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (confirming) mutation.mutate(confirming);
-                setConfirming(null);
-              }}
-            >
-              Confirmar depósito
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </form>
-  );
-}

@@ -22,7 +22,7 @@ export async function apiFetch(path: string, init: RequestInit & { timeoutMs?: n
       cache: "no-store",
       signal: AbortSignal.timeout(init.timeoutMs ?? 8000),
     });
-    if (path.endsWith("/auth/login") || path.endsWith("/auth/logout")) clearCsrfMemory();
+    if (path.endsWith("/auth/login") || path.endsWith("/auth/logout") || path.endsWith("/auth/register")) clearCsrfMemory();
     if (response.status === 204) return null;
     const text = await response.text();
     const parsed = text.length > 0 ? parseJson(text) : null;

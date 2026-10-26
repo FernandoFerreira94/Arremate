@@ -3,9 +3,12 @@
 import { ArtworkImage } from "@/components/app/artwork-image";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2Icon, LinkIcon } from "lucide-react";
 import { EmptyState, ErrorState, LoadingRows } from "@/components/app/page-states";
+import { LotStateBadge } from "@/components/app/lot-state-badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageShell } from "@/components/app/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatBrt } from "@/lib/datetime";
 import { formatBrl } from "@/lib/money";
 import { listAwards, listParticipations, type Award, type Participation } from "./awards-api";
-import { outcomeLabel, splitParticipations, type Outcome } from "./participations";
+import { outcomeLabel, type Outcome } from "./participations";
 
 const OUTCOME_VARIANT: Record<Outcome, "success" | "danger" | "warning" | "neutral" | "ended"> = {
   LEADING: "success",
@@ -26,40 +29,28 @@ const OUTCOME_VARIANT: Record<Outcome, "success" | "danger" | "warning" | "neutr
 };
 
 export function MyAwardsPage() {
-  const awards = useQuery({ queryKey: ["me", "awards", 1], queryFn: () => listAwards(1) });
-  const participations = useQuery({ queryKey: ["me", "participations", 1], queryFn: () => listParticipations(1) });
+  return <Suspense fallback={<LoadingRows label="Carregando arremates" />}><AwardsContent /></Suspense>;
+}
 
+function AwardsContent() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const tab = params.get("aba") === "historico" ? "historico" : params.get("aba") === "participacoes" ? "participacoes" : "arremates";
+  const page = Math.max(1, Math.min(100000, Number.parseInt(params.get("page") ?? "1", 10) || 1));
+  const awards = useQuery({ queryKey: ["me", "awards", page], queryFn: () => listAwards(page), enabled: tab === "arremates" });
+  const participations = useQuery({ queryKey: ["me", "participations", page], queryFn: () => listParticipations(page), enabled: tab !== "arremates" });
+  function navigate(next: string, nextPage = 1) { router.replace(`/meus-arremates?aba=${next}&page=${nextPage}`, { scroll: false }); }
+  const active = tab === "arremates" ? awards : participations;
+  const pages = Math.max(1, Math.ceil((active.data?.total ?? 0) / 8));
   return (
     <PageShell title="Meus arremates" description="Seus arremates com comprovante e as disputas em que você deu lance.">
       <div className="flex flex-col gap-6">
+        <Tabs value={tab} onValueChange={(value) => navigate(value)}><TabsList aria-label="Meus leilões"><TabsTrigger value="arremates">Arremates</TabsTrigger><TabsTrigger value="participacoes">Participações</TabsTrigger><TabsTrigger value="historico">Histórico</TabsTrigger></TabsList></Tabs>
         <Card>
-          <CardHeader><CardTitle>Arrematados</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tab === "arremates" ? "Arrematados" : tab === "historico" ? "Histórico" : "Participações"}</CardTitle></CardHeader>
           <CardContent>
-            {awards.isPending ? (
-              <LoadingRows label="Carregando arremates" rows={2} />
-            ) : awards.isError ? (
-              <ErrorState message="Não foi possível carregar seus arremates." onRetry={() => void awards.refetch()} />
-            ) : awards.data.items.length === 0 ? (
-              <EmptyState title="Nenhum arremate ainda" description="Quando você vencer um lote e a liquidação terminar, o comprovante aparece aqui." action={<Button asChild variant="outline"><Link href="/">Ver lotes ao vivo</Link></Button>} />
-            ) : (
-              <ul className="grid gap-4 md:grid-cols-2">
-                {awards.data.items.map((award) => <AwardCard key={award.lotId} award={award} />)}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle>Participações</CardTitle></CardHeader>
-          <CardContent>
-            {participations.isPending ? (
-              <LoadingRows label="Carregando participações" />
-            ) : participations.isError ? (
-              <ErrorState message="Não foi possível carregar suas participações." onRetry={() => void participations.refetch()} />
-            ) : participations.data.items.length === 0 ? (
-              <EmptyState title="Você ainda não deu lances" description="Escolha um lote ao vivo na vitrine para participar." />
-            ) : (
-              <ParticipationsTable rows={participations.data.items} />
-            )}
+            {active.isPending ? <LoadingRows label="Carregando leilões" rows={3} /> : active.isError ? <ErrorState message="Não foi possível carregar seus leilões." onRetry={() => void active.refetch()} /> : active.data.items.length === 0 ? <EmptyState title={tab === "arremates" ? "Nenhum arremate ainda" : "Você ainda não participou de leilões"} description="Os lotes em que você der lance aparecem aqui." action={<Button asChild variant="outline"><Link href="/">Ver vitrine</Link></Button>} /> : tab === "arremates" && awards.data ? <ul className="grid gap-4 md:grid-cols-2">{awards.data.items.map((award) => <AwardCard key={award.lotId} award={award} />)}</ul> : <ParticipationsTable rows={participations.data?.items ?? []} />}
+            {active.data && active.data.total > 8 ? <div className="mt-4 flex items-center justify-between gap-3 text-sm"><span>Página {page} de {pages}</span><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => navigate(tab, page - 1)}>Anterior</Button><Button variant="outline" size="sm" disabled={page >= pages} onClick={() => navigate(tab, page + 1)}>Próxima</Button></div></div> : null}
           </CardContent>
         </Card>
       </div>
@@ -97,13 +88,13 @@ function AwardCard({ award }: { award: Award }) {
 }
 
 function ParticipationsTable({ rows }: { rows: Participation[] }) {
-  const { open, finished } = splitParticipations(rows);
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Lote</TableHead>
-          <TableHead>Situação</TableHead>
+          <TableHead>Estado</TableHead>
+          <TableHead>Resultado</TableHead>
           <TableHead className="text-right">Seu maior lance</TableHead>
           <TableHead className="text-right">Atual / final</TableHead>
           <TableHead>Término</TableHead>
@@ -111,19 +102,20 @@ function ParticipationsTable({ rows }: { rows: Participation[] }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {[...open, ...finished].map((row) => (
+        {rows.map((row) => (
           <TableRow key={row.lotId}>
-            <TableCell className="font-medium">{row.title}</TableCell>
+            <TableCell className="font-medium"><div className="flex items-center gap-3"><ArtworkImage src={row.imageUrl} alt="" width={40} height={40} sizes="40px" className="size-10 rounded-sm object-contain" /><span>{row.title}</span></div></TableCell>
+            <TableCell><LotStateBadge state={row.state} /></TableCell>
             <TableCell><Badge variant={OUTCOME_VARIANT[row.outcome]}>{outcomeLabel(row.outcome)}</Badge></TableCell>
-            <TableCell className="text-right">{formatBrl(row.myTopCents)}</TableCell>
+            <TableCell className="text-right">{formatBrl(row.myTopCents)}{row.myBids?.length ? <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer">Seus lances ({row.myBids.length})</summary><ul className="flex flex-col gap-1 pt-2">{row.myBids.map((bid, index) => <li key={`${bid.acceptedAt}-${index}`}>{formatBrl(bid.amountCents)} · {formatBrt(bid.acceptedAt)}</li>)}</ul></details> : null}</TableCell>
             <TableCell className="text-right">{row.currentCents ? formatBrl(row.currentCents) : "—"}</TableCell>
             <TableCell>{formatBrt(row.endsAt)}</TableCell>
             <TableCell className="text-right">
               {row.outcome === "WON" && row.receiptToken ? (
                 <Link href={`/comprovantes/${row.receiptToken}`} className="inline-flex min-h-11 items-center text-sm font-medium">Comprovante</Link>
-              ) : row.outcome === "LEADING" || row.outcome === "OUTBID" ? (
+              ) : (
                 <Link href={`/lotes/${row.lotId}`} className="inline-flex min-h-11 items-center text-sm font-medium">Abrir sala</Link>
-              ) : null}
+              )}
             </TableCell>
           </TableRow>
         ))}

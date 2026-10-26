@@ -11,8 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/app/password-input";
 import { Label } from "@/components/ui/label";
-import { login } from "./auth-api";
+import { currentSession, login, type Session } from "./auth-api";
 import { afterLoginFailure, safeReturnTo, type LoginValues } from "./login-state";
+import { GoogleButton } from "./google-button";
 import { SESSION_KEY } from "./use-session";
 
 /** Login rápido de teste: contas fictícias do seed com a senha pública de demo (docs/ambiente.md). Usa o login normal (mesmo limite de tentativas); ligado só por flag pública. */
@@ -50,8 +51,11 @@ export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormPr
     setSending(true);
     setError(null);
     let session: Awaited<ReturnType<typeof login>>;
+    let current: Session | null;
     try {
       session = await login({ email: creds.email.trim(), password: creds.password, returnTo: variant === "sheet" ? undefined : safeReturnTo(returnTo ?? params.get("returnTo")) });
+      current = await currentSession();
+      if (!current) throw new Error("Sessão não encontrada");
     } catch (failure) {
       const next = afterLoginFailure(creds, failure);
       if (!demo) setValues(next.values);
@@ -61,7 +65,7 @@ export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormPr
     }
     // Na Sheet a página não navega: a query da sessão fica no cache (é atualizada abaixo) para o header ser notificado.
     client.removeQueries({ predicate: (query) => query.queryKey[0] !== "public" && (variant === "page" || query.queryKey[0] !== SESSION_KEY[0]) });
-    client.setQueryData(SESSION_KEY, { role: session.role });
+    client.setQueryData(SESSION_KEY, current);
     if (onSuccess) {
       setSending(false);
       return onSuccess();
@@ -77,7 +81,8 @@ export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormPr
                 <p id="login-error">{error}</p>
               </Alert>
             ) : null}
-            {/* TODO(integração Codex): botão "Continuar com Google" + divisor "ou com e-mail" (R1 / A1). */}
+            <GoogleButton returnTo={safeReturnTo(returnTo ?? params.get("returnTo"))} disabled={sending} />
+            {params.get("google") === "erro" ? <Alert variant="destructive">Não foi possível entrar com o Google. Tente de novo.</Alert> : null}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={`${variant}-email`}>Email</Label>
               <Input
@@ -86,6 +91,7 @@ export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormPr
                 autoComplete="username"
                 placeholder="voce@email.com"
                 required
+                disabled={sending}
                 value={values.email}
                 onChange={(event) => setValues({ ...values, email: event.target.value })}
                 aria-describedby={error ? "login-error" : undefined}
@@ -98,6 +104,7 @@ export function LoginForm({ variant = "page", onSuccess, returnTo }: LoginFormPr
                 autoComplete="current-password"
                 placeholder="Sua senha"
                 required
+                disabled={sending}
                 value={values.password}
                 onChange={(event) => setValues({ ...values, password: event.target.value })}
                 aria-describedby={error ? "login-error" : undefined}

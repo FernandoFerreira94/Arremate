@@ -25,6 +25,8 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
     signal: request.signal,
   });
   const headers = new Headers();
+  const location = upstream.headers.get("location");
+  if (location) headers.set("location", location);
   const contentType = upstream.headers.get("content-type");
   if (contentType) headers.set("content-type", contentType);
   headers.set("cache-control", upstream.headers.get("cache-control") ?? "no-store");

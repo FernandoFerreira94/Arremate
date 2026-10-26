@@ -7,17 +7,13 @@ import { ErrorState, LoadingRows } from "@/components/app/page-states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSession } from "@/features/auth/use-session";
+import { GoogleButton } from "@/features/auth/google-button";
 import { useAuthSheet } from "@/features/auth/auth-sheet";
 import { getWallet } from "@/features/wallet/wallet-api";
 import { formatBrl } from "@/lib/money";
 
 const ROLE_LABEL = { AUCTIONEER: "Leiloeiro", BIDDER: "Licitante" } as const;
 
-/**
- * R8: Perfil SÓ LEITURA a partir do que a sessão expõe hoje (papel).
- * TODO(integração Codex): nome (editável), e-mail, conta Google vinculada e cartões salvos, quando o User ganhar
- * esses campos e a API os expuser. Até lá não há edição nem botão sem capacidade.
- */
 export function ProfilePage() {
   const session = useSession();
   const auth = useAuthSheet();
@@ -44,10 +40,10 @@ export function ProfilePage() {
           <CardHeader><CardTitle className="flex items-center gap-2"><UserIcon className="size-5 text-primary" aria-hidden /> Dados da conta</CardTitle></CardHeader>
           <CardContent>
             <dl className="grid grid-cols-[minmax(0,10rem)_1fr] gap-y-2 text-sm">
+              <dt className="text-muted-foreground">Nome</dt><dd>{session.data.name}</dd>
               <dt className="text-muted-foreground">Papel</dt><dd>{ROLE_LABEL[role]}</dd>
               <dt className="text-muted-foreground">Tipo de conta</dt><dd>Conta de demonstração</dd>
             </dl>
-            <p className="mt-4 text-xs text-muted-foreground">Nome e e-mail aparecem aqui quando o cadastro público estiver ativo.</p>
           </CardContent>
         </Card>
         <Card>
@@ -55,6 +51,7 @@ export function ProfilePage() {
           <CardContent className="flex flex-col gap-2 text-sm">
             <p>Senha protegida com argon2 e sessão em cookie httpOnly.</p>
             <Button variant="outline" size="sm" className="self-start" onClick={() => auth.open("redefinir")}>Redefinir senha (simulado)</Button>
+            <GoogleButton returnTo="/perfil" linking />
           </CardContent>
         </Card>
       </div>
@@ -62,7 +59,7 @@ export function ProfilePage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <SummaryCard icon={WalletIcon} label="Disponível na carteira" value={wallet.data ? formatBrl(wallet.data.availableCents) : wallet.isError ? "Indisponível" : "…"} href="/carteira" cta="Abrir carteira" />
           <SummaryCard icon={GavelIcon} label="Lances e arremates" value="Ver histórico" href="/meus-arremates" cta="Meus arremates" />
-          <SummaryCard icon={CreditCardIcon} label="Cartões" value="Cartão de teste" href="/carteira#cartoes" cta="Ir para a carteira" />
+          <SummaryCard icon={CreditCardIcon} label="Cartões" value="Cartão de teste" href="/carteira?aba=cartao" cta="Ir para a carteira" />
         </div>
       ) : (
         <SummaryCard icon={GavelIcon} label="Lotes" value="Publicados por você" href="/painel/lotes" cta="Meus lotes" />

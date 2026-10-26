@@ -7,6 +7,8 @@ export type Participation = {
   title: string;
   imageUrl: string;
   endsAt: string;
+  state: "LIVE" | "ENDED" | "CANCELLED";
+  myBids: { amountCents: string; acceptedAt: string }[];
   myTopCents: string;
   currentCents: string | null;
   outcome: Outcome;

@@ -1,12 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon, CircleCheckIcon, XIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useSession } from "../auth/use-session";
 import { cutoutFor, stepsFor, tourKey, type TourStep } from "./tour-steps";
@@ -14,11 +12,6 @@ import { cutoutFor, stepsFor, tourKey, type TourStep } from "./tour-steps";
 type TourContextValue = { start: () => void };
 const TourContext = createContext<TourContextValue>({ start: () => undefined });
 export const useTour = () => useContext(TourContext);
-
-/** TODO(integração com a sessão): /api/me/id existe só para a chave local do tour; dobrar em /auth/me. */
-async function getMyId(): Promise<{ userId: string }> {
-  return (await apiFetch("/api/me/id")) as { userId: string };
-}
 
 function visibleTarget(step: TourStep): HTMLElement | null {
   for (const name of step.targets) {
@@ -38,8 +31,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const role = session.data?.role ?? null;
   const pathname = usePathname();
   const router = useRouter();
-  const me = useQuery({ queryKey: ["me-id"], queryFn: getMyId, enabled: Boolean(role), staleTime: Infinity });
-  const userId = role ? me.data?.userId : undefined;
+  const userId = session.data?.userId;
   const [steps, setSteps] = useState<TourStep[] | null>(null);
   const [wanted, setWanted] = useState(false);
   const autoChecked = useRef<string | null>(null);

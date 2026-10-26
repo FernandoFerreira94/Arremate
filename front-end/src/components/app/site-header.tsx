@@ -80,9 +80,8 @@ export function navFor(role: Role | null): NavItem[] {
     return [
       { href: "/perfil", label: "Perfil", icon: UserIcon },
       { href: "/carteira", label: "Carteira", icon: WalletIcon },
-      // TODO(integração Codex): apontar para /carteira?aba=pix e /carteira?aba=cartao quando as abas existirem.
-      { href: "/carteira#depositar", label: "Creditar saldo", icon: PlusCircleIcon },
-      { href: "/carteira#cartoes", label: "Cartões", icon: CreditCardIcon },
+      { href: "/carteira?aba=pix", label: "Creditar saldo", icon: PlusCircleIcon },
+      { href: "/carteira?aba=cartao", label: "Cartões", icon: CreditCardIcon },
       { href: "/meus-arremates", label: "Meus lances e arremates", icon: GavelIcon },
       { href: "/favoritos", label: "Meus favoritos", icon: HeartIcon },
     ];
@@ -119,17 +118,17 @@ export function SiteHeader() {
       </Button>
     );
 
-  // TODO(integração Codex): mostrar o nome curto ("Ana R.") quando o campo de nome existir no User.
+  const accountName = session.data?.name || (role ? ROLE_LABEL[role] : "");
   const profile = role ? (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" aria-label="Menu da conta" data-tour="profile">
-          <span className="inline-flex size-7 items-center justify-center rounded-full bg-muted font-serif text-sm" aria-hidden>{ROLE_LABEL[role][0]}</span>
-          {ROLE_LABEL[role]}
+          <span className="inline-flex size-7 items-center justify-center rounded-full bg-muted font-serif text-sm" aria-hidden>{accountName[0]}</span>
+          <span className="max-w-32 truncate">{accountName}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuLabel>{ROLE_LABEL[role]}</DropdownMenuLabel>
+        <DropdownMenuLabel>{accountName}</DropdownMenuLabel>
         {accountItems.map((item) => (
           <DropdownMenuItem key={item.href} asChild>
             <Link href={item.href}><item.icon /> {item.label}</Link>
@@ -221,7 +220,7 @@ export function SiteHeader() {
                 {SITE_ITEMS.map(mobileLink)}
                 {accountItems.length ? (
                   <>
-                    <p className="px-3 pt-3 text-xs uppercase tracking-wide text-muted-foreground">Minha conta · {role ? ROLE_LABEL[role] : ""}</p>
+                    <p className="px-3 pt-3 text-xs uppercase tracking-wide text-muted-foreground">Minha conta · {accountName}</p>
                     {accountItems.map(mobileLink)}
                     <SheetClose asChild>
                       <button type="button" onClick={() => tour.start()} className="flex items-center gap-3 rounded-md px-3 py-2.5 text-left hover:bg-muted [&_svg]:size-4 [&_svg]:text-muted-foreground">
