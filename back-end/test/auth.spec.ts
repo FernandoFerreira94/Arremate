@@ -5,8 +5,8 @@ import { RateLimiter } from "../src/auth/rate-limit";
 import { resolveReturnTo } from "../src/auth/return-to";
 import { clientIp, sessionCookie } from "../src/auth/session-cookie";
 
-describe("sessÃ£o e fronteira", () => {
-  it("recusa returnTo externo e aceita sÃ³ rota local da lista", () => {
+describe("sessão e fronteira", () => {
+  it("recusa returnTo externo e aceita só rota local da lista", () => {
     expect(resolveReturnTo("https://evil", "BIDDER")).toEqual({ ok: false });
     expect(resolveReturnTo("//evil", "BIDDER")).toEqual({ ok: false });
     expect(resolveReturnTo("/\\evil", "BIDDER")).toEqual({ ok: false });
@@ -21,7 +21,7 @@ describe("sessÃ£o e fronteira", () => {
     });
   });
 
-  it("limita login, mutaÃ§Ã£o, catÃ¡logo, auditoria e SSE na janela de um minuto", () => {
+  it("limita login, mutação, catálogo, auditoria e SSE na janela de um minuto", () => {
     let now = 1_000;
     const limits = new RateLimiter(() => now);
     for (let attempt = 0; attempt < 10; attempt += 1) limits.consume("login", "203.0.113.8");
@@ -46,7 +46,7 @@ describe("sessÃ£o e fronteira", () => {
     expect(limits.tryAcquireSse("anon:203.0.113.9")).toBe(true);
   });
 
-  it("nÃ£o usa o IP encaminhado e marca o cookie de produÃ§Ã£o com __Host-", () => {
+  it("não usa o IP encaminhado e marca o cookie de produção com __Host-", () => {
     const request = {
       socket: { remoteAddress: "::ffff:127.0.0.1" },
       headers: { "x-forwarded-for": "203.0.113.9", host: "evil.example" },
@@ -62,7 +62,7 @@ describe("sessÃ£o e fronteira", () => {
     expect(prod.options).not.toHaveProperty("domain");
   });
 
-  it("amarra o CSRF Ã  sessÃ£o e usa Argon2id com o mÃ­nimo OWASP", async () => {
+  it("amarra o CSRF à sessão e usa Argon2id com o mínimo OWASP", async () => {
     const sessionToken = randomBytes(32).toString("base64url");
     const token = csrfTokenForSession(sessionToken);
     expect(token).toBe(csrfTokenForSession(sessionToken));
@@ -83,7 +83,7 @@ describe("sessÃ£o e fronteira", () => {
 });
 
 
-it.each(["/termos", "/privacidade", "/como-funciona"])("login pode retornar Ã  pÃ¡gina pÃºblica %s", (destination) => {
+it.each(["/termos", "/privacidade", "/como-funciona"])("login pode retornar à página pública %s", (destination) => {
   expect(resolveReturnTo(destination, "BIDDER")).toEqual({ ok: true, path: destination });
   expect(resolveReturnTo(destination, "AUCTIONEER")).toEqual({ ok: true, path: destination });
 });

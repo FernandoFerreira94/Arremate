@@ -21,7 +21,7 @@ export type ParticipationRow = {
 
 export type AwardRow = { lot_id: string; title: string; media_key: string; amount_cents: string; settled_at: Date; public_token: string };
 
-/** Leituras decisÃƒÆ’Ã‚Â³rias e gravaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes da liquidaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o; tudo no cliente transacional recebido. */
+/** Leituras decisórias e gravações da liquidação; tudo no cliente transacional recebido. */
 export class SettlementRepository {
   async lockLot(client: PoolClient, lotId: string): Promise<SettlingLot | null> {
     const result = await client.query<SettlingLot>(
@@ -50,7 +50,7 @@ export class SettlementRepository {
   async clock(client: PoolClient): Promise<Date> {
     const result = await client.query<{ now: Date }>(`SELECT date_trunc('milliseconds', clock_timestamp()) AS now`);
     const now = result.rows[0]?.now;
-    if (!now) throw new Error("relÃƒÆ’Ã‚Â³gio do banco indisponÃƒÆ’Ã‚Â­vel");
+    if (!now) throw new Error("relógio do banco indisponível");
     return now;
   }
 
@@ -66,7 +66,7 @@ export class SettlementRepository {
        WHERE id = $1 AND committed_cents >= $2::numeric`,
       [walletId, amount.toString()],
     );
-    if (updated.rowCount !== 1) throw new Error("reserva do vencedor nÃƒÆ’Ã‚Â£o confere");
+    if (updated.rowCount !== 1) throw new Error("reserva do vencedor não confere");
   }
 
   async creditSeller(client: PoolClient, walletId: string, amount: bigint, lotId: string): Promise<void> {
@@ -96,7 +96,7 @@ export class SettlementRepository {
       expectedRevision,
       revision,
     ]);
-    if (updated.rowCount !== 1) throw new Error("lote mudou durante a liquidaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o");
+    if (updated.rowCount !== 1) throw new Error("lote mudou durante a liquidação");
   }
 
   async dueLots(database: DatabaseRepository, limit: number): Promise<string[]> {

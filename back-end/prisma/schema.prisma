@@ -1,5 +1,5 @@
 // CHECK de saldo, valores positivos, prazo e e-mail normalizado ficam na migration:
-// Prisma 7 nÃ£o representa CHECK no schema nem no migrate diff.
+// Prisma 7 não representa CHECK no schema nem no migrate diff.
 
 generator client {
   provider     = "prisma-client"
@@ -104,7 +104,7 @@ model Lot {
   endsAt         DateTime  @map("ends_at") @db.Timestamptz(3)
   revision       Int       @default(0)
   status         LotStatus @default(PUBLISHED)
-  /// D17: estimativa e laudo sÃ£o SIMULADOS para demonstraÃ§Ã£o; nunca vÃªm do Met.
+  /// D17: estimativa e laudo são SIMULADOS para demonstração; nunca vêm do Met.
   estimateLowCents  BigInt? @map("estimate_low_cents")
   estimateHighCents BigInt? @map("estimate_high_cents")
   conditionReport   String? @map("condition_report") @db.Text
@@ -206,8 +206,8 @@ model IdempotencyRecord {
   @@map("idempotency_records")
 }
 
-/// D22 (R11): favoritos por usuÃ¡rio. Sem FK para lots de propÃ³sito: o reset do E2E faz TRUNCATE em lots
-/// sem listar tabelas dependentes; a API valida o lote no PUT e a leitura junta sÃ³ lotes existentes.
+/// D22 (R11): favoritos por usuário. Sem FK para lots de propósito: o reset do E2E faz TRUNCATE em lots
+/// sem listar tabelas dependentes; a API valida o lote no PUT e a leitura junta só lotes existentes.
 model Favorite {
   userId    String   @map("user_id") @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -220,7 +220,7 @@ model Favorite {
 }
 
 /// D22 (Fernando, 25/10/2026): "Avise-me quando abrir". Sem FK para lots (mesmo motivo de favorites: o TRUNCATE do E2E).
-/// A inscriÃ§Ã£o Ã© apagada ao cancelar o aviso ou quando a notificaÃ§Ã£o Ã© gerada.
+/// A inscrição é apagada ao cancelar o aviso ou quando a notificação é gerada.
 model LotWatch {
   userId    String   @map("user_id") @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -232,7 +232,7 @@ model LotWatch {
   @@map("lot_watches")
 }
 
-/// D22: notificaÃ§Ã£o in-app "Lote abriu"; a API guarda as 20 mais recentes por usuÃ¡rio.
+/// D22: notificação in-app "Lote abriu"; a API guarda as 20 mais recentes por usuário.
 model Notification {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String    @map("user_id") @db.Uuid

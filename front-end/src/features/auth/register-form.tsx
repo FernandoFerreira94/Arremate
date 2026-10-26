@@ -43,7 +43,7 @@ export function RegisterForm({ onGoToLogin, onDone }: { onGoToLogin: () => void;
       onDone();
       router.push(result.returnTo);
     } catch (failure) {
-      setError(failure instanceof ApiError && failure.statusCode === 429 ? "Muitas tentativas. Aguarde alguns minutos." : "NÃ£o foi possÃ­vel criar a conta. Verifique os dados ou tente entrar.");
+      setError(failure instanceof ApiError && failure.statusCode === 429 ? "Muitas tentativas. Aguarde alguns minutos." : "Não foi possível criar a conta. Verifique os dados ou tente entrar.");
     } finally {
       setSending(false);
     }
@@ -56,15 +56,15 @@ export function RegisterForm({ onGoToLogin, onDone }: { onGoToLogin: () => void;
         <div className="flex flex-col gap-1.5"><Label htmlFor="register-name">Nome</Label><Input id="register-name" placeholder="Seu nome completo" autoComplete="name" maxLength={100} value={name} onChange={(event) => setName(event.target.value)} /></div>
         <div className="flex flex-col gap-1.5"><Label htmlFor="register-email">E-mail</Label><Input id="register-email" placeholder="voce@email.com" type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} /></div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="register-password">Senha</Label><PasswordInput id="register-password" placeholder="MÃ­nimo de 8 caracteres" autoComplete="new-password" maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} />
+          <Label htmlFor="register-password">Senha</Label><PasswordInput id="register-password" placeholder="Mínimo de 8 caracteres" autoComplete="new-password" maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} />
           <div className="grid grid-cols-4 gap-1" aria-hidden>{[1, 2, 3, 4].map((i) => <span key={i} className={cn("h-1 rounded-full bg-muted", strength >= i && (strength < 2 ? "bg-destructive" : strength < 4 ? "bg-warning" : "bg-success"))} />)}</div>
-          <p className="text-xs text-muted-foreground" aria-live="polite">{strength ? `ForÃ§a: ${STRENGTH_LABEL[strength]}` : "MÃ­nimo de 8 caracteres"}</p>
+          <p className="text-xs text-muted-foreground" aria-live="polite">{strength ? `Força: ${STRENGTH_LABEL[strength]}` : "Mínimo de 8 caracteres"}</p>
         </div>
-        <div className="flex flex-col gap-1.5"><Label htmlFor="register-confirm">Confirmar senha</Label><PasswordInput id="register-confirm" placeholder="Repita a senha" autoComplete="new-password" maxLength={128} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} aria-invalid={mismatch} aria-describedby={mismatch ? "register-confirm-error" : undefined} />{mismatch ? <p id="register-confirm-error" className="text-xs text-destructive">As senhas nÃ£o conferem.</p> : null}</div>
-        <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-0.5 size-4 accent-[var(--primary)]" checked={terms} onChange={(event) => setTerms(event.target.checked)} /><span>Aceito os <Link href="/termos" className="text-primary underline">Termos</Link> e a <Link href="/privacidade" className="text-primary underline">Privacidade</Link> da demonstraÃ§Ã£o. Guardamos nome, e-mail e saldo simulado.</span></label>
-        <Button type="submit" size="lg" disabled={sending || !name.trim() || !isPlausibleEmail(email) || password.length < 8 || password !== confirmation || !terms}>{sending ? <Loader2Icon className="animate-spin" /> : <UserPlusIcon />}{sending ? "Criando contaâ€¦" : "Criar conta"}</Button>
+        <div className="flex flex-col gap-1.5"><Label htmlFor="register-confirm">Confirmar senha</Label><PasswordInput id="register-confirm" placeholder="Repita a senha" autoComplete="new-password" maxLength={128} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} aria-invalid={mismatch} aria-describedby={mismatch ? "register-confirm-error" : undefined} />{mismatch ? <p id="register-confirm-error" className="text-xs text-destructive">As senhas não conferem.</p> : null}</div>
+        <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-0.5 size-4 accent-[var(--primary)]" checked={terms} onChange={(event) => setTerms(event.target.checked)} /><span>Aceito os <Link href="/termos" className="text-primary underline">Termos</Link> e a <Link href="/privacidade" className="text-primary underline">Privacidade</Link> da demonstração. Guardamos nome, e-mail e saldo simulado.</span></label>
+        <Button type="submit" size="lg" disabled={sending || !name.trim() || !isPlausibleEmail(email) || password.length < 8 || password !== confirmation || !terms}>{sending ? <Loader2Icon className="animate-spin" /> : <UserPlusIcon />}{sending ? "Criando conta…" : "Criar conta"}</Button>
       </fieldset>
-      <button type="button" className="min-h-11 text-sm text-muted-foreground underline-offset-4 hover:underline" disabled={sending} onClick={onGoToLogin}>JÃ¡ tenho conta</button>
+      <button type="button" className="min-h-11 text-sm text-muted-foreground underline-offset-4 hover:underline" disabled={sending} onClick={onGoToLogin}>Já tenho conta</button>
     </form>
   );
 }

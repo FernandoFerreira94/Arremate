@@ -13,7 +13,7 @@ export const LIST_PAGE_SIZE = 8;
 
 export type ClosedLot = {
   lotId: string;
-  /** OPEN: ainda nÃ£o venceu (inclusive prorrogado); SKIPPED: jÃ¡ fechado/cancelado. */
+  /** OPEN: ainda não venceu (inclusive prorrogado); SKIPPED: já fechado/cancelado. */
   status: "SETTLED" | "CLOSED_NO_BIDS" | "OPEN" | "SKIPPED";
   amountCents: MoneyText | null;
   receiptToken: string | null;
@@ -48,8 +48,8 @@ export class SettlementService {
   ) {}
 
   /**
-   * Lock lote â†’ carteiras ordenadas â†’ relÃ³gio real pÃ³s-lock. DÃ©bito do vencedor (total e reservado),
-   * crÃ©dito do vendedor, ledger, settlement e recibo numa transaÃ§Ã£o; vÃ­nculo selado na testemunha.
+   * Lock lote → carteiras ordenadas → relógio real pós-lock. Débito do vencedor (total e reservado),
+   * crédito do vendedor, ledger, settlement e recibo numa transação; vínculo selado na testemunha.
    */
   async settleLot(lotId: string): Promise<ClosedLot> {
     if (!UUID.test(lotId)) throw new ApiException(404, "NAO_ENCONTRADO");
@@ -82,7 +82,7 @@ export class SettlementService {
       const token = randomBytes(24).toString("base64url");
       const winnerWallet = wallets.get(winner.user_id);
       const sellerWallet = wallets.get(lot.owner_id);
-      if (!winnerWallet || !sellerWallet) throw new Error("carteira ausente na liquidaÃ§Ã£o");
+      if (!winnerWallet || !sellerWallet) throw new Error("carteira ausente na liquidação");
       return {
         kind: "settle",
         link: { settlementId, winnerBidId: winner.id, receiptToken: token, settledAt },
@@ -98,7 +98,7 @@ export class SettlementService {
     });
   }
 
-  /** Varre lotes vencidos; cada um em sua transaÃ§Ã£o. Falha de um nÃ£o impede os demais. */
+  /** Varre lotes vencidos; cada um em sua transação. Falha de um não impede os demais. */
   async settleDueLots(onClosed?: (lotId: string) => void): Promise<ProcessingSummary> {
     const summary: ProcessingSummary = { scanned: 0, settled: 0, closedNoBids: 0, blocked: 0, failed: 0 };
     if (!this.audit) return summary;
@@ -114,7 +114,7 @@ export class SettlementService {
           summary.blocked += 1;
         } else {
           summary.failed += 1;
-          this.logger.error(`LiquidaÃ§Ã£o falhou no lote ${lotId}: ${error instanceof Error ? error.name : "erro"}`);
+          this.logger.error(`Liquidação falhou no lote ${lotId}: ${error instanceof Error ? error.name : "erro"}`);
         }
       }
     }

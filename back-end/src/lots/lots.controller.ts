@@ -28,13 +28,13 @@ export class LotsController {
     return this.lots.showcase(query.page);
   }
 
-  /** D22 (H2): prÃ³ximo leilÃ£o agendado, pÃºblico. */
+  /** D22 (H2): próximo leilão agendado, público. */
   @Get("lots/next")
   next() {
     return this.lots.nextScheduled();
   }
 
-  /** D22 (H2b): atÃ© 5 agendados para o carrossel do hero, pÃºblico. */
+  /** D22 (H2b): até 5 agendados para o carrossel do hero, público. */
   @Get("lots/upcoming")
   upcoming(@Query("limit") limit?: string) {
     return this.lots.upcoming(limit);

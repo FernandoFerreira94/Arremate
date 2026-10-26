@@ -60,9 +60,9 @@ interface ApplicationOptions {
   mediaDir?: string;
   auditKey?: Uint8Array | null;
   witnessDir?: string;
-  /** Intervalo do runner de liquidaÃ§Ã£o; false desliga (padrÃ£o em NODE_ENV=test). */
+  /** Intervalo do runner de liquidação; false desliga (padrão em NODE_ENV=test). */
   settlementIntervalMs?: number | false;
-  /** D22: intervalo da varredura agendadoâ†’aberto que gera notificaÃ§Ãµes; false desliga (padrÃ£o em NODE_ENV=test). */
+  /** D22: intervalo da varredura agendado→aberto que gera notificações; false desliga (padrão em NODE_ENV=test). */
   notificationIntervalMs?: number | false;
 }
 
