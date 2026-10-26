@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Fraunces, Inter } from "next/font/google";
 import { SiteFooter } from "@/components/app/site-footer";
 import { SiteHeader } from "@/components/app/site-header";
@@ -21,12 +22,14 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#6E1E2B", colorScheme: "light" };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // D26 (M2): nonce da CSP gerado no proxy.ts.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="pt-BR" className={`${fraunces.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         {/* O script estático só altera o atributo de entrada antes da hidratação. */}
-        <script id="arremate-intro-boot" dangerouslySetInnerHTML={{ __html: INTRO_BOOT_SCRIPT }} />
+        <script id="arremate-intro-boot" nonce={nonce} dangerouslySetInnerHTML={{ __html: INTRO_BOOT_SCRIPT }} />
       </head>
       <body className="flex min-h-dvh flex-col antialiased">
         <BrandIntro />
