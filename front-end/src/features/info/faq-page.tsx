@@ -25,8 +25,8 @@ export function FaqPage() {
         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input type="search" aria-label="Buscar nas perguntas" placeholder="Buscar: lance mínimo, prorrogação, saldo…" className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
-      <Tabs value={category} onValueChange={(value) => setCategory(value as FaqCategory | "todas")} className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <TabsList aria-label="Categorias" className="flex-nowrap">
+      <Tabs value={category} onValueChange={(value) => setCategory(value as FaqCategory | "todas")} className="min-w-0">
+        <TabsList aria-label="Categorias" className="h-auto w-full flex-wrap justify-start sm:w-auto">
           {FAQ_CATEGORIES.map((c) => <TabsTrigger key={c.value} value={c.value}>{c.label}</TabsTrigger>)}
         </TabsList>
       </Tabs>
