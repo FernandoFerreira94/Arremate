@@ -7,7 +7,7 @@ import { ArtworkImage } from "@/components/app/artwork-image";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useZoom } from "@/hooks/use-zoom";
-import { percent } from "@/lib/zoom";
+import { percent, zoomHint } from "@/lib/zoom";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -87,7 +87,7 @@ function ZoomBody({ src, zoomSrc, alt, title, credit }: Props) {
           </DialogDescription>
         </div>
         <span className="hidden shrink-0 rounded-md bg-stone-800 px-2 py-1 text-xs text-stone-200 sm:inline">
-          {zoom.scale < 3 ? `${percent(zoom.scale)} · clique para ampliar` : "3× · clique volta a 1×"}
+          {zoomHint(zoom.scale)}
         </span>
       </div>
 

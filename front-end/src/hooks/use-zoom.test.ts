@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DESKTOP_MAX, TOUCH_MAX, clamp, fitSize, nextClickLevel, pinchScale, stepScale, viewportRect } from "../lib/zoom";
+import { DESKTOP_MAX, TOUCH_MAX, clamp, fitSize, nextClickLevel, pinchScale, stepScale, viewportRect, zoomHint } from "../lib/zoom";
 import { INITIAL_ZOOM, zoomReducer, type ZoomAction, type ZoomModel } from "./use-zoom";
 
 const ready = (max = DESKTOP_MAX): ZoomModel =>
@@ -92,5 +92,12 @@ describe("useZoom (D28): reducer do hook", () => {
     const panned = run(ready(), { type: "click", at: { x: 0, y: 0 } }, { type: "pan", dx: 500, dy: 0 });
     const resized = run(panned, { type: "view", view: { width: 500, height: 300 } });
     expect(resized.zoom.x).toBe(250);
+  });
+
+  it("dica cita os dois limites reais: clique até 3× e pinça até 4× (QA N3)", () => {
+    expect(zoomHint(1)).toBe("100% · clique para ampliar até 3× · pinça até 4×");
+    expect(zoomHint(2)).toBe("200% · clique para ampliar até 3× · pinça até 4×");
+    expect(zoomHint(3)).toBe("300% · clique volta a 1×");
+    expect(zoomHint(TOUCH_MAX)).toBe("400% · clique volta a 1×");
   });
 });

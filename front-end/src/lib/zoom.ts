@@ -98,3 +98,10 @@ export function viewportRect(state: ZoomState, view: Size, content: Size): { lef
 export function percent(scale: number): string {
   return `${Math.round(scale * 100)}%`;
 }
+
+/** Dica do Dialog: cita os dois limites reais (clique até 3×, pinça até 4×). */
+export function zoomHint(scale: number): string {
+  return scale < DESKTOP_MAX
+    ? `${percent(scale)} · clique para ampliar até ${DESKTOP_MAX}× · pinça até ${TOUCH_MAX}×`
+    : `${percent(scale)} · clique volta a 1×`;
+}
