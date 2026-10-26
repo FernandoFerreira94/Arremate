@@ -61,12 +61,20 @@ export type ActivityRow = { id: string; lot_id: string; title: string; alias: st
 export class LotsRepository {
   constructor(private readonly database: DatabaseRepository) {}
 
-  async showcase(limit: number, offset: number): Promise<{ rows: LotRow[]; total: number }> {
+  /** `search` filtra por título ou artista (ILIKE parametrizado; %, _ e \ digitados valem como literais). */
+  async showcase(limit: number, offset: number, search: string | null = null): Promise<{ rows: LotRow[]; total: number }> {
+    const pattern = search === null ? null : `%${search.replace(/[\\%_]/g, "\\$&")}%`;
     const rows = await this.database.query<LotRow>(
-      `SELECT ${LOT_COLUMNS} ${LOT_FROM} WHERE l.status <> 'CANCELLED' ${SHOWCASE_ORDER} LIMIT $1 OFFSET $2`,
-      [limit, offset],
+      `SELECT ${LOT_COLUMNS} ${LOT_FROM}
+       WHERE l.status <> 'CANCELLED' AND ($3::text IS NULL OR s.title ILIKE $3 OR s.attributes->>'artist' ILIKE $3)
+       ${SHOWCASE_ORDER} LIMIT $1 OFFSET $2`,
+      [limit, offset, pattern],
     );
-    const total = await this.database.query<{ n: number }>(`SELECT count(*)::int AS n FROM lots WHERE status <> 'CANCELLED'`);
+    const total = await this.database.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM lots l JOIN catalog_item_snapshots s ON s.id = l.snapshot_id
+       WHERE l.status <> 'CANCELLED' AND ($1::text IS NULL OR s.title ILIKE $1 OR s.attributes->>'artist' ILIKE $1)`,
+      [pattern],
+    );
     return { rows: rows.rows, total: total.rows[0]?.n ?? 0 };
   }
 

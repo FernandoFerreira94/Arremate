@@ -63,8 +63,9 @@ export class LotsService {
     private readonly audit: AuditService | null,
   ) {}
 
-  async showcase(page: number): Promise<Paged<LotView>> {
-    const { rows, total } = await this.lots.showcase(SHOWCASE_PAGE_SIZE, (page - 1) * SHOWCASE_PAGE_SIZE);
+  async showcase(page: number, search?: string): Promise<Paged<LotView>> {
+    const term = search?.trim().replace(/\s+/g, " ") || null;
+    const { rows, total } = await this.lots.showcase(SHOWCASE_PAGE_SIZE, (page - 1) * SHOWCASE_PAGE_SIZE, term);
     return this.paged(rows, page, SHOWCASE_PAGE_SIZE, total);
   }
 

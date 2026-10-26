@@ -39,3 +39,11 @@ export class PageQuery {
   limit: number = 20;
 }
 
+/** Vitrine: página + busca opcional por nome da obra ou do artista. */
+export class ShowcaseQuery extends PageQuery {
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  q?: string;
+}
+

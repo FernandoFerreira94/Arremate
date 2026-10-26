@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { Suspense, useState } from "react";
 import {
   BookOpenIcon,
   CompassIcon,
@@ -46,6 +47,7 @@ import type { Role } from "@/features/auth/auth-api";
 import { getWallet } from "@/features/wallet/wallet-api";
 import { formatBrl } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { LotSearch } from "./lot-search";
 import { Logo } from "./logo";
 
 type NavItem = { href: string; label: string; icon: LucideIcon; hint?: string };
@@ -107,6 +109,7 @@ export function SiteHeader() {
   const logout = useLogout();
   const authSheet = useAuthSheet();
   const tour = useTour();
+  const [menuOpen, setMenuOpen] = useState(false);
   const role = session.data?.role ?? null;
   const accountItems = navFor(role);
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href.split(/[?#]/)[0]));
@@ -199,12 +202,15 @@ export function SiteHeader() {
           </NavigationMenuList>
         </NavigationMenu>
         <div className="col-start-3 flex items-center justify-end gap-2">
+          <Suspense fallback={null}>
+            <LotSearch className="hidden w-56 lg:block" />
+          </Suspense>
           {role ? <NotificationBell /> : null}
           <div className="hidden items-center gap-2 md:flex">
             {role === "BIDDER" ? <BalanceChip /> : null}
             {profile}
           </div>
-          <Sheet>
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden" aria-label="Abrir menu" data-tour="menu">
                 <MenuIcon />
@@ -213,6 +219,9 @@ export function SiteHeader() {
             <SheetContent className="w-full max-w-none overflow-y-auto sm:max-w-sm">
               <SheetTitle>Menu</SheetTitle>
               <SheetDescription>Demonstração com valores simulados.</SheetDescription>
+              <Suspense fallback={null}>
+                <LotSearch onSubmitted={() => setMenuOpen(false)} />
+              </Suspense>
               <nav aria-label="Menu móvel" className="flex flex-col gap-1">
                 <p className="px-3 pt-2 text-xs uppercase tracking-wide text-muted-foreground">Leilões</p>
                 {AUCTION_ITEMS.map(mobileLink)}

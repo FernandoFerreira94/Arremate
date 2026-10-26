@@ -35,8 +35,10 @@ export type PublicReceipt = {
 export const lotKey = (id: string) => ["lot", id] as const;
 export const bidsKey = (id: string, page: number) => ["lot", id, "bids", page] as const;
 
-export async function getShowcase(page: number): Promise<ShowcasePage> {
-  return (await apiFetch(`/api/lots?page=${page}`)) as ShowcasePage;
+export async function getShowcase(page: number, q = ""): Promise<ShowcasePage> {
+  const search = new URLSearchParams({ page: String(page) });
+  if (q) search.set("q", q);
+  return (await apiFetch(`/api/lots?${search.toString()}`)) as ShowcasePage;
 }
 export async function getLot(id: string): Promise<PublicLot> {
   return (await apiFetch(`/api/lots/${encodeURIComponent(id)}`)) as PublicLot;

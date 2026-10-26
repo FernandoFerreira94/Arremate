@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react";
+import { LotSearch } from "@/components/app/lot-search";
 import { EmptyState, ErrorState } from "@/components/app/page-states";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,13 +43,14 @@ export function ShowcasePage() {
   const router = useRouter();
   const pathname = usePathname();
   const tab = tabFromParam(params.get("aba"));
+  const q = params.get("q")?.trim() ?? "";
   const setTab = (next: Tab) => {
     const search = new URLSearchParams(params.toString());
     search.set("aba", TAB_PARAM[next]);
     search.delete("page");
     router.replace(`${pathname}?${search.toString()}`, { scroll: false });
   };
-  const query = useQuery({ queryKey: ["showcase", page], queryFn: () => getShowcase(page), refetchInterval: 15000 });
+  const query = useQuery({ queryKey: ["showcase", page, q], queryFn: () => getShowcase(page, q), refetchInterval: 15000 });
   const now = useNow();
   const offset = query.data ? clockOffset(query.data.serverNow, query.dataUpdatedAt) : 0;
   const items = (query.data?.items ?? []).filter((lot) => showcaseTab(lot.state) !== null);
@@ -56,6 +58,21 @@ export function ShowcasePage() {
   const count = (t: Tab) => items.filter((lot) => inTab(lot, t)).length;
   const visible = items.filter((lot) => inTab(lot, tab));
   const pages = query.data ? Math.max(1, Math.ceil(query.data.total / query.data.pageSize)) : 1;
+  const pageHref = (n: number) => {
+    const search = new URLSearchParams({ aba: TAB_PARAM[tab], page: String(n) });
+    if (q) search.set("q", q);
+    return `/?${search.toString()}`;
+  };
+  const clearSearch = () => {
+    const search = new URLSearchParams(params.toString());
+    search.delete("q");
+    search.delete("page");
+    const rest = search.toString();
+    router.replace(rest ? `${pathname}?${rest}` : pathname, { scroll: false });
+  };
+  const empty = q
+    ? { title: `Nada encontrado para "${q}" nesta aba`, description: "Confira as outras abas ou busque por outro nome de obra ou artista." }
+    : EMPTY[tab];
 
   return (
     <div className="flex flex-col gap-6">
@@ -77,6 +94,18 @@ export function ShowcasePage() {
         </Tabs>
         <p className="text-xs text-muted-foreground">Término mais próximo primeiro · cancelados não aparecem</p>
       </div>
+      <LotSearch className="lg:hidden" />
+      {q ? (
+        <div className="flex flex-wrap items-center gap-2 text-sm" role="status">
+          <span>
+            Resultados para <strong>&ldquo;{q}&rdquo;</strong>
+            {query.data ? <span className="text-muted-foreground"> · {query.data.total} {query.data.total === 1 ? "lote" : "lotes"}</span> : null}
+          </span>
+          <Button variant="ghost" size="sm" onClick={clearSearch}>
+            <XIcon /> Limpar busca
+          </Button>
+        </div>
+      ) : null}
       {query.isPending ? (
         <div role="status" aria-label="Carregando lotes" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-[452px]" />)}
@@ -84,7 +113,7 @@ export function ShowcasePage() {
       ) : query.isError ? (
         <ErrorState message="Não foi possível carregar os lotes. Verifique sua conexão. Nenhum dado foi alterado." onRetry={() => void query.refetch()} />
       ) : visible.length === 0 ? (
-        <EmptyState title={EMPTY[tab].title} description={EMPTY[tab].description} />
+        <EmptyState title={empty.title} description={empty.description} />
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {visible.map((lot) => <li key={lot.id}><LotCard lot={lot} now={now} offset={offset} /></li>)}
@@ -93,11 +122,11 @@ export function ShowcasePage() {
       {pages > 1 ? (
         <nav aria-label="Paginação" className="flex items-center justify-center gap-2">
           <Button asChild={page > 1} variant="outline" size="sm" className="whitespace-nowrap" disabled={page <= 1}>
-            {page > 1 ? <Link href={`/?aba=${TAB_PARAM[tab]}&page=${page - 1}`} className="inline-flex items-center gap-2 whitespace-nowrap"><ChevronLeftIcon /> Anterior</Link> : <span className="inline-flex items-center gap-2 whitespace-nowrap"><ChevronLeftIcon /> Anterior</span>}
+            {page > 1 ? <Link href={pageHref(page - 1)} className="inline-flex items-center gap-2 whitespace-nowrap"><ChevronLeftIcon /> Anterior</Link> : <span className="inline-flex items-center gap-2 whitespace-nowrap"><ChevronLeftIcon /> Anterior</span>}
           </Button>
           <span className="text-sm tabular-nums" aria-current="page">{page} de {pages}</span>
           <Button asChild={page < pages} variant="outline" size="sm" className="whitespace-nowrap" disabled={page >= pages}>
-            {page < pages ? <Link href={`/?aba=${TAB_PARAM[tab]}&page=${page + 1}`} className="inline-flex items-center gap-2 whitespace-nowrap">Próxima <ChevronRightIcon /></Link> : <span className="inline-flex items-center gap-2 whitespace-nowrap">Próxima <ChevronRightIcon /></span>}
+            {page < pages ? <Link href={pageHref(page + 1)} className="inline-flex items-center gap-2 whitespace-nowrap">Próxima <ChevronRightIcon /></Link> : <span className="inline-flex items-center gap-2 whitespace-nowrap">Próxima <ChevronRightIcon /></span>}
           </Button>
         </nav>
       ) : null}
