@@ -3,6 +3,7 @@
 import { CircleAlertIcon, CircleCheckIcon, InfoIcon, LoaderCircleIcon, TriangleAlertIcon } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { Toaster } from "sonner";
+import { useTheme } from "@/lib/use-theme";
 
 const MOBILE = "(max-width: 640px)";
 
@@ -18,14 +19,15 @@ function useMobile(): boolean {
 }
 
 /**
- * Toaster do Arremate (Sonner, G1/G2; substitui o toast local da D22). Só tema claro. Desktop embaixo à direita,
+ * Toaster do Arremate (Sonner, G1/G2; substitui o toast local da D22). Segue o tema do site. Desktop embaixo à direita,
  * mobile no topo; até 3 visíveis; corpo --card e cor de estado só na borda esquerda e no ícone (prancha T1/T2).
  */
 export function AppToaster() {
   const mobile = useMobile();
+  const theme = useTheme() ?? "light";
   return (
     <Toaster
-      theme="light"
+      theme={theme}
       position={mobile ? "top-center" : "bottom-right"}
       offset={mobile ? { top: 72, left: 8, right: 8 } : 24}
       mobileOffset={{ top: 72, left: 8, right: 8 }}

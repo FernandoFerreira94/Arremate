@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/app/site-header";
 import { siteUrl } from "@/lib/page-metadata";
 import { BrandIntro, INTRO_BOOT_SCRIPT } from "@/components/app/brand-intro";
 import { PageEntrance } from "@/components/app/page-entrance";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export const viewport: Viewport = { themeColor: "#6E1E2B", colorScheme: "light" };
+export const viewport: Viewport = { themeColor: "#6E1E2B", colorScheme: "light dark" };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // D26 (M2): nonce da CSP gerado no proxy.ts.
@@ -29,6 +30,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="pt-BR" className={`${fraunces.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         {/* O script estático só altera o atributo de entrada antes da hidratação. */}
+        <script id="arremate-theme-boot" nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <script id="arremate-intro-boot" nonce={nonce} dangerouslySetInnerHTML={{ __html: INTRO_BOOT_SCRIPT }} />
       </head>
       <body className="flex min-h-dvh flex-col antialiased">

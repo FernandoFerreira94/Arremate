@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 /**
- * F3-cor (D22): fundo --primary, textos em primary-foreground, títulos e crédito a 80 %, frase em Fraunces com a 2ª linha em
+ * F3-cor (D22): fundo --brand, textos em brand-foreground (iguais nos dois temas), títulos e crédito a 80 %, frase em Fraunces com a 2ª linha em
  * latão (--accent) e filete em accent. LEGAL traz Termos e Privacidade (páginas do Codex) e as âncoras de Regras e Auditoria.
  */
 const GROUPS: { title: string; links: { label: string; href: string }[] }[] = [
@@ -14,7 +14,7 @@ const GROUPS: { title: string; links: { label: string; href: string }[] }[] = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 bg-primary text-primary-foreground">
+    <footer className="mt-16 bg-brand text-brand-foreground">
       <div className="mx-auto flex max-w-[1360px] flex-col gap-8 px-4 py-10 lg:px-10 lg:py-12">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
           <div className="flex flex-col items-start gap-4">
@@ -32,7 +32,7 @@ export function SiteFooter() {
                 <ul className="mt-2 flex flex-col">
                   {group.links.map((link) => (
                     <li key={link.label}>
-                      <Link href={link.href} className="inline-flex min-h-11 items-center text-sm text-primary-foreground underline-offset-4 hover:underline">
+                      <Link href={link.href} className="inline-flex min-h-11 items-center text-sm text-brand-foreground underline-offset-4 hover:underline">
                         {link.label}
                       </Link>
                     </li>
