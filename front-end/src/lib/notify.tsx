@@ -32,14 +32,25 @@ export function notifyWarning(message: string, description?: string) {
 }
 
 /**
- * Erro: ApiError mostra a mensagem do servidor e o código para suporte (completo, com botão de copiar).
- * 401 leva para /entrar; CONFIRMATION_PENDING vira aviso. Erro inesperado (não ApiError) também é relatado.
+ * Recusa por regra (4xx: já lidera, saldo, lance abaixo do mínimo, lote encerrado…) é aviso para a pessoa,
+ * não falha do sistema: sem vermelho e sem código para suporte, que fica só para 5xx e erro inesperado.
+ */
+export function isRuleRejection(error: unknown): boolean {
+  return error instanceof ApiError && error.statusCode >= 400 && error.statusCode < 500;
+}
+
+/**
+ * Erro: ApiError 5xx mostra a mensagem do servidor e o código para suporte (completo, com botão de copiar).
+ * 4xx vira aviso sem código; 401 leva para /entrar; CONFIRMATION_PENDING vira aviso. Erro inesperado
+ * (não ApiError) também é relatado.
  */
 export function notifyError(error: unknown, fallback = "Não foi possível concluir a operação.", options: { id?: string; retry?: () => void } = {}) {
   if (error instanceof ApiError) {
     if (error.code === "CONFIRMATION_PENDING") return notifyWarning("Confirmação pendente.", "Repita com a mesma chave em instantes.");
     const id = options.id;
-    const shown = toast.error(error.message || fallback, withAction({ id, duration: TOAST_DURATION.error, description: error.requestId ? <SupportCode code={error.requestId} /> : undefined }, options.retry ? { label: "Tentar de novo", onClick: options.retry } : undefined));
+    const shown = isRuleRejection(error)
+      ? toast.warning(error.message || fallback, { id, duration: TOAST_DURATION.warning })
+      : toast.error(error.message || fallback, withAction({ id, duration: TOAST_DURATION.error, description: error.requestId ? <SupportCode code={error.requestId} /> : undefined }, options.retry ? { label: "Tentar de novo", onClick: options.retry } : undefined));
     if (error.statusCode === 401 && error.code === "SESSAO_NECESSARIA" && typeof window !== "undefined" && window.location.pathname !== "/entrar") {
       const back = `${window.location.pathname}${window.location.search}`;
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- módulo fora de componente; navegação completa limpa o cache da sessão expirada

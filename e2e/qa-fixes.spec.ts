@@ -120,3 +120,44 @@ test("abas do /suporte cabem em 390px", async ({ browser }) => {
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test("quem já lidera vê o botão desabilitado e o motivo, sem toast de erro", async ({ browser }) => {
+  const bidder = await apiAs("bidder");
+  await deposit(bidder, "500000");
+  const lotId = await publishLot(await apiAs("auctioneer"), { endsInMs: 30 * 60_000 });
+  await bidder.post(`/api/lots/${lotId}/bids`, { amountCents: "10000" });
+  const page = await pageAs(browser, "bidder");
+  await page.goto(`/lotes/${lotId}`);
+  await expect(page.getByText(/Você está ganhando/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Dar lance" })).toBeDisabled();
+  await expect(page.getByTestId("lidera-aviso")).toHaveText("Você já lidera este lote. Dê outro lance quando alguém cobrir o seu.");
+  await expect(page.locator("[data-sonner-toast][data-type='error']")).toHaveCount(0);
+});
+
+// Recusa por regra de lance é aviso, nunca erro vermelho com código para suporte (mesmo se a sala estiver desatualizada).
+for (const [code, message] of [
+  ["ALREADY_LEADING", "Você já lidera este lote; aguarde ser superado."],
+  ["BID_BELOW_MINIMUM", "O lance precisa ser igual ou maior que o mínimo atual."],
+  ["INSUFFICIENT_FUNDS", "Saldo disponível insuficiente para reservar este lance."],
+  ["LOT_ENDED", "Este lote já encerrou."],
+] as const) {
+  test(`recusa ${code} vira aviso sem código para suporte`, async ({ browser }) => {
+    const bidder = await apiAs("bidder");
+    await deposit(bidder, "500000");
+    const lotId = await publishLot(await apiAs("auctioneer"), { endsInMs: 30 * 60_000 });
+    const page = await pageAs(browser, "bidder");
+    await page.route(`**/api/lots/${lotId}/bids`, (route) =>
+      route.request().method() === "POST"
+        ? route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ statusCode: 409, code, message, requestId: "8a21cecf-88df-4c1a-864a-9f5703d25042" }) })
+        : route.fallback(),
+    );
+    await page.goto(`/lotes/${lotId}`);
+    await page.getByRole("button", { name: "Dar lance" }).click();
+    await page.getByRole("button", { name: "Confirmar lance" }).click();
+    const toast = page.locator("[data-sonner-toast]").filter({ hasText: message });
+    await expect(toast).toBeVisible();
+    await expect(toast).toHaveAttribute("data-type", "warning");
+    await expect(toast.getByTestId("support-code")).toHaveCount(0);
+    await expect(page.locator("[data-sonner-toast][data-type='error']")).toHaveCount(0);
+  });
+}

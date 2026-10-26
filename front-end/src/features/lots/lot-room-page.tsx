@@ -134,7 +134,7 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
           </Card>
           {data.state === "LIVE" ? (
             session.isPending ? null : isBidder ? (
-              <BidForm lot={data} availableCents={wallet.data?.availableCents ?? null} onDone={refresh} />
+              <BidForm lot={data} availableCents={wallet.data?.availableCents ?? null} leading={mine?.outcome === "LEADING"} onDone={refresh} />
             ) : session.data ? (
               <Alert><p>Leiloeiros acompanham a sala, mas não dão lances.</p></Alert>
             ) : (
@@ -234,7 +234,7 @@ function ResultBanner({ lot }: { lot: PublicLot }) {
   return <Alert><GavelIcon /><p>Encerrado. Arrematado por {formatBrl(lot.currentCents ?? "0")}.</p></Alert>;
 }
 
-function BidForm({ lot, availableCents, onDone }: { lot: PublicLot; availableCents: string | null; onDone: () => void }) {
+function BidForm({ lot, availableCents, leading, onDone }: { lot: PublicLot; availableCents: string | null; leading: boolean; onDone: () => void }) {
   const id = useId();
   const [text, setText] = useState(plain(lot.minimumNextCents));
   const [error, setError] = useState<string | null>(null);
@@ -256,7 +256,8 @@ function BidForm({ lot, availableCents, onDone }: { lot: PublicLot; availableCen
     onError: (failure) => {
       setConfirm(null);
       setConfirmed(null);
-      setError(failure instanceof ApiError ? failure.message : "Não conseguimos confirmar seu lance. Atualize o histórico antes de tentar de novo.");
+      // Já liderando (ex.: estado da sala ainda não atualizado) não é erro do campo: o aviso e o status bastam.
+      setError(failure instanceof ApiError ? (failure.code === "ALREADY_LEADING" ? null : failure.message) : "Não conseguimos confirmar seu lance. Atualize o histórico antes de tentar de novo.");
       notifyError(failure, "Não conseguimos confirmar seu lance.", { id: "lance" });
       onDone();
     },
@@ -291,7 +292,8 @@ function BidForm({ lot, availableCents, onDone }: { lot: PublicLot; availableCen
               <Button key={cents} type="button" variant="outline" size="sm" onClick={() => setText(plain(cents))}>{formatBrl(cents)}</Button>
             ))}
           </div>
-          <Button type="submit" size="lg" disabled={mutation.isPending}><GavelIcon /> {mutation.isPending ? "Enviando…" : "Dar lance"}</Button>
+          <Button type="submit" size="lg" disabled={mutation.isPending || leading}><GavelIcon /> {mutation.isPending ? "Enviando…" : "Dar lance"}</Button>
+          {leading ? <p className="text-sm text-muted-foreground" data-testid="lidera-aviso">Você já lidera este lote. Dê outro lance quando alguém cobrir o seu.</p> : null}
           {availableCents !== null ? <p className="text-xs text-muted-foreground">Disponível {formatBrl(availableCents)} · seu lance fica comprometido enquanto você lidera</p> : null}
           {short ? (
             <Alert variant="warning" data-testid="saldo-insuficiente">
