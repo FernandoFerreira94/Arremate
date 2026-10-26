@@ -21,7 +21,8 @@ describe("proxy da API", () => {
       expect(forwarded.get("x-csrf-token")).toBe("csrf-de-teste");
       expect(forwarded.get("content-type")).toBe("application/json");
       expect(forwarded.get("host")).toBeNull();
-      expect(forwarded.get("x-forwarded-for")).toBeNull();
+      // D26 (M1): o IP do cliente segue para a API, sem outros cabeçalhos de encaminhamento.
+      expect(forwarded.get("x-forwarded-for")).toBe("203.0.113.9");
     } finally {
       if (previous === undefined) delete process.env.API_PROXY_TARGET;
       else process.env.API_PROXY_TARGET = previous;

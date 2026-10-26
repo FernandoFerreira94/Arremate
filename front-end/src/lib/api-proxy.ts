@@ -13,5 +13,18 @@ export function upstreamHeaders(headers: Headers): Headers {
     const value = headers.get(name);
     if (value) forwarded.set(name, value);
   }
+  // D26 (M1): repassa só o IP do cliente (um valor), para a API contar limites por pessoa e não por 127.0.0.1.
+  const ip = clientAddress(headers);
+  if (ip) forwarded.set("x-forwarded-for", ip);
   return forwarded;
+}
+
+const IPV4 = /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
+const IPV6 = /^[0-9a-f:.]{2,45}$/i;
+
+/** Primeiro valor do X-Forwarded-For definido pelo servidor do Next (ou pela borda da hospedagem); inválido é descartado. */
+export function clientAddress(headers: Headers): string | null {
+  const first = headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
+  if (IPV4.test(first) || (first.includes(":") && IPV6.test(first))) return first;
+  return null;
 }
