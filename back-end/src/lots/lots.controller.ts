@@ -120,6 +120,13 @@ export class LotsController {
     return withMessage(await this.lots.setWatch(actorOf(request), id, false), SUCCESS_MESSAGES.AVISO_DESATIVADO);
   }
 
+  /** D32: lances de outras pessoas para o feed ao vivo (polling curto; o SSE é por lote e limitado por IP). */
+  @Get("me/activity")
+  @Authenticated()
+  activity(@Query("after") after: string | undefined, @Req() request: ActorRequest) {
+    return this.lots.activity(actorOf(request), after);
+  }
+
   @Get("me/notifications")
   @Authenticated()
   notifications(@Req() request: ActorRequest) {

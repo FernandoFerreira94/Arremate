@@ -208,3 +208,54 @@ html[data-arremate-intro="playing"] .page-entrance > div > * { animation-play-st
   .tour-cutout { transition: none; }
   .tour-tip[data-state] { animation: none; }
 }
+
+/* D32: feed de lances ao vivo. Círculo com o martelo se desenha, o card entra da direita só com o nome
+   da obra e abre como accordion com o lance. Acima da barra fixa da carteira no celular; abaixo de Sheet/Dialog. */
+.activity-feed {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(6rem + env(safe-area-inset-bottom));
+  z-index: 45;
+  width: min(20rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .activity-feed { right: 1.5rem; bottom: 1.5rem; }
+}
+.feed-card { pointer-events: auto; display: flex; align-items: flex-start; gap: 0.5rem; }
+.feed-card[data-leaving] { animation: feed-leave 300ms ease forwards; }
+.feed-card__badge {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  background: var(--primary);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.18);
+  animation: feed-badge-in 400ms var(--motion-entry-ease) both;
+}
+.feed-card__ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.feed-card__ring circle { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 1; animation: intro-frame 600ms ease 100ms both; }
+.feed-card__mark { width: 26px; height: 26px; animation: feed-mark-in 300ms ease 450ms both; }
+.feed-card__body {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+  animation: feed-body-in 450ms var(--motion-entry-ease) 700ms both;
+}
+.feed-card__details { display: grid; grid-template-rows: 1fr; animation: feed-open 400ms ease 1250ms both; }
+@keyframes feed-badge-in { from { opacity: 0; transform: scale(0.6); } }
+@keyframes feed-mark-in { from { opacity: 0; transform: scale(0.7) rotate(-20deg); } }
+@keyframes feed-body-in { from { opacity: 0; transform: translateX(48px); } }
+@keyframes feed-open { from { grid-template-rows: 0fr; opacity: 0; } to { grid-template-rows: 1fr; opacity: 1; } }
+@keyframes feed-leave { to { opacity: 0; transform: translateX(32px); } }
+@media (prefers-reduced-motion: reduce) {
+  .feed-card, .feed-card * { animation: none !important; }
+}

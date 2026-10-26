@@ -56,6 +56,7 @@ export type NotificationRow = {
 export const NOTIFICATIONS_KEPT = 20;
 
 export type PublicBidRow = { alias: string; amount_cents: string; sequence: number; accepted_at: Date };
+export type ActivityRow = { id: string; lot_id: string; title: string; alias: string; amount_cents: string; accepted_at: Date };
 
 export class LotsRepository {
   constructor(private readonly database: DatabaseRepository) {}
@@ -194,6 +195,18 @@ export class LotsRepository {
        FROM notifications n JOIN lots l ON l.id = n.lot_id JOIN catalog_item_snapshots s ON s.id = l.snapshot_id
        WHERE n.user_id = $1 ORDER BY n.created_at DESC, n.id DESC LIMIT $2`,
       [userId, NOTIFICATIONS_KEPT],
+    );
+    return result.rows;
+  }
+
+  /** D32: lances de outras pessoas aceitos depois do cursor, em ordem de aceite (feed ao vivo). */
+  async activity(userId: string, after: Date, limit: number): Promise<ActivityRow[]> {
+    const result = await this.database.query<ActivityRow>(
+      `SELECT b.id, b.lot_id, s.title, b.alias, b.amount_cents::text AS amount_cents, b.accepted_at
+       FROM bids b JOIN lots l ON l.id = b.lot_id JOIN catalog_item_snapshots s ON s.id = l.snapshot_id
+       WHERE b.user_id <> $1 AND b.accepted_at > $2
+       ORDER BY b.accepted_at ASC, b.sequence ASC LIMIT $3`,
+      [userId, after, limit],
     );
     return result.rows;
   }

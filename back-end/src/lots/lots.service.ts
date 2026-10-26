@@ -51,6 +51,8 @@ export type Paged<T> = { items: T[]; page: number; pageSize: number; total: numb
 
 const UPCOMING_MAX = 5;
 
+export type ActivityView = { id: string; lotId: string; title: string; alias: string; amountCents: string; acceptedAt: string };
+
 export class LotsService {
   private readonly logger = new Logger(LotsService.name);
 
@@ -136,6 +138,19 @@ export class LotsService {
     if (id !== null && !UUID.test(id)) throw new ApiException(404, "NAO_ENCONTRADO");
     await this.lots.markRead(actor.userId, id);
     return this.notifications(actor);
+  }
+
+  /**
+   * D32: feed de lances ao vivo de outras pessoas. Sem cursor devolve só o relógio do servidor (quem chega não
+   * recebe o passado); com cursor, até 5 lances posteriores e o novo cursor.
+   */
+  async activity(actor: Actor, rawAfter: string | undefined): Promise<{ items: ActivityView[]; cursor: string }> {
+    if (rawAfter === undefined) return { items: [], cursor: (await this.lots.clock()).toISOString() };
+    const after = new Date(rawAfter);
+    if (!/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(rawAfter) || Number.isNaN(after.getTime())) throw new ApiException(400, "REQUISICAO_INVALIDA");
+    const rows = await this.lots.activity(actor.userId, after, 5);
+    const items = rows.map((row) => ({ id: row.id, lotId: row.lot_id, title: row.title, alias: row.alias, amountCents: row.amount_cents, acceptedAt: row.accepted_at.toISOString() }));
+    return { items, cursor: items.at(-1)?.acceptedAt ?? rawAfter };
   }
 
   generateOpenedNotifications(): Promise<number> {

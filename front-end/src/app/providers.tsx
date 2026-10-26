@@ -6,6 +6,7 @@ import { AuthSheetProvider } from "@/features/auth/auth-sheet";
 import { PendingFavoriteRunner } from "@/features/favorites/use-favorites";
 import { TourProvider } from "@/features/tour/tour";
 import { AppToaster } from "@/components/app/toast";
+import { ActivityFeed } from "@/features/activity/activity-feed";
 import { ErrorListeners } from "@/components/app/error-listeners";
 import { NotificationToaster } from "@/features/notifications/use-notifications";
 import { PendingWatchRunner } from "@/features/notifications/use-watches";
@@ -27,6 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <PendingWatchRunner />
           <NotificationToaster />
           {children}
+          <ActivityFeed />
           <AppToaster />
         </TourProvider>
       </AuthSheetProvider>
