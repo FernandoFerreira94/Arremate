@@ -1,5 +1,6 @@
 import { Type } from "class-transformer";
-import { IsInt, IsISO8601, IsOptional, IsString, Matches, Max, MaxLength, Min } from "class-validator";
+import { IsIn, IsInt, IsISO8601, IsOptional, IsString, Matches, Max, MaxLength, Min } from "class-validator";
+import { SHOWCASE_STATES, type ShowcaseState } from "../lots.repository";
 
 export class CreateLotDto {
   @IsString()
@@ -45,5 +46,10 @@ export class ShowcaseQuery extends PageQuery {
   @IsString()
   @MaxLength(80)
   q?: string;
+
+  /** Aba da vitrine filtrada no SQL; sem ela, todos os não cancelados. */
+  @IsOptional()
+  @IsIn(SHOWCASE_STATES)
+  state?: ShowcaseState;
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bidShortcuts, clockOffset, remainingMs, formatCountdown, rankByBidder, showcaseTab, insufficientBalanceMessage, confirmationHolds, becameOutbid } from "./room-logic";
+import { bidShortcuts, clockOffset, remainingMs, formatCountdown, rankByBidder, insufficientBalanceMessage, confirmationHolds, becameOutbid } from "./room-logic";
 
 describe("bidShortcuts", () => {
   it("mínimo, +1 e +2 incrementos sobre o mínimo", () => {
@@ -29,15 +29,6 @@ describe("rankByBidder", () => {
       { alias: "A", amountCents: "200", sequence: 3, acceptedAt: "" },
     ]);
     expect(rows.map((r) => [r.position, r.alias, r.amountCents])).toEqual([[1, "A", "200"], [2, "B", "150"]]);
-  });
-});
-
-describe("showcaseTab", () => {
-  it("agrupa estados nas abas; cancelado fica fora", () => {
-    expect(showcaseTab("LIVE")).toBe("live");
-    expect(showcaseTab("SCHEDULED")).toBe("scheduled");
-    expect(showcaseTab("ENDED")).toBe("ended");
-    expect(showcaseTab("CANCELLED")).toBeNull();
   });
 });
 

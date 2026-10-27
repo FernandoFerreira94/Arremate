@@ -12,12 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { NextAuctionHero } from "../notifications/next-auction-hero";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LotCard } from "./lot-card";
-import { getShowcase } from "./lots-api";
-import { endsTodayBrt } from "./recent-bids-logic";
-import { clockOffset, showcaseTab, type ShowcaseTab } from "./room-logic";
+import { getShowcase, type ShowcaseState } from "./lots-api";
+import { clockOffset } from "./room-logic";
 
 /** R5: abas endereçáveis pelo menu (`/?aba=agendados`); "Encerrando hoje" é um filtro dos ao vivo, sem status novo. */
-type Tab = ShowcaseTab | "ending";
+type Tab = ShowcaseState;
 const TAB_PARAM: Record<Tab, string> = { live: "ao-vivo", scheduled: "agendados", ended: "encerrados", ending: "encerrando-hoje" };
 const tabFromParam = (value: string | null): Tab => (Object.entries(TAB_PARAM).find(([, v]) => v === value)?.[0] as Tab | undefined) ?? "live";
 
@@ -50,13 +49,15 @@ export function ShowcasePage() {
     search.delete("page");
     router.replace(`${pathname}?${search.toString()}`, { scroll: false });
   };
-  const query = useQuery({ queryKey: ["showcase", page, q], queryFn: () => getShowcase(page, q), refetchInterval: 15000 });
+  // A aba vai para o servidor: filtro e paginação no SQL, e os totais contam todos os lotes, não só a página.
+  const query = useQuery({ queryKey: ["showcase", tab, page, q], queryFn: () => getShowcase(page, q, tab), refetchInterval: 15000, placeholderData: (previous) => previous });
   const now = useNow();
   const offset = query.data ? clockOffset(query.data.serverNow, query.dataUpdatedAt) : 0;
-  const items = (query.data?.items ?? []).filter((lot) => showcaseTab(lot.state) !== null);
-  const inTab = (lot: (typeof items)[number], t: Tab) => (t === "ending" ? lot.state === "LIVE" && endsTodayBrt(lot.endsAt, now + offset) : showcaseTab(lot.state) === t);
-  const count = (t: Tab) => items.filter((lot) => inTab(lot, t)).length;
-  const visible = items.filter((lot) => inTab(lot, tab));
+  // Ao trocar de aba os totais anteriores ficam no lugar, mas os cartões da aba antiga não aparecem.
+  const loading = query.isPending || query.isPlaceholderData;
+  const count = (t: Tab) => query.data?.counts[t] ?? 0;
+  const found = count("live") + count("scheduled") + count("ended");
+  const visible = query.data?.items ?? [];
   const pages = query.data ? Math.max(1, Math.ceil(query.data.total / query.data.pageSize)) : 1;
   const pageHref = (n: number) => {
     const search = new URLSearchParams({ aba: TAB_PARAM[tab], page: String(n) });
@@ -99,14 +100,14 @@ export function ShowcasePage() {
         <div className="flex flex-wrap items-center gap-2 text-sm" role="status">
           <span>
             Resultados para <strong>&ldquo;{q}&rdquo;</strong>
-            {query.data ? <span className="text-muted-foreground"> · {query.data.total} {query.data.total === 1 ? "lote" : "lotes"}</span> : null}
+            {query.data ? <span className="text-muted-foreground"> · {found} {found === 1 ? "lote" : "lotes"}</span> : null}
           </span>
           <Button variant="ghost" size="sm" onClick={clearSearch}>
             <XIcon /> Limpar busca
           </Button>
         </div>
       ) : null}
-      {query.isPending ? (
+      {loading ? (
         <div role="status" aria-label="Carregando lotes" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-[452px]" />)}
         </div>
@@ -115,7 +116,7 @@ export function ShowcasePage() {
       ) : visible.length === 0 ? (
         <EmptyState title={empty.title} description={empty.description} />
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ul aria-label="Lotes da aba" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {visible.map((lot) => <li key={lot.id}><LotCard lot={lot} now={now} offset={offset} /></li>)}
         </ul>
       )}

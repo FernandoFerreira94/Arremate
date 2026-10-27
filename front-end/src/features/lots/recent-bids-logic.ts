@@ -30,9 +30,3 @@ export function maskAlias(alias: string): string {
   if (trimmed.length <= 3) return `${trimmed}•••`;
   return `${trimmed.slice(0, 3)}•••${trimmed.slice(-1)}`;
 }
-
-/** R5: lote ao vivo que termina hoje no horário de Brasília (UTC−3, sem horário de verão). */
-export function endsTodayBrt(endsAtIso: string, nowMs: number): boolean {
-  const day = (ms: number) => new Date(ms - 3 * 3600_000).toISOString().slice(0, 10);
-  return day(Date.parse(endsAtIso)) === day(nowMs);
-}

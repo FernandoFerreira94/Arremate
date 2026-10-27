@@ -120,7 +120,7 @@ Snapshot: `(provider, external_id)` único, com `ON CONFLICT DO NOTHING`. Import
 | `GET /api/catalog/items/:externalId` | Leiloeiro, 30/min | O mesmo item |
 | `POST /api/lots` | Leiloeiro, `Idempotency-Key` UUID | 201 `LotView` |
 | `POST /api/lots/:id/cancel` | Leiloeiro dono | 200 `LotView` |
-| `GET /api/lots?page=` | Público | 8 por página, sem cancelados; ao vivo, depois agendados, depois encerrados |
+| `GET /api/lots?page=&q=&state=` | Público | 8 por página, sem cancelados; ao vivo, depois agendados, depois encerrados. `state` (`live`, `scheduled`, `ended`, `ending`) filtra a aba no SQL; `counts` traz o total de cada aba sobre a busca inteira |
 | `GET /api/lots/:id` | Público | `LotView`, inclusive cancelado |
 | `GET /api/lots/:id/bids?page=&limit=` | Público | `{ alias, amountCents, sequence, acceptedAt }` |
 | `GET /api/seller/lots?page=&limit=` | Leiloeiro | Os próprios lotes, inclusive cancelados |

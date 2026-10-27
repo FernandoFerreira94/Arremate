@@ -308,4 +308,42 @@ describe("lotes", () => {
     expect(wildcard.body.total).toBe(0);
     expect((await search("x".repeat(81))).status).toBe(400);
   });
+
+  it("filtra a aba no servidor e conta cada aba sobre todos os lotes, não só a página", async () => {
+    const owner = await login("AUCTIONEER");
+    const tag = randomBytes(4).toString("hex");
+    const titled = (label: string) => body(work({ title: `Aba ${tag} ${label}` }));
+    const live = await Promise.all(Array.from({ length: 9 }, (_, i) => publish(owner.session, titled(`vivo ${i}`))));
+    const scheduled = await publish(owner.session, titled("agendado"));
+    const ended = await publish(owner.session, titled("encerrado"));
+    const cancelled = await publish(owner.session, titled("cancelado"));
+    for (const created of [...live, scheduled, ended, cancelled]) expect(created.status).toBe(201);
+    await pool.query(`UPDATE lots SET starts_at = clock_timestamp() + interval '1 day', ends_at = clock_timestamp() + interval '2 days' WHERE id = $1`, [scheduled.body.id]);
+    await pool.query(`UPDATE lots SET starts_at = clock_timestamp() - interval '2 hours', ends_at = clock_timestamp() - interval '1 hour' WHERE id = $1`, [ended.body.id]);
+    expect((await owner.session.post(`/api/lots/${cancelled.body.id}/cancel`, {})).status).toBe(200);
+
+    const list = (state: string, page = 1) => request(app.getHttpServer()).get(`/api/lots?q=${tag}&state=${state}&page=${page}`);
+    const endedTab = await list("ended");
+    expect(endedTab.status).toBe(200);
+    expect(endedTab.body.items.map((item: { id: string }) => item.id)).toEqual([ended.body.id]);
+    expect(endedTab.body.total).toBe(1);
+    expect(endedTab.body.counts).toMatchObject({ live: 9, scheduled: 1, ended: 1 });
+
+    const firstLive = await list("live");
+    const secondLive = await list("live", 2);
+    expect(firstLive.body.items).toHaveLength(8);
+    expect(secondLive.body.items).toHaveLength(1);
+    expect(firstLive.body.total).toBe(9);
+    expect([...firstLive.body.items, ...secondLive.body.items].every((item: { state: string }) => item.state === "LIVE")).toBe(true);
+    expect((await list("scheduled")).body.items.map((item: { id: string }) => item.id)).toEqual([scheduled.body.id]);
+
+    const ending = await list("ending");
+    const brtDay = (iso: string) => new Date(Date.parse(iso) - 3 * HOUR).toISOString().slice(0, 10);
+    const expectedEnding = live.filter((created) => brtDay(created.body.endsAt) === brtDay(ending.body.serverNow)).length;
+    expect(ending.body.total).toBe(expectedEnding);
+    expect(ending.body.counts.ending).toBe(expectedEnding);
+
+    expect((await request(app.getHttpServer()).get(`/api/lots?q=${tag}`)).body.total).toBe(11);
+    expect((await list("cancelled")).status).toBe(400);
+  });
 });
