@@ -31,6 +31,19 @@ test("abas da vitrine contam todos os lotes e filtram no servidor, não só a p�
   else await expect(cards).toHaveCount(Math.min(counts.ended, 8));
 });
 
+test("sala no celular: preço e lance vêm antes da ficha da obra (code review item 3)", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  const list = (await (await page.request.get("/api/lots?state=live")).json()) as { items: { id: string }[] };
+  test.skip(list.items.length === 0, "sem lote ao vivo no banco de teste");
+  await markTourSeen(page);
+  await page.goto(`/lotes/${list.items[0]?.id}`);
+  const price = await page.getByTestId("current-price").boundingBox();
+  const about = await page.getByText("Sobre o lote").boundingBox();
+  expect(price && about && price.y < about.y).toBe(true);
+  await context.close();
+});
+
 test("comprovante com token válido mas inexistente mostra erro real, sem selo positivo", async ({ page }) => {
   await page.goto(`/comprovantes/${"A".repeat(32)}`);
   await expect(page.getByText("Comprovante não encontrado. Confira o link recebido.")).toBeVisible();
