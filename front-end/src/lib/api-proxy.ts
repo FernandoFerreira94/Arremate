@@ -32,3 +32,11 @@ export function clientAddress(headers: Headers): string | null {
   if (IPV4.test(last) || (last.includes(":") && IPV6.test(last))) return last;
   return null;
 }
+
+/** API fora do ar (reinício, deploy): 503 em JSON no formato das outras falhas, em vez de 500 sem corpo. */
+export function upstreamUnavailable(): Response {
+  return Response.json(
+    { statusCode: 503, code: "API_INDISPONIVEL", message: "O serviço está reiniciando. Tente de novo em instantes; nenhum dado foi alterado.", requestId: "" },
+    { status: 503, headers: { "cache-control": "no-store", "retry-after": "5" } },
+  );
+}
