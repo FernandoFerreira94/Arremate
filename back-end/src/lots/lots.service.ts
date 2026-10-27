@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import { Logger } from "@nestjs/common";
 import { ApiException } from "../auth/api.exception";
 import type { Actor } from "../auth/auth.service";
-import type { AuditService } from "../audit/audit.service";
+import type { PoolClient } from "pg";
+import { ConfirmationPendingError, IntegrityBlockedError, type AuditService } from "../audit/audit.service";
 import { CatalogService } from "../catalog/catalog.service";
 import { MoneyError, parsePositiveMoney } from "../common/money";
 import { DatabaseRepository } from "../database/database.repository";
@@ -240,18 +241,33 @@ export class LotsService {
 
   async cancelLot(actor: Actor, lotId: string): Promise<LotView> {
     if (!UUID.test(lotId)) throw new ApiException(404, "NAO_ENCONTRADO");
-    await this.database.transaction(async (client) => {
-      const locked = await client.query<{ owner_id: string; status: string; ended: boolean }>(
-        `SELECT owner_id, status::text AS status, ends_at <= clock_timestamp() AS ended FROM lots WHERE id = $1 FOR UPDATE`,
-        [lotId],
-      );
-      const lot = locked.rows[0];
+    type Cancellable = { owner_id: string; status: string; ended: boolean; revision: number; has_bids: boolean };
+    const CANCELLABLE = `SELECT owner_id, status::text AS status, ends_at <= clock_timestamp() AS ended, revision,
+                                EXISTS (SELECT 1 FROM bids WHERE lot_id = lots.id) AS has_bids FROM lots WHERE id = $1`;
+    const refuse = (lot: Cancellable | undefined): void => {
       if (!lot || lot.owner_id !== actor.userId) throw new ApiException(404, "NAO_ENCONTRADO");
       if (lot.status !== "PUBLISHED" || lot.ended) throw new ApiException(409, "LOTE_NAO_CANCELAVEL");
-      const bids = await client.query(`SELECT 1 FROM bids WHERE lot_id = $1 LIMIT 1`, [lotId]);
-      if ((bids.rowCount ?? 0) > 0) throw new ApiException(409, "LOTE_COM_LANCES");
-      await client.query(`UPDATE lots SET status = 'CANCELLED' WHERE id = $1`, [lotId]);
-    });
+      if (lot.has_bids) throw new ApiException(409, "LOTE_COM_LANCES");
+    };
+    // Recusas de regra saem antes da auditoria (não mudam nada); a checagem se repete sob lock na transação.
+    refuse((await this.database.query<Cancellable>(CANCELLABLE, [lotId])).rows[0]);
+    const cancel = async (client: PoolClient, expectedRevision: number | null) => {
+      const lot = (await client.query<Cancellable>(`${CANCELLABLE} FOR UPDATE`, [lotId])).rows[0];
+      refuse(lot);
+      if (expectedRevision !== null && lot?.revision !== expectedRevision) throw new ConfirmationPendingError();
+      // A revisão acompanha o envelope selado pela auditoria (cancelamento conta como uma mutação do lote).
+      await client.query(`UPDATE lots SET status = 'CANCELLED', revision = revision + $2 WHERE id = $1`, [lotId, expectedRevision === null ? 0 : 1]);
+    };
+    try {
+      if (this.audit) await this.audit.cancelAtomic(lotId, cancel);
+      else await this.database.transaction((client) => cancel(client, null));
+    } catch (error) {
+      if (error instanceof ConfirmationPendingError) throw new ApiException(503, "CONFIRMATION_PENDING");
+      if (error instanceof IntegrityBlockedError) {
+        throw error.code === "CONFIRMATION_PENDING" ? new ApiException(503, "CONFIRMATION_PENDING") : new ApiException(409, "LOTE_BLOQUEADO");
+      }
+      throw error;
+    }
     return this.detail(lotId);
   }
 

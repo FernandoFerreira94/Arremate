@@ -45,6 +45,8 @@ export type CheckpointBody = {
   startsAt: string;
   genesisEndsAt: string;
   settlement: SettlementLink | null;
+  /** Cancelamento selado no envelope; ausente equivale a `false` e mantém os bytes dos envelopes antigos. */
+  cancelled?: boolean;
 };
 
 export type Checkpoint = CheckpointBody & {
@@ -60,6 +62,7 @@ export type LotSnapshot = {
   startsAt: string;
   endsAt: string;
   revision: number;
+  status: string;
 };
 
 export type StoredBid = {

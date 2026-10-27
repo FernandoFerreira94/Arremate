@@ -64,6 +64,7 @@ Cada evento do lote (abertura, lance, prorrogação, liquidação) é assinado c
 - inserir um lance sem a chave não gera assinatura válida;
 - apagar lances, inclusive os últimos, deixa o histórico menor que a testemunha (`HISTORY_TRUNCATED`);
 - apagar o lote com a testemunha restante dá `LOT_REMOVED`;
+- mudar `lots.status` direto no banco (por exemplo `CANCELLED`) dá `STATUS_MISMATCH`: o cancelamento é selado no envelope da testemunha;
 - sem chave ou sem testemunha, o resultado é “indeterminado”, nunca “íntegro”.
 
 **Prove você mesmo (banco local):** abra a auditoria de um lote com lances e confira “íntegro”. Depois rode no banco de desenvolvimento

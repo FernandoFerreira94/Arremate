@@ -49,7 +49,7 @@ export class AuditRepository {
 
   private async readHistory(client: PoolClient, lotId: string): Promise<LotHistory> {
     const lot = await client.query(
-      `SELECT id, owner_id, snapshot_id, initial_cents, increment_cents, starts_at, ends_at, revision
+      `SELECT id, owner_id, snapshot_id, initial_cents, increment_cents, starts_at, ends_at, revision, status::text AS status
        FROM lots WHERE id = $1`,
       [lotId],
     );
@@ -148,6 +148,7 @@ function mapLot(row: unknown): LotSnapshot {
     startsAt: asInstant(record.starts_at),
     endsAt: asInstant(record.ends_at),
     revision: asInteger(record.revision),
+    status: typeof record.status === "string" ? record.status : "",
   };
 }
 

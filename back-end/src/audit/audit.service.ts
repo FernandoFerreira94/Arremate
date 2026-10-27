@@ -130,6 +130,7 @@ export class AuditService {
         startsAt: current.startsAt,
         genesisEndsAt: current.genesisEndsAt,
         settlement: current.settlement,
+        ...(current.cancelled ? { cancelled: true } : {}),
       };
       const next = seal(body, key);
       await this.store.writePending(next);
@@ -255,6 +256,34 @@ export class AuditService {
     });
   }
 
+  /**
+   * Cancelamento atômico: decide e grava a nova situação numa transação, sela `cancelled` no envelope
+   * e só então avança a testemunha. Assim um `UPDATE lots SET status` direto no banco é detectado.
+   */
+  async cancelAtomic(lotId: string, decide: (client: PoolClient, revision: number) => Promise<void>): Promise<void> {
+    await this.exclusive(lotId, async () => {
+      await this.assertCanMutate(lotId);
+      const key = this.requireKey();
+      const current = await this.store.read(lotId);
+      if (!current) throw new IntegrityBlockedError("CONFIRMATION_PENDING");
+      const next = seal({ ...withoutEnvelope(current), revision: current.revision + 1, cancelled: true }, key);
+      let committed = false;
+      try {
+        await this.repository.transaction(async (client) => {
+          await this.store.writePending(next);
+          await decide(client, current.revision);
+        });
+        committed = true;
+        await this.store.advance(current.revision, next);
+        await this.store.clearPending(lotId);
+      } catch (error) {
+        if (committed) throw new ConfirmationPendingError();
+        await this.store.clearPending(lotId);
+        throw error;
+      }
+    });
+  }
+
   async retryCheckpoint(lotId: string): Promise<void> {
     await this.exclusive(lotId, async () => {
       this.requireKey();
@@ -342,6 +371,9 @@ export class AuditService {
     if (history.lot.endsAt !== checkpoint.endsAt || history.lot.revision !== checkpoint.revision || !settlementMatches(history.settlement, checkpoint.settlement)) {
       return tampered("ENVELOPE_MISMATCH", "Extensão ou resultado não conferem com o envelope.", checkpoint, verifiedAt);
     }
+    if (history.lot.status !== expectedStatus(checkpoint)) {
+      return tampered("STATUS_MISMATCH", "Situação do lote não confere com o envelope.", checkpoint, verifiedAt);
+    }
     return {
       status: "INTACT",
       revision: checkpoint.revision,
@@ -391,6 +423,7 @@ function nextBody(current: Checkpoint, signature: string, endsAt: string): Check
     startsAt: current.startsAt,
     genesisEndsAt: current.genesisEndsAt,
     settlement: current.settlement,
+    ...(current.cancelled ? { cancelled: true } : {}),
   };
 }
 
@@ -445,6 +478,13 @@ function metadataMatches(lot: LotSnapshot, checkpoint: Checkpoint): boolean {
     lot.incrementCents === checkpoint.incrementCents &&
     lot.startsAt === checkpoint.startsAt
   );
+}
+
+/** A situação do lote não é assinada à parte: decorre do envelope (cancelamento ou liquidação selados). */
+function expectedStatus(checkpoint: Checkpoint): string {
+  if (checkpoint.cancelled) return "CANCELLED";
+  if (checkpoint.settlement) return checkpoint.settlement.winnerBidId ? "SETTLED" : "CLOSED_NO_BIDS";
+  return "PUBLISHED";
 }
 
 function settlementMatches(actual: SettlementLink | null, expected: SettlementLink | null): boolean {
