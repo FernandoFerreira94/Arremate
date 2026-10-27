@@ -50,7 +50,7 @@ function AwardsContent() {
         <Card>
           <CardHeader><CardTitle>{tab === "arremates" ? "Arrematados" : tab === "historico" ? "Histórico" : "Participações"}</CardTitle></CardHeader>
           <CardContent>
-            {active.isPending ? <LoadingRows label="Carregando leilões" rows={3} /> : active.isError ? <ErrorState message="Não foi possível carregar seus leilões." onRetry={() => void active.refetch()} /> : active.data.items.length === 0 ? <EmptyState title={tab === "arremates" ? "Nenhum arremate ainda" : "Você ainda não participou de leilões"} description={tab === "arremates" ? "Quando você vencer um leilão, o lote e o comprovante aparecem aqui. Disputas em andamento ficam em Participações." : "Os lotes em que você der lance aparecem aqui."} action={<Button asChild variant="outline"><Link href="/">Ver vitrine</Link></Button>} /> : tab === "arremates" && awards.data ? <ul className="grid gap-4 md:grid-cols-2">{awards.data.items.map((award) => <AwardCard key={award.lotId} award={award} />)}</ul> : <ParticipationsTable rows={participations.data?.items ?? []} />}
+            {active.isPending ? <LoadingRows label="Carregando leilões" rows={3} /> : active.isError ? <ErrorState message="Não foi possível carregar seus leilões." onRetry={() => void active.refetch()} /> : active.data.items.length === 0 ? <EmptyState title={tab === "arremates" ? "Nenhum arremate ainda" : "Você ainda não participou de leilões"} description={tab === "arremates" ? "Quando você vencer um leilão, o lote e o comprovante aparecem aqui. Disputas em andamento ficam em Participações." : "Os lotes em que você der lance aparecem aqui."} action={<Button asChild variant="outline"><Link href="/">Ver vitrine</Link></Button>} /> : tab === "arremates" && awards.data ? <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">{awards.data.items.map((award) => <AwardCard key={award.lotId} award={award} />)}</ul> : <ParticipationsTable rows={participations.data?.items ?? []} />}
             {active.data && active.data.total > 8 ? <div className="mt-4 flex items-center justify-between gap-3 text-sm"><span>Página {page} de {pages}</span><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => navigate(tab, page - 1)}>Anterior</Button><Button variant="outline" size="sm" disabled={page >= pages} onClick={() => navigate(tab, page + 1)}>Próxima</Button></div></div> : null}
           </CardContent>
         </Card>
@@ -72,7 +72,7 @@ function AwardCard({ award }: { award: Award }) {
     }
   }
   return (
-    <li className="flex gap-4 rounded-lg border p-3">
+    <li className="flex min-w-0 gap-4 rounded-lg border p-3">
 
       <ArtworkImage src={award.imageUrl} alt="" width={80} height={80} sizes="80px" className="size-20 rounded-md object-cover" />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
