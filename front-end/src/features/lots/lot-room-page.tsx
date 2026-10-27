@@ -94,16 +94,19 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
       {channel === "degraded" ? (
         <Alert className="items-center"><WifiOffIcon /><p>Reconectando… os dados podem estar até 10 s desatualizados. Lances continuam sendo validados pelo servidor.</p></Alert>
       ) : null}
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="flex flex-col gap-6 lg:col-span-7">
-          <figure>
+      {/* Code review item 3: no celular a ordem é imagem → título, preço e lance → ficha da obra. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="contents lg:col-span-7 lg:flex lg:flex-col lg:gap-6">
+          <figure className="order-1 min-w-0 lg:order-none">
             <ArtworkZoom src={data.imageUrl} zoomSrc={`/api/media/zoom/${encodeURIComponent(data.externalId)}`} alt={`${data.title}, ${data.artist}`} title={data.title} credit={`${data.credit} · ${data.license}`} />
             <figcaption className="mt-2 text-xs text-muted-foreground">{data.credit} · {data.license}</figcaption>
           </figure>
-          <AboutCard lot={data} />
-          <ConditionCard lot={data} />
+          <div className="order-3 flex min-w-0 flex-col gap-6 lg:order-none">
+            <AboutCard lot={data} />
+            <ConditionCard lot={data} />
+          </div>
         </div>
-        <div className="flex flex-col gap-6 lg:col-span-5">
+        <div className="order-2 flex min-w-0 flex-col gap-6 lg:order-none lg:col-span-5">
           <div>
             <div className="flex items-start justify-between gap-2">
               <LotStateBadge state={data.state} />
