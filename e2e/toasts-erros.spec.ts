@@ -101,15 +101,19 @@ test("remover favorito mostra Desfazer, que refaz o favorito", async ({ browser 
 });
 
 test("dois avisos seguidos empilham em coluna: o novo embaixo, longe do feed de lances", async ({ browser }) => {
-  const lotId = await publishLot(await apiAs("auctioneer"), { endsInMs: 30 * 60_000 });
+  // Dois depósitos de valores diferentes: avisos distintos (o favorito reusa o id por lote e troca o aviso no lugar).
   const viewport = { width: 1440, height: 900 };
   const page = await bidderPage(browser, viewport);
-  await page.goto(`/lotes/${lotId}`);
-  await page.getByRole("button", { name: /^Favoritar/ }).first().click();
-  const older = toasts(page).filter({ hasText: "Adicionado aos favoritos." });
+  await page.goto("/carteira?aba=pix");
+  const deposit = async (label: string) => {
+    await page.getByRole("button", { name: label, exact: true }).click();
+    await page.getByRole("button", { name: "Simular pagamento aprovado" }).click();
+  };
+  await deposit("R$ 1.000");
+  const older = toasts(page).filter({ hasText: "Depósito de R$ 1.000,00 adicionado à carteira." });
   await expect(older).toBeVisible();
-  await page.getByRole("button", { name: /Remover .* dos favoritos/ }).first().click();
-  const newer = toasts(page).filter({ hasText: "Removido dos favoritos." });
+  await deposit("R$ 5.000");
+  const newer = toasts(page).filter({ hasText: "Depósito de R$ 5.000,00 adicionado à carteira." });
   await expect(newer).toBeVisible();
   await expect(older).toBeVisible();
   // Coluna aberta: sem sobreposição, o mais novo embaixo e o anterior empurrado para cima, no canto esquerdo.
