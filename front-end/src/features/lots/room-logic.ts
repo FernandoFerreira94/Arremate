@@ -1,4 +1,4 @@
-import { formatBrl } from "../../lib/money";
+import { formatBrl, parseBrlInput } from "../../lib/money";
 
 export type PublicBid = { alias: string; amountCents: string; sequence: number; acceptedAt: string };
 
@@ -55,4 +55,10 @@ export function confirmationHolds(confirmedCents: string, currentCents: string |
 /** QA N4: toast na sala só na virada de liderando para superado (não ao abrir a sala já superado). */
 export function becameOutbid(previous: string | null | undefined, next: string | null | undefined): boolean {
   return previous === "LEADING" && next === "OUTBID";
+}
+
+/** Auditoria item 13: com o novo mínimo (lance de outra pessoa), o campo acompanha se ficou abaixo dele ou inválido. */
+export function followsMinimum(text: string, minimumCents: string): boolean {
+  const parsed = parseBrlInput(text);
+  return !parsed.ok || BigInt(parsed.cents) < BigInt(minimumCents);
 }

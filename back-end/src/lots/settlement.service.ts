@@ -98,6 +98,11 @@ export class SettlementService {
     });
   }
 
+  /** Auditoria item 3: confirma ou descarta intenções pendentes antes da primeira varredura. */
+  async recoverPendingConfirmations(): Promise<{ confirmed: number; discarded: number; blocked: string[] }> {
+    return this.audit ? this.audit.recoverPending() : { confirmed: 0, discarded: 0, blocked: [] };
+  }
+
   /** Varre lotes vencidos; cada um em sua transação. Falha de um não impede os demais. */
   async settleDueLots(onClosed?: (lotId: string) => void): Promise<ProcessingSummary> {
     const summary: ProcessingSummary = { scanned: 0, settled: 0, closedNoBids: 0, blocked: 0, failed: 0 };
@@ -121,8 +126,8 @@ export class SettlementService {
     return summary;
   }
 
-  async listParticipations(actor: Actor, page: number): Promise<ListPage<Participation>> {
-    const { rows, total } = await this.repository.participations(this.database, actor.userId, LIST_PAGE_SIZE, (page - 1) * LIST_PAGE_SIZE);
+  async listParticipations(actor: Actor, page: number, lotId?: string): Promise<ListPage<Participation>> {
+    const { rows, total } = await this.repository.participations(this.database, actor.userId, LIST_PAGE_SIZE, (page - 1) * LIST_PAGE_SIZE, lotId?.toLowerCase() ?? null);
     const items = rows.map((row): Participation => ({
       lotId: row.lot_id,
       title: row.title,

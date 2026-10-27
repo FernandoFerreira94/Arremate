@@ -31,11 +31,11 @@ import { formatBrt } from "@/lib/datetime";
 import { createIdempotentAction } from "@/lib/idempotent-action";
 import { formatBrl, parseBrlInput } from "@/lib/money";
 import { useLotChannel } from "@/lib/realtime";
-import { bidsKey, getBids, getLot, lotKey, placeBid, SIMULATED_LABEL, type PublicLot } from "./lots-api";
+import { bidsKey, getAudit, getBids, getLot, lotKey, placeBid, SIMULATED_LABEL, type PublicLot } from "./lots-api";
 import { ArtworkZoom } from "./artwork-zoom";
 import { LotDetailRows } from "./lot-details";
 import { RecentBidsTrigger } from "./recent-bids";
-import { becameOutbid, bidShortcuts, clockOffset, confirmationHolds, insufficientBalanceMessage, formatCountdown, rankByBidder, remainingMs } from "./room-logic";
+import { becameOutbid, bidShortcuts, followsMinimum, clockOffset, confirmationHolds, insufficientBalanceMessage, formatCountdown, rankByBidder, remainingMs } from "./room-logic";
 import { useNow } from "./showcase-page";
 import { messageOf, notifyError, notifySuccess, notifyWarning } from "@/lib/notify";
 
@@ -47,8 +47,12 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
   const bids = useQuery({ queryKey: bidsKey(lotId, 1), queryFn: () => getBids(lotId, 1, 100) });
   const session = useSession();
   const isBidder = session.data?.role === "BIDDER";
-  const participations = useQuery({ queryKey: ["me", "participations", 1], queryFn: () => listParticipations(1), enabled: isBidder });
+  // Auditoria item 12: a participação deste lote, não a 1ª página de todas (que podia não incluir o lote).
+  const participations = useQuery({ queryKey: ["me", "participations", "lot", lotId], queryFn: () => listParticipations(1, lotId), enabled: isBidder });
   const wallet = useQuery({ queryKey: ["wallet"], queryFn: getWallet, enabled: isBidder });
+  // Auditoria item 3: encerrado sem liquidar consulta a auditoria; lote adulterado não liquida e a sala diz isso.
+  const awaitingSettlement = lot.data?.state === "ENDED" && (lot.data.result === "CLOSED_PENDING" || lot.data.settlementPending);
+  const audit = useQuery({ queryKey: ["lot", lotId, "audit"], queryFn: () => getAudit(lotId), enabled: awaitingSettlement, refetchInterval: 15000 });
 
   const refresh = useCallback(() => {
     void client.invalidateQueries({ queryKey: ["lot", lotId] });
@@ -128,7 +132,7 @@ export function LotRoomPage({ lotId }: { lotId: string }) {
                 <Badge variant="warning">Reta final: lance agora prorroga para 2 min</Badge>
               ) : null}
               <MyStatus outcome={mine?.outcome ?? null} myTopCents={mine?.myTopCents ?? null} />
-              <ResultBanner lot={data} />
+              <ResultBanner lot={data} blocked={audit.data?.status === "TAMPERED"} />
               {data.state === "SCHEDULED" ? <WatchButton lotId={data.id} title={data.title} /> : null}
             </CardContent>
           </Card>
@@ -226,9 +230,20 @@ function MyStatus({ outcome, myTopCents }: { outcome: string | null; myTopCents:
   return null;
 }
 
-function ResultBanner({ lot }: { lot: PublicLot }) {
+function ResultBanner({ lot, blocked }: { lot: PublicLot; blocked: boolean }) {
   if (lot.state === "CANCELLED") return <Alert><p>Este lote foi cancelado pelo leiloeiro antes de receber lances.</p></Alert>;
   if (lot.state !== "ENDED") return null;
+  if (blocked && (lot.result === "CLOSED_PENDING" || lot.settlementPending)) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangleIcon />
+        <p>
+          Bloqueado pela auditoria: o histórico deste lote não confere, então ele não é liquidado. O saldo de quem venceu continua reservado, sem débito.{" "}
+          <Link href={`/lotes/${encodeURIComponent(lot.id)}/auditoria`} className="underline underline-offset-4">Ver auditoria</Link>
+        </p>
+      </Alert>
+    );
+  }
   if (lot.result === "CLOSED_PENDING" || lot.settlementPending) return <Alert><p>Encerrado. Apurando o resultado… o comprovante aparece em instantes.</p></Alert>;
   if (lot.result === "CLOSED_NO_BIDS") return <Alert><p>Encerrado sem vencedor: nenhum lance foi dado.</p></Alert>;
   return <Alert><GavelIcon /><p>Encerrado. Arrematado por {formatBrl(lot.currentCents ?? "0")}.</p></Alert>;
@@ -237,6 +252,12 @@ function ResultBanner({ lot }: { lot: PublicLot }) {
 function BidForm({ lot, availableCents, leading, onDone }: { lot: PublicLot; availableCents: string | null; leading: boolean; onDone: () => void }) {
   const id = useId();
   const [text, setText] = useState(plain(lot.minimumNextCents));
+  // Auditoria item 13: lance de outra pessoa sobe o mínimo; o campo acompanha se ficou abaixo dele.
+  const [seenMinimum, setSeenMinimum] = useState(lot.minimumNextCents);
+  if (seenMinimum !== lot.minimumNextCents) {
+    setSeenMinimum(lot.minimumNextCents);
+    if (followsMinimum(text, lot.minimumNextCents)) setText(plain(lot.minimumNextCents));
+  }
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<{ text: string; cents: string } | null>(null);

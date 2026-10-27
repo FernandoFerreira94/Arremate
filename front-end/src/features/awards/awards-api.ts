@@ -16,8 +16,9 @@ export type Participation = {
 };
 export type Award = { lotId: string; title: string; imageUrl: string; amountCents: string; settledAt: string; receiptToken: string };
 
-export async function listParticipations(page = 1): Promise<ListPage<Participation>> {
-  return (await apiFetch(`/api/me/participations?page=${page}`)) as ListPage<Participation>;
+export async function listParticipations(page = 1, lotId?: string): Promise<ListPage<Participation>> {
+  const lot = lotId ? `&lotId=${encodeURIComponent(lotId)}` : "";
+  return (await apiFetch(`/api/me/participations?page=${page}${lot}`)) as ListPage<Participation>;
 }
 
 export async function listAwards(page = 1): Promise<ListPage<Award>> {

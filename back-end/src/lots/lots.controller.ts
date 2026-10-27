@@ -2,12 +2,15 @@ import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Post, Put, Que
 import type { Request } from "express";
 import { ApiException } from "../auth/api.exception";
 import type { Actor } from "../auth/auth.service";
+import { consumeOrThrow } from "../auth/csrf.guard";
+import { RateLimiter } from "../auth/rate-limit";
 import { Roles } from "../auth/roles.guard";
+import { clientIp } from "../auth/session-cookie";
 import { Authenticated } from "../auth/session.guard";
 import { RejectExtraDto } from "../auth/dto/login.dto";
 import { bidMessage, SUCCESS_MESSAGES, withMessage } from "../common/messages";
 import { BiddingService } from "./bidding.service";
-import { CreateLotDto, PageQuery, ShowcaseQuery } from "./dto/create-lot.dto";
+import { CreateLotDto, PageQuery, ParticipationsQuery, ShowcaseQuery } from "./dto/create-lot.dto";
 import { PlaceBidDto } from "./dto/place-bid.dto";
 import { LotEventsService } from "./lot-events.service";
 import { LotsService } from "./lots.service";
@@ -22,6 +25,7 @@ export class LotsController {
     private readonly bidding: BiddingService,
     private readonly settlement: SettlementService,
     private readonly events: LotEventsService,
+    private readonly limits: RateLimiter,
   ) {}
 
   @Get("lots")
@@ -47,7 +51,9 @@ export class LotsController {
   }
 
   @Get("lots/:id/audit")
-  audit(@Param("id") id: string) {
+  audit(@Param("id") id: string, @Req() request: Request) {
+    // Auditoria item 9: cada consulta reexecuta a verificação; limite por IP no bucket "audit".
+    consumeOrThrow(this.limits, "audit", clientIp(request));
     return this.lots.publicAudit(id);
   }
 
@@ -70,8 +76,8 @@ export class LotsController {
 
   @Get("me/participations")
   @Roles("BIDDER")
-  participations(@Query() query: PageQuery, @Req() request: ActorRequest) {
-    return this.settlement.listParticipations(actorOf(request), query.page);
+  participations(@Query() query: ParticipationsQuery, @Req() request: ActorRequest) {
+    return this.settlement.listParticipations(actorOf(request), query.page, query.lotId);
   }
 
   @Get("me/awards")

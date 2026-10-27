@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsIn, IsInt, IsISO8601, IsOptional, IsString, Matches, Max, MaxLength, Min } from "class-validator";
+import { IsIn, IsInt, IsISO8601, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from "class-validator";
 import { SHOWCASE_STATES, type ShowcaseState } from "../lots.repository";
 
 export class CreateLotDto {
@@ -53,3 +53,9 @@ export class ShowcaseQuery extends PageQuery {
   state?: ShowcaseState;
 }
 
+/** Participações do licitante; `lotId` opcional filtra a um lote (auditoria item 12). */
+export class ParticipationsQuery extends PageQuery {
+  @IsOptional()
+  @IsUUID()
+  lotId?: string;
+}

@@ -26,10 +26,11 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
     await deposit(other, "500000");
     const { lotId, title } = await lotWithTitle();
     const page = await bidderPage(browser, viewport);
+    const firstPoll = page.waitForResponse((response) => response.url().includes("/api/me/activity"));
     await page.goto("/");
     const feed = page.getByTestId("activity-feed");
     await expect(feed).toBeAttached();
-    await page.waitForTimeout(1500); // o primeiro polling marca o cursor; o lance vem depois
+    await firstPoll; // o primeiro polling marca o cursor; o lance vem depois
     await other.post(`/api/lots/${lotId}/bids`, { amountCents: "10000" });
     const card = feed.getByTestId("activity-card").filter({ hasText: title });
     await expect(card).toBeVisible({ timeout: 15_000 });
@@ -56,8 +57,9 @@ test("o próprio lance não aparece no feed, nem lance do lote cuja sala está a
   const own = await lotWithTitle();
   const room = await lotWithTitle();
   const page = await bidderPage(browser, { width: 1440, height: 900 });
+  const firstPoll = page.waitForResponse((response) => response.url().includes("/api/me/activity"));
   await page.goto(`/lotes/${room.lotId}`);
-  await page.waitForTimeout(1500);
+  await firstPoll;
   await me.post(`/api/lots/${own.lotId}/bids`, { amountCents: "10000" });
   await other.post(`/api/lots/${room.lotId}/bids`, { amountCents: "10000" });
   await page.waitForTimeout(9_000); // dois pollings
@@ -70,8 +72,9 @@ test("com movimento reduzido o card aparece pronto, sem animação", async ({ br
   await deposit(other, "500000");
   const { lotId, title } = await lotWithTitle();
   const page = await bidderPage(browser, { width: 1440, height: 900 }, "reduce");
+  const firstPoll = page.waitForResponse((response) => response.url().includes("/api/me/activity"));
   await page.goto("/");
-  await page.waitForTimeout(1500);
+  await firstPoll;
   await other.post(`/api/lots/${lotId}/bids`, { amountCents: "10000" });
   const card = page.getByTestId("activity-card").filter({ hasText: title });
   await expect(card).toBeVisible({ timeout: 15_000 });

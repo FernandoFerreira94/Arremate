@@ -33,6 +33,7 @@ export const ERROR_MESSAGES: Record<string, { status: number; message: string }>
   LOT_NOT_STARTED: { status: 409, message: "Este lote ainda não abriu para lances." },
   LOT_ENDED: { status: 409, message: "Este lote já encerrou." },
   LOT_CANCELLED: { status: 409, message: "Este lote foi cancelado." },
+  OWN_LOT: { status: 409, message: "Você não pode dar lance no próprio lote." },
   LOTE_BLOQUEADO: { status: 409, message: "Lote bloqueado: a auditoria não confere." },
   CONFIRMATION_PENDING: { status: 503, message: "Confirmação pendente. Repita com a mesma chave para saber o resultado." },
   CORPO_GRANDE_DEMAIS: { status: 413, message: "O conteúdo enviado é grande demais." },

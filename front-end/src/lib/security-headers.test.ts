@@ -37,7 +37,8 @@ describe("D26 (M2): cabeçalhos de segurança", () => {
 
 describe("D26 (M1): IP do cliente no proxy /api", () => {
   it("usa o primeiro valor válido e descarta lixo", () => {
-    expect(clientAddress(new Headers({ "x-forwarded-for": "203.0.113.9, 10.0.0.1" }))).toBe("203.0.113.9");
+    // O primeiro valor é do cliente (forjável); vale o que o salto mais próximo acrescentou.
+    expect(clientAddress(new Headers({ "x-forwarded-for": "1.2.3.4, 203.0.113.9" }))).toBe("203.0.113.9");
     expect(clientAddress(new Headers({ "x-forwarded-for": "::1" }))).toBe("::1");
     expect(clientAddress(new Headers({ "x-forwarded-for": "evil<script>" }))).toBeNull();
     expect(clientAddress(new Headers())).toBeNull();
