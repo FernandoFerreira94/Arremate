@@ -25,6 +25,7 @@ const CHECKPOINT_FIELDS = [
   "receiptToken",
   "settledAt",
 ] as const;
+const CANCELLED_LINE = "status=CANCELLED";
 
 export function canonicalBidBytes(event: CanonicalBid): Buffer {
   assertSupportedVersion(event.keyVersion);
@@ -123,7 +124,9 @@ export function canonicalCheckpointBytes(body: CheckpointBody): Buffer {
     `settlementId=${settlement.settlementId}\n` +
     `winnerBidId=${settlement.winnerBidId}\n` +
     `receiptToken=${settlement.receiptToken}\n` +
-    `settledAt=${settlement.settledAt}\n`;
+    `settledAt=${settlement.settledAt}\n` +
+    // Linha só nos cancelados: os envelopes já gravados continuam com os mesmos bytes e assinaturas.
+    (body.cancelled ? `${CANCELLED_LINE}\n` : "");
   return Buffer.from(text, "utf8");
 }
 
@@ -242,6 +245,8 @@ function parseCheckpointBody(bodyText: string): CheckpointBody {
     throw new Error("testemunha ilegível");
   }
   lines.pop();
+  const cancelled = lines.length === CHECKPOINT_FIELDS.length + 3 && lines.at(-1) === CANCELLED_LINE;
+  if (cancelled) lines.pop();
   if (lines.length !== CHECKPOINT_FIELDS.length + 2 || lines[0] !== "v1" || lines[1] !== "record=checkpoint") {
     throw new Error("testemunha ilegível");
   }
@@ -282,6 +287,7 @@ function parseCheckpointBody(bodyText: string): CheckpointBody {
           receiptToken: receiptToken === "-" ? null : receiptToken,
           settledAt,
         },
+    ...(cancelled ? { cancelled: true } : {}),
   };
 }
 

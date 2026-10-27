@@ -6,6 +6,7 @@ import { Pool } from "pg";
 import request from "supertest";
 import type { Response } from "supertest";
 import { createApplication } from "../../src/app";
+import { AuditService } from "../../src/audit/audit.service";
 import { hashPassword } from "../../src/auth/password-hash";
 
 const ORIGIN = "http://127.0.0.1:3300";
@@ -233,6 +234,8 @@ describe("sessão HTTP", () => {
     );
     const lotId = lot.rows[0]?.id;
     if (!lotId) throw new Error("lote de teste não foi criado");
+    // Lote inserido direto precisa da gênese: o cancelamento é selado pela auditoria (auditoria item 2).
+    await (app.get(AuditService) as AuditService | null)?.openGenesis(lotId);
     const ownerJar = new Map<string, string>();
     const otherJar = new Map<string, string>();
     expect((await postLogin(ownerJar, { email: owner.email, password: "senha-correta-demonstracao" })).status).toBe(200);

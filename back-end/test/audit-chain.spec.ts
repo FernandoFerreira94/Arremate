@@ -3,6 +3,8 @@ import {
   canonicalBidBytes,
   canonicalCheckpointBytes,
   canonicalGenesisBytes,
+  encodeCheckpoint,
+  parseCheckpoint,
   signBid,
   signCheckpoint,
   signGenesis,
@@ -161,5 +163,20 @@ describe("cadeia canônica de auditoria", () => {
     expect(verifyBidSignature(event, `${signature.slice(0, -1)}0`, KEY)).toBe(false);
     expect(verifyBidSignature(event, "abcd", KEY)).toBe(false);
     expect(timingSafeEqual(Buffer.from(signature, "hex"), Buffer.from(signature, "hex"))).toBe(true);
+  });
+
+  it("sela o cancelamento sem mudar os bytes dos envelopes já gravados (auditoria item 2)", () => {
+    expect(canonicalCheckpointBytes({ ...checkpoint(), cancelled: false })).toEqual(CHECKPOINT_BYTES);
+    const cancelled = { ...checkpoint(), revision: 1, cancelled: true };
+    expect(canonicalCheckpointBytes(cancelled).toString("utf8").endsWith("settledAt=-\nstatus=CANCELLED\n")).toBe(true);
+    const signature = signCheckpoint(cancelled, KEY);
+    expect(signature).not.toBe(signCheckpoint({ ...cancelled, cancelled: false }, KEY));
+
+    const parsed = parseCheckpoint(encodeCheckpoint({ ...cancelled, envelopeSignature: signature }));
+    expect(parsed.cancelled).toBe(true);
+    expect(signCheckpoint(parsed, KEY)).toBe(signature);
+    const legacy = parseCheckpoint(encodeCheckpoint({ ...checkpoint(), envelopeSignature: CHECKPOINT_SIGNATURE }));
+    expect(legacy.cancelled).toBeUndefined();
+    expect(signCheckpoint(legacy, KEY)).toBe(CHECKPOINT_SIGNATURE);
   });
 });

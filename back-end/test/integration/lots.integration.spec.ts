@@ -226,7 +226,8 @@ describe("lotes", () => {
     expect(cancelled.status).toBe(200);
     expect(cancelled.body.state).toBe("CANCELLED");
     const revision = await pool.query<{ revision: number }>(`SELECT revision FROM lots WHERE id = $1`, [lotId]);
-    expect(revision.rows[0]?.revision).toBe(0);
+    // Auditoria item 2: o cancelamento é selado no envelope e conta como uma revisão do lote.
+    expect(revision.rows[0]?.revision).toBe(1);
     expect((await app.get(AuditService).verifyLot(lotId)).status).toBe("INTACT");
     const again = await owner.session.post(`/api/lots/${lotId}/cancel`, {});
     expect(again.status).toBe(409);
@@ -247,6 +248,30 @@ describe("lotes", () => {
     expect(mine.status).toBe(200);
     expect(mine.body.items.map((item: { id: string }) => item.id)).toContain(lotId);
     expect((await other.session.get("/api/seller/lots")).body.items.map((item: { id: string }) => item.id)).not.toContain(lotId);
+  });
+
+  it("detecta a situação do lote alterada direto no banco (auditoria item 2)", async () => {
+    const owner = await login("AUCTIONEER");
+    const audit = app.get(AuditService);
+    const cancelledInDb = await publish(owner.session);
+    const settledInDb = await publish(owner.session);
+    await pool.query(`UPDATE lots SET status = 'CANCELLED' WHERE id = $1`, [cancelledInDb.body.id]);
+    await pool.query(`UPDATE lots SET status = 'SETTLED' WHERE id = $1`, [settledInDb.body.id]);
+    for (const id of [cancelledInDb.body.id, settledInDb.body.id]) {
+      const result = await audit.verifyLot(id);
+      expect(result).toMatchObject({ status: "TAMPERED", reasonCode: "STATUS_MISMATCH" });
+      const page = await request(app.getHttpServer()).get(`/api/lots/${id}/audit`);
+      expect(page.body).toMatchObject({ status: "TAMPERED", reasonCode: "STATUS_MISMATCH" });
+    }
+
+    // Voltar a situação original restaura a integridade: nada foi reassinado.
+    await pool.query(`UPDATE lots SET status = 'PUBLISHED' WHERE id = $1`, [cancelledInDb.body.id]);
+    expect((await audit.verifyLot(cancelledInDb.body.id)).status).toBe("INTACT");
+    const cancelled = await owner.session.post(`/api/lots/${cancelledInDb.body.id}/cancel`, {});
+    expect(cancelled.status).toBe(200);
+    // Desfazer um cancelamento selado também é detectado.
+    await pool.query(`UPDATE lots SET status = 'PUBLISHED' WHERE id = $1`, [cancelledInDb.body.id]);
+    expect(await audit.verifyLot(cancelledInDb.body.id)).toMatchObject({ status: "TAMPERED", reasonCode: "STATUS_MISMATCH" });
   });
 
   it("não cancela com lance nem depois do fim", async () => {

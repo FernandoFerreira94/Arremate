@@ -30,7 +30,10 @@ describe("fronteiras de tempo do lance", () => {
     const future = await fx.lot(seller, { startsInMs: 60_000 });
     const ended = await fx.lot(seller, { startsInMs: -7_200_000, endsInMs: -3_600_000 });
     const cancelled = await fx.lot(seller);
-    await fx.pool.query(`UPDATE lots SET status = 'CANCELLED' WHERE id = $1`, [cancelled]);
+    // Cancelamento pelo caminho selado; UPDATE direto agora é adulteração (auditoria item 2).
+    await fx.audit.cancelAtomic(cancelled, async (client, revision) => {
+      await client.query(`UPDATE lots SET status = 'CANCELLED', revision = $2 WHERE id = $1`, [cancelled, revision + 1]);
+    });
     expect(await outcome(bid(bidder, future, 10000n))).toBe("LOT_NOT_STARTED");
     expect(await outcome(bid(bidder, ended, 10000n))).toBe("LOT_ENDED");
     expect(await outcome(bid(bidder, cancelled, 10000n))).toBe("LOT_CANCELLED");

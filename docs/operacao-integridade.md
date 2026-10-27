@@ -21,6 +21,7 @@ A resposta pública é `status`, `revision`, `count`, `verifiedAt`, `reasonCode`
 | LOT_REMOVED | TAMPERED | Lote ausente com testemunha remanescente. |
 | LOT_METADATA_MISMATCH | TAMPERED | Metadados do lote não conferem com a gênese. |
 | ENVELOPE_MISMATCH | TAMPERED | Extensão ou resultado não conferem com o envelope. |
+| STATUS_MISMATCH | TAMPERED | Situação do lote (cancelado, liquidado, sem lances) não confere com o envelope; `UPDATE lots SET status` direto é detectado. |
 | DUPLICATE_ROW | TAMPERED | Há mais de uma linha para o mesmo lote ou liquidação. |
 
 Sem chave, sem testemunha ou com confirmação incompleta o status nunca é INTACT. Leitura que muda de revisão no meio da consulta vira INDETERMINATE, não adulteração definitiva.
