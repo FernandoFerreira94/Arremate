@@ -1,6 +1,6 @@
 import { Type } from "class-transformer";
 import { IsIn, IsInt, IsISO8601, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from "class-validator";
-import { SHOWCASE_STATES, type ShowcaseState } from "../lots.repository";
+import { SELLER_STATES, SHOWCASE_STATES, type SellerState, type ShowcaseState } from "../lots.repository";
 
 export class CreateLotDto {
   @IsString()
@@ -58,4 +58,11 @@ export class ParticipationsQuery extends PageQuery {
   @IsOptional()
   @IsUUID()
   lotId?: string;
+}
+
+/** Painel do leiloeiro: aba filtrada no SQL (code review item 4). */
+export class SellerLotsQuery extends PageQuery {
+  @IsOptional()
+  @IsIn(SELLER_STATES)
+  state?: SellerState;
 }

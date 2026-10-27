@@ -10,7 +10,7 @@ import { Authenticated } from "../auth/session.guard";
 import { RejectExtraDto } from "../auth/dto/login.dto";
 import { bidMessage, SUCCESS_MESSAGES, withMessage } from "../common/messages";
 import { BiddingService } from "./bidding.service";
-import { CreateLotDto, PageQuery, ParticipationsQuery, ShowcaseQuery } from "./dto/create-lot.dto";
+import { CreateLotDto, PageQuery, ParticipationsQuery, SellerLotsQuery, ShowcaseQuery } from "./dto/create-lot.dto";
 import { PlaceBidDto } from "./dto/place-bid.dto";
 import { LotEventsService } from "./lot-events.service";
 import { LotsService } from "./lots.service";
@@ -64,8 +64,8 @@ export class LotsController {
 
   @Get("seller/lots")
   @Roles("AUCTIONEER")
-  seller(@Query() query: PageQuery, @Req() request: ActorRequest) {
-    return this.lots.sellerLots(actorOf(request), query.page, query.limit);
+  seller(@Query() query: SellerLotsQuery, @Req() request: ActorRequest) {
+    return this.lots.sellerLots(actorOf(request), query.page, query.limit, query.state);
   }
 
   @Get("seller/summary")
