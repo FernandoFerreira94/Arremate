@@ -7,7 +7,7 @@ import { ArtworkImage } from "@/components/app/artwork-image";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useZoom } from "@/hooks/use-zoom";
-import { percent, zoomHint } from "@/lib/zoom";
+import { LENS_SIZE, lensAt, percent, zoomHint, type Lens } from "@/lib/zoom";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -53,6 +53,7 @@ function ZoomBody({ src, zoomSrc, alt, title, credit }: Props) {
   const [attempt, setAttempt] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [lens, setLens] = useState<Lens | null>(null);
   const focusTarget = useRef<HTMLDivElement | null>(null);
   const hiresSrc = attempt === 0 ? zoomSrc : `${zoomSrc}?tentativa=${attempt}`;
 
@@ -100,9 +101,17 @@ function ZoomBody({ src, zoomSrc, alt, title, credit }: Props) {
         data-scale={zoom.scale}
         className={cn(
           "relative min-h-0 flex-1 touch-none select-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500",
-          zoom.dragging ? "cursor-grabbing" : zoom.scale >= 3 ? "cursor-zoom-out" : "cursor-zoom-in",
+          zoom.dragging ? "cursor-grabbing" : lens ? "cursor-none" : zoom.scale >= 3 ? "cursor-zoom-out" : "cursor-zoom-in",
         )}
         {...zoom.handlers}
+        onPointerMove={(event) => {
+          zoom.handlers.onPointerMove(event);
+          // Lupa (27/10): só com mouse, a 1× e com a imagem em alta carregada; no toque vale a pinça.
+          if (event.pointerType !== "mouse" || zoom.scale !== 1 || zoom.dragging || !loaded) return setLens(null);
+          const rect = event.currentTarget.getBoundingClientRect();
+          setLens(lensAt({ x: event.clientX - rect.left, y: event.clientY - rect.top }, { width: rect.width, height: rect.height }, zoom.natural));
+        }}
+        onPointerLeave={() => setLens(null)}
       >
         <div
           className={cn("absolute inset-0 will-change-transform", !zoom.dragging && "transition-transform duration-200 ease-out motion-reduce:transition-none")}
@@ -128,6 +137,16 @@ function ZoomBody({ src, zoomSrc, alt, title, credit }: Props) {
             />
           ) : null}
         </div>
+
+        {lens && zoom.scale === 1 ? (
+          <div
+            aria-hidden
+            data-testid="zoom-lens"
+            data-factor={lens.factor}
+            className="pointer-events-none absolute rounded-full border-2 border-amber-400 bg-stone-950 bg-no-repeat shadow-[0_8px_30px_rgba(0,0,0,0.55)]"
+            style={{ left: lens.left, top: lens.top, width: LENS_SIZE, height: LENS_SIZE, backgroundImage: `url("${hiresSrc}")`, backgroundSize: lens.backgroundSize, backgroundPosition: lens.backgroundPosition }}
+          />
+        ) : null}
 
         {!loaded && !failed ? (
           <div role="status" className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">

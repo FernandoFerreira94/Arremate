@@ -95,7 +95,7 @@ describe("useZoom (D28): reducer do hook", () => {
   });
 
   it("dica cita os dois limites reais: clique até 3× e pinça até 4× (QA N3)", () => {
-    expect(zoomHint(1)).toBe("100% · clique para ampliar até 3× · pinça até 4×");
+    expect(zoomHint(1)).toBe("100% · passe o mouse para a lupa · clique para ampliar até 3× · pinça até 4×");
     expect(zoomHint(2)).toBe("200% · clique para ampliar até 3× · pinça até 4×");
     expect(zoomHint(3)).toBe("300% · clique volta a 1×");
     expect(zoomHint(TOUCH_MAX)).toBe("400% · clique volta a 1×");
