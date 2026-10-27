@@ -17,6 +17,7 @@ import type { BiddingService } from "../src/lots/bidding.service";
 import type { LotsService } from "../src/lots/lots.service";
 import type { SettlementService } from "../src/lots/settlement.service";
 import type { WalletsService } from "../src/wallets/wallets.service";
+import { backdateLotHistory, type TimelineSigner } from "./seed-timeline";
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -100,6 +101,8 @@ export type CatalogSeedOptions = {
   prepare?: boolean;
   closeLeadMs?: number;
   log?: (line: string) => void;
+  /** Com a chave e a testemunha, o histórico de lances ganha horários espalhados e realistas. */
+  timeline?: TimelineSigner;
 };
 
 export type CatalogSeedResult = { created: Array<{ lot: string; lotId: string }>; skipped: string[]; warnings: string[] };
@@ -199,6 +202,10 @@ export async function runCatalogSeed(o: CatalogSeedOptions): Promise<CatalogSeed
       for (let i = 0; i < amounts.length; i += 1) {
         await o.bidding.placeBid(bidder(order[i] as number), lotId, cents(amounts[i] as number).toString(), stableUuid("seed-bid", lotId, String(i)));
       }
+      if (o.timeline) {
+        const { startsAt, lastBidAt } = demoTimeline(entry, lotId, Date.now());
+        await backdateLotHistory(o.pool, o.timeline, lotId, startsAt, lastBidAt);
+      }
     }
     result.created.push({ lot: entry.lot, lotId });
     log(`Lote ${entry.lot} criado (${entry.state}).`);
@@ -219,6 +226,13 @@ export async function runCatalogSeed(o: CatalogSeedOptions): Promise<CatalogSeed
     }
   }
   return result;
+}
+
+/** Inicio recuado e ultimo lance para a demo: encerrados e "encerrando" comecaram ha ~2 dias; ao vivo, entre 6 h e 40 h. */
+export function demoTimeline(entry: CatalogEntry, lotId: string, now: number): { startsAt: Date; lastBidAt: Date } {
+  const spread = createHash("sha256").update(lotId).digest().readUInt32BE(0) / 0xffffffff;
+  if (entry.state === "OPEN") return { startsAt: new Date(now - (6 + spread * 34) * HOUR), lastBidAt: new Date(now - (5 + spread * 85) * MIN) };
+  return { startsAt: new Date(now - (2 * DAY + spread * 10 * HOUR)), lastBidAt: new Date(now - (2 + spread * 6) * MIN) };
 }
 
 /** Estimativa e laudo sao dados SIMULADOS do lote (D17); so preenche se estiver vazio. */

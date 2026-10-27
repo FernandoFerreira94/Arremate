@@ -169,9 +169,10 @@ async function main(): Promise<void> {
   const database = new DatabaseRepository(url);
   const pool = new Pool({ connectionString: url, max: 2 });
   try {
+    const witness = new FileCheckpointStore(process.env.AUDIT_WITNESS_DIR ?? join(root, ".data/witness"));
     const audit = new AuditService(
       new AuditRepository(database.connectionPool, "public"),
-      new FileCheckpointStore(process.env.AUDIT_WITNESS_DIR ?? join(root, ".data/witness")),
+      witness,
       Buffer.from(raw, "hex"),
     );
     const media = new MediaStore(process.env.MEDIA_DIR ?? join(root, ".data/media"));
@@ -206,6 +207,7 @@ async function main(): Promise<void> {
         bidderIds,
         prepare: process.argv.includes("--preparar-lote"),
         log: (line) => console.log(line),
+        timeline: { key: Buffer.from(raw, "hex"), store: witness },
       });
       console.log(`Catalogo: ${catalogResult.created.length} lote(s) criado(s), ${catalogResult.skipped.length} ja existente(s).`);
       for (const w of catalogResult.warnings) console.warn(w);
