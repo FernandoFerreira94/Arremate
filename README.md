@@ -26,8 +26,8 @@ Pré-requisitos: Node 24.22.1 (`.nvmrc`), Docker com Compose e internet no prime
    `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`.
 3. `npm run db:up` — PostgreSQL 18 de desenvolvimento em `127.0.0.1:5462` e de teste em `5463`.
 4. Migrations, com o papel dono do banco (a API usa outro papel, sem DDL): em `back-end/`, com `DIRECT_URL=postgresql://auction_owner:<DB_OWNER_PASSWORD>@127.0.0.1:5462/casadeleilao` no `.env`, rode `npx prisma migrate deploy`. Para os testes de integração e E2E, repita com a URL do banco de teste (`5463/casadeleilao_test`).
-5. `npm run dev:api` (API em 4300) e, em outro terminal, `npm run dev:web` (site em http://127.0.0.1:3300).
-6. `npm run db:seed --workspace back-end` — dados de demonstração. Reexecutar não duplica nada; `npm run db:reset-demo --workspace back-end` seguido do seed volta a demo ao começo.
+5. `npm run db:seed --workspace back-end` — dados de demonstração. Reexecutar não duplica nada; `npm run db:reset-demo --workspace back-end` seguido do seed volta a demo ao começo. Rode o seed com a API parada: a fila da testemunha da auditoria é por processo, e seed e API escrevendo no mesmo lote ao mesmo tempo podem abortar o seed (o dinheiro não corre risco; basta rodar de novo).
+6. `npm run dev:api` (API em 4300) e, em outro terminal, `npm run dev:web` (site em http://127.0.0.1:3300). Se a API parou no meio de uma confirmação da auditoria, ela tenta de novo ao subir; `npm run audit:retry` faz o mesmo manualmente.
 
 Opcional: `DEMO_BOTS=1` no `.env` liga licitantes automáticos que cobrem o seu lance, para ver o tempo real sem abrir duas contas.
 

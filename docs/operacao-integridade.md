@@ -36,7 +36,11 @@ Uma instância só. O mutex do processo serializa o lote; ele não substitui o l
 4. Promover `pending` para `checkpoint` com `advance(revisão atual, próxima)`. A revisão só cresce. Apagar `pending`.
 5. Só então devolver a resposta ou publicar o evento.
 
-Se o passo 4 falha (write, fsync ou rename), o lote fica INDETERMINATE com `CONFIRMATION_GAP`. `assertCanMutate` recusa novas mutações e a liquidação futura com `CONFIRMATION_PENDING`. Não há rotina que assine de novo o conteúdo atual do banco. `retryCheckpoint` só promove o `pending` que já estava assinado, e só se o banco conferir com ele. Sem esse arquivo, a recuperação automática não existe: o plano aceita o lote parado até haver evidência confiável (cópia consistente de banco e testemunha). Não prometemos reconstrução.
+Se o passo 4 falha (write, fsync ou rename), o lote fica INDETERMINATE com `CONFIRMATION_GAP`. `assertCanMutate` recusa novas mutações e a liquidação futura com `CONFIRMATION_PENDING`. Não há rotina que assine de novo o conteúdo atual do banco.
+
+Nova tentativa (27/10/2026): ao subir, a API roda `recoverPending` antes da primeira varredura de liquidação, e `npm run audit:retry` faz o mesmo à mão. Para cada `pending`: se o banco confere com ele, ele vira `checkpoint`; se o banco confere com o `checkpoint` já confirmado (a transação não gravou), o `pending` é descartado; se não confere com nenhum dos dois, o lote segue bloqueado e o id aparece no log. Nada é reassinado. A sala de um lote encerrado e adulterado mostra "Bloqueado pela auditoria" e o saldo de quem venceu continua reservado, sem débito.
+
+O cancelamento também passa por essa ordem (`cancelAtomic`): o envelope novo leva a linha `status=CANCELLED`, e a verificação compara `lots.status` com o que o envelope implica (`STATUS_MISMATCH`). Envelopes sem cancelamento mantêm os mesmos bytes de antes.
 
 ## O que entra na assinatura
 
@@ -50,8 +54,8 @@ Cada lance assina `lotId`, `bidId`, `bidderUserId`, sequência, alias em UTF-8 c
 
 Diretório fora do banco, um subdiretório por UUID de lote, arquivos `checkpoint` e `pending`. Gravação: arquivo temporário, fsync do arquivo, rename. Em seguida o código tenta fsync do diretório. Neste Windows o fsync do diretório devolve EPERM e a gravação segue; isso não prova o fsync de diretório no Linux de destino. Esse ensaio fica para o ambiente Linux da release.
 
-A chave prevista para o processo é `AUDIT_HMAC_KEY` (hex, no mínimo 32 bytes), fora do repositório e do banco. O diretório previsto é `AUDIT_WITNESS_DIR`. A API ainda não lê esses nomes: não há rota HTTP de auditoria nesta tarefa. Os testes injetam a chave e usam um diretório temporário. Não colocar a testemunha em disco efêmero de função serverless.
+A chave do processo é `AUDIT_HMAC_KEY` (hex, no mínimo 32 bytes), fora do repositório e do banco; sem ela a API sobe, avisa no log e lances e auditoria respondem 503. O diretório é `AUDIT_WITNESS_DIR` (padrão `.data/witness`). As rotas públicas `GET /api/lots/:id/audit` e `GET /api/receipts/:token` reexecutam a verificação e têm limite de 30 por minuto por IP. Os testes injetam a chave e usam um diretório temporário. Não colocar a testemunha em disco efêmero de função serverless.
 
 ## Leitura
 
-`verifyLot` lê a testemunha, o histórico inteiro (não a página da tela) e a testemunha de novo. A leitura do banco usa `REPEATABLE READ` e `SET LOCAL search_path`, para não vazar o schema da conexão. Se a revisão mudar nesse intervalo, repete até três vezes e então devolve `CONCURRENT_READ`. Mais de uma linha de lote ou de liquidação para o mesmo id é `DUPLICATE_ROW`, mesmo que a primeira linha ainda confira.
+`verifyLot` lê a testemunha, o histórico inteiro (não a página da tela) e a testemunha de novo. A leitura do banco usa `REPEATABLE READ` e `SET LOCAL search_path`, para não vazar o schema da conexão. Se a revisão mudar nesse intervalo, repete até três vezes e então devolve `CONCURRENT_READ`. A rota pública ainda espera até três vezes 150 ms quando o resultado é `CONFIRMATION_GAP` ou `CONCURRENT_READ`, para não mostrar "Indeterminado" no meio de um lance comum. Um lote apagado com testemunha remanescente responde `TAMPERED`/`LOT_REMOVED` na rota pública, não 404. Mais de uma linha de lote ou de liquidação para o mesmo id é `DUPLICATE_ROW`, mesmo que a primeira linha ainda confira.
