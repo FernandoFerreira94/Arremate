@@ -57,7 +57,7 @@ O papel `auction_app` faz SELECT/INSERT/UPDATE/DELETE. CREATE/ALTER ficam com o 
 
 | Endpoint | Permissão |
 | --- | --- |
-| GET /api/auth/csrf; POST /api/auth/login; POST /api/auth/logout; GET /api/auth/me | Sessão |
+| GET /api/auth/csrf; POST /api/auth/login; POST /api/auth/logout; GET /api/auth/me; GET /api/auth/session | Sessão (`/session` responde 200 com `user: null` para visitante; `/me` exige sessão) |
 | GET /api/lots; GET /api/lots/:id; GET /api/lots/:id/bids | Público; sem cancelados na vitrine |
 | GET /api/catalog/search; GET /api/catalog/items/:externalId | Leiloeiro |
 | POST /api/lots; POST /api/lots/:id/cancel | Leiloeiro, próprio lote |

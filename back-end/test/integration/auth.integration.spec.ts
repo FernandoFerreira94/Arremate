@@ -188,6 +188,20 @@ describe("sessão HTTP", () => {
     expect(me.status).toBe(401);
   });
 
+  it("GET /auth/session responde 200 com user null para visitante e sessão revogada, e o usuário quando há sessão", async () => {
+    const anonymous = await request(app.getHttpServer()).get("/api/auth/session");
+    expect(anonymous.status).toBe(200);
+    expect(anonymous.body).toEqual({ user: null });
+    const user = await createUser("BIDDER");
+    const jar = new Map<string, string>();
+    expect((await postLogin(jar, { email: user.email, password: "senha-correta-demonstracao" })).status).toBe(200);
+    const logged = await request(app.getHttpServer()).get("/api/auth/session").set("Cookie", cookieHeader(jar));
+    expect(logged.status).toBe(200);
+    expect(logged.body.user).toMatchObject({ role: "BIDDER", userId: user.id });
+    await pool.query(`UPDATE sessions SET revoked_at = clock_timestamp() WHERE user_id = $1`, [user.id]);
+    expect((await request(app.getHttpServer()).get("/api/auth/session").set("Cookie", cookieHeader(jar))).body).toEqual({ user: null });
+  });
+
   it("nega depósito e lance ao leiloeiro e criação ao licitante, sem gravar efeito", async () => {
     const auctioneer = await createUser("AUCTIONEER");
     const bidder = await createUser("BIDDER");
