@@ -170,3 +170,30 @@ test.describe("celular", () => {
     await expect(trigger).toBeFocused();
   });
 });
+
+test.describe("cards da vitrine (27/10)", () => {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    test(`imagem do card abre o visualizador com zoom (${viewport.width}px) e o botão Abrir sala continua`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await markTourSeen(page);
+      await page.goto("/?aba=ao-vivo");
+      const card = page.getByRole("list", { name: "Lotes da aba" }).getByRole("listitem").first();
+      await expect(card.getByRole("link", { name: /Abrir sala/ })).toBeVisible();
+      const zoomRequest = page.waitForRequest((request) => request.url().includes("/api/media/zoom/"));
+      await card.getByRole("button", { name: /^Ampliar imagem:/ }).click();
+      await zoomRequest;
+      const dialog = page.getByTestId("zoom-dialog");
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByTestId("zoom-placeholder")).toHaveCount(0);
+      if (viewport.width > 1000) {
+        const box = (await dialog.getByTestId("zoom-viewport").boundingBox())!;
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await expect(page.getByTestId("zoom-lens")).toBeVisible();
+      } else {
+        await expect(dialog.getByRole("button", { name: "Fechar" })).toBeVisible();
+      }
+      await page.keyboard.press("Escape");
+      await expect(dialog).toHaveCount(0);
+    });
+  }
+});

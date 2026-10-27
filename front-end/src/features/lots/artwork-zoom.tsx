@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
 import { ImageOffIcon, MaximizeIcon, RotateCcwIcon, XIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react";
 import { ArtworkImage } from "@/components/app/artwork-image";
 import { Button } from "@/components/ui/button";
@@ -20,17 +20,20 @@ type Props = {
   credit: string;
 };
 
-/** D28 (Z3): clique na obra abre o Dialog com zoom 1×→2×→3×, arrastar, barra −/+/redefinir e minimapa; no celular, tela cheia com pinça e duplo toque. */
-export function ArtworkZoom({ src, zoomSrc, alt, title, credit }: Props) {
+/**
+ * D28 (Z3): clique na obra abre o Dialog com lupa, zoom 1×→2×→3×, arrastar, barra −/+/redefinir e minimapa; no celular,
+ * tela cheia com pinça e duplo toque. `trigger` troca o gatilho (card da vitrine); a imagem grande só carrega ao abrir.
+ */
+export function ArtworkZoom({ src, zoomSrc, alt, title, credit, trigger }: Props & { trigger?: ReactElement }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button type="button" aria-label={`Ampliar imagem: ${title}`} className="group relative block w-full cursor-zoom-in rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        {trigger ?? <button type="button" aria-label={`Ampliar imagem: ${title}`} className="group relative block w-full cursor-zoom-in rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
           <ArtworkImage src={src} alt={alt} width={1200} height={900} sizes="(min-width: 1360px) 728px, (min-width: 1024px) 58vw, 100vw" preload className="h-auto w-full rounded-lg bg-muted object-contain" />
           <span aria-hidden className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-md bg-foreground/75 px-2 py-1 text-xs font-medium text-background opacity-90 group-hover:opacity-100">
             <MaximizeIcon className="size-3.5" /> Ampliar
           </span>
-        </button>
+        </button>}
       </DialogTrigger>
       <DialogContent
         data-testid="zoom-dialog"
