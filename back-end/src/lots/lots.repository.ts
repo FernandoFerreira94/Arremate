@@ -20,6 +20,19 @@ const SHOWCASE_ORDER = `
     CASE WHEN l.ends_at > clock_timestamp() THEN l.ends_at END ASC,
     l.ends_at DESC, l.id`;
 
+export const SHOWCASE_STATES = ["live", "scheduled", "ended", "ending"] as const;
+export type ShowcaseState = (typeof SHOWCASE_STATES)[number];
+export type ShowcaseCounts = Record<ShowcaseState, number>;
+
+/** Mesmas regras de `lotState`; "ending" são os ao vivo que terminam hoje no horário de Brasília. */
+const LIVE_SQL = `(l.status = 'PUBLISHED' AND l.starts_at <= clock_timestamp() AND l.ends_at > clock_timestamp())`;
+const SHOWCASE_STATE_SQL: Record<ShowcaseState, string> = {
+  live: LIVE_SQL,
+  scheduled: `(l.status = 'PUBLISHED' AND l.starts_at > clock_timestamp())`,
+  ended: `(l.status <> 'PUBLISHED' OR l.ends_at <= clock_timestamp())`,
+  ending: `(${LIVE_SQL} AND (l.ends_at AT TIME ZONE 'America/Sao_Paulo')::date = (clock_timestamp() AT TIME ZONE 'America/Sao_Paulo')::date)`,
+};
+
 export type LotRow = {
   id: string;
   initial_cents: string;
@@ -61,21 +74,36 @@ export type ActivityRow = { id: string; lot_id: string; title: string; alias: st
 export class LotsRepository {
   constructor(private readonly database: DatabaseRepository) {}
 
-  /** `search` filtra por título ou artista (ILIKE parametrizado; %, _ e \ digitados valem como literais). */
-  async showcase(limit: number, offset: number, search: string | null = null): Promise<{ rows: LotRow[]; total: number }> {
+  /**
+   * `search` filtra por título ou artista (ILIKE parametrizado; %, _ e \ digitados valem como literais).
+   * `state` filtra a aba no SQL; `counts` traz o total de cada aba sobre todos os lotes da busca, numa consulta só.
+   */
+  async showcase(
+    limit: number,
+    offset: number,
+    search: string | null = null,
+    state: ShowcaseState | null = null,
+  ): Promise<{ rows: LotRow[]; total: number; counts: ShowcaseCounts }> {
     const pattern = search === null ? null : `%${search.replace(/[\\%_]/g, "\\$&")}%`;
+    const where = `l.status <> 'CANCELLED' AND ($1::text IS NULL OR s.title ILIKE $1 OR s.attributes->>'artist' ILIKE $1)`;
     const rows = await this.database.query<LotRow>(
       `SELECT ${LOT_COLUMNS} ${LOT_FROM}
-       WHERE l.status <> 'CANCELLED' AND ($3::text IS NULL OR s.title ILIKE $3 OR s.attributes->>'artist' ILIKE $3)
-       ${SHOWCASE_ORDER} LIMIT $1 OFFSET $2`,
-      [limit, offset, pattern],
+       WHERE ${where} AND ${state === null ? "true" : SHOWCASE_STATE_SQL[state]}
+       ${SHOWCASE_ORDER} LIMIT $2 OFFSET $3`,
+      [pattern, limit, offset],
     );
-    const total = await this.database.query<{ n: number }>(
-      `SELECT count(*)::int AS n FROM lots l JOIN catalog_item_snapshots s ON s.id = l.snapshot_id
-       WHERE l.status <> 'CANCELLED' AND ($1::text IS NULL OR s.title ILIKE $1 OR s.attributes->>'artist' ILIKE $1)`,
+    const counts = await this.database.query<ShowcaseCounts & { total: number }>(
+      `SELECT count(*)::int AS total,
+              count(*) FILTER (WHERE ${SHOWCASE_STATE_SQL.live})::int AS live,
+              count(*) FILTER (WHERE ${SHOWCASE_STATE_SQL.scheduled})::int AS scheduled,
+              count(*) FILTER (WHERE ${SHOWCASE_STATE_SQL.ended})::int AS ended,
+              count(*) FILTER (WHERE ${SHOWCASE_STATE_SQL.ending})::int AS ending
+       FROM lots l JOIN catalog_item_snapshots s ON s.id = l.snapshot_id
+       WHERE ${where}`,
       [pattern],
     );
-    return { rows: rows.rows, total: total.rows[0]?.n ?? 0 };
+    const { total, ...byTab } = counts.rows[0] ?? { total: 0, live: 0, scheduled: 0, ended: 0, ending: 0 };
+    return { rows: rows.rows, total: state === null ? total : byTab[state], counts: byTab };
   }
 
   async ownedBy(ownerId: string, limit: number, offset: number): Promise<{ rows: LotRow[]; total: number }> {

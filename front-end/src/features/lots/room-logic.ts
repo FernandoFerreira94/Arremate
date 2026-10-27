@@ -1,4 +1,3 @@
-import type { LotState } from "@/components/app/lot-state-badge";
 import { formatBrl } from "../../lib/money";
 
 export type PublicBid = { alias: string; amountCents: string; sequence: number; acceptedAt: string };
@@ -40,15 +39,6 @@ export function rankByBidder(bids: PublicBid[]): Array<PublicBid & { position: n
   return [...best.values()]
     .sort((a, b) => (BigInt(b.amountCents) > BigInt(a.amountCents) ? 1 : BigInt(b.amountCents) < BigInt(a.amountCents) ? -1 : a.sequence - b.sequence))
     .map((bid, index) => ({ ...bid, position: index + 1 }));
-}
-
-export type ShowcaseTab = "live" | "scheduled" | "ended";
-
-export function showcaseTab(state: LotState): ShowcaseTab | null {
-  if (state === "LIVE") return "live";
-  if (state === "SCHEDULED") return "scheduled";
-  if (state === "ENDED") return "ended";
-  return null;
 }
 
 /** QA MÉDIA 5: mensagem do lance acima do disponível, com quanto falta. */

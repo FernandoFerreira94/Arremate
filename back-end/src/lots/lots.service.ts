@@ -7,7 +7,7 @@ import { CatalogService } from "../catalog/catalog.service";
 import { MoneyError, parsePositiveMoney } from "../common/money";
 import { DatabaseRepository } from "../database/database.repository";
 import type { CreateLotDto } from "./dto/create-lot.dto";
-import { LotsRepository, type LotRow, type NotificationRow } from "./lots.repository";
+import { LotsRepository, type LotRow, type NotificationRow, type ShowcaseCounts, type ShowcaseState } from "./lots.repository";
 
 export const SHOWCASE_PAGE_SIZE = 8;
 export const START_TOLERANCE_MS = 60_000;
@@ -63,10 +63,10 @@ export class LotsService {
     private readonly audit: AuditService | null,
   ) {}
 
-  async showcase(page: number, search?: string): Promise<Paged<LotView>> {
+  async showcase(page: number, search?: string, state?: ShowcaseState): Promise<Paged<LotView> & { counts: ShowcaseCounts }> {
     const term = search?.trim().replace(/\s+/g, " ") || null;
-    const { rows, total } = await this.lots.showcase(SHOWCASE_PAGE_SIZE, (page - 1) * SHOWCASE_PAGE_SIZE, term);
-    return this.paged(rows, page, SHOWCASE_PAGE_SIZE, total);
+    const { rows, total, counts } = await this.lots.showcase(SHOWCASE_PAGE_SIZE, (page - 1) * SHOWCASE_PAGE_SIZE, term, state ?? null);
+    return { ...(await this.paged(rows, page, SHOWCASE_PAGE_SIZE, total)), counts };
   }
 
   async sellerLots(actor: Actor, page: number, limit: number): Promise<Paged<LotView>> {

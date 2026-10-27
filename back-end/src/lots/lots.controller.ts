@@ -26,7 +26,7 @@ export class LotsController {
 
   @Get("lots")
   showcase(@Query() query: ShowcaseQuery) {
-    return this.lots.showcase(query.page, query.q);
+    return this.lots.showcase(query.page, query.q, query.state);
   }
 
   /** D22 (H2): próximo leilão agendado, público. */

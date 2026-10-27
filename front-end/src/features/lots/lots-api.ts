@@ -13,7 +13,9 @@ export type PublicLot = LotView & {
 };
 
 export const SIMULATED_LABEL = "Simulado para demonstração";
-export type ShowcasePage = { items: PublicLot[]; page: number; pageSize: number; total: number; serverNow: string };
+/** Abas da vitrine; o filtro e os totais vêm do servidor, sobre todos os lotes e não só a página. */
+export type ShowcaseState = "live" | "scheduled" | "ended" | "ending";
+export type ShowcasePage = { items: PublicLot[]; page: number; pageSize: number; total: number; serverNow: string; counts: Record<ShowcaseState, number> };
 export type BidsPage = { items: PublicBid[]; page: number; pageSize: number; total: number };
 export type AuditView = { lotId: string; status: "INTACT" | "TAMPERED" | "INDETERMINATE"; revision: number | null; count: number | null; verifiedAt: string; reasonCode: string; message: string };
 export type AcceptedBid = { bid: PublicBid; lotRevision: number; endsAt: string; extended: boolean; serverNow: string; walletRevision: number };
@@ -35,9 +37,10 @@ export type PublicReceipt = {
 export const lotKey = (id: string) => ["lot", id] as const;
 export const bidsKey = (id: string, page: number) => ["lot", id, "bids", page] as const;
 
-export async function getShowcase(page: number, q = ""): Promise<ShowcasePage> {
+export async function getShowcase(page: number, q = "", state?: ShowcaseState): Promise<ShowcasePage> {
   const search = new URLSearchParams({ page: String(page) });
   if (q) search.set("q", q);
+  if (state) search.set("state", state);
   return (await apiFetch(`/api/lots?${search.toString()}`)) as ShowcasePage;
 }
 export async function getLot(id: string): Promise<PublicLot> {

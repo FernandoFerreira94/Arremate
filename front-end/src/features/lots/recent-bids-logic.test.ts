@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { endsTodayBrt, formatGap, maskAlias, recentBidsWithGaps } from "./recent-bids-logic";
+import { formatGap, maskAlias, recentBidsWithGaps } from "./recent-bids-logic";
 
 const bid = (sequence: number, at: string) => ({ alias: `Licitante ${sequence}`, amountCents: String(sequence * 1000), sequence, acceptedAt: at });
 
@@ -31,13 +31,5 @@ describe("maskAlias", () => {
   it("encurta mantendo início e fim", () => {
     expect(maskAlias("Licitante 7")).toBe("Lic•••7");
     expect(maskAlias("Ana")).toBe("Ana•••");
-  });
-});
-
-describe("endsTodayBrt", () => {
-  it("usa o dia de Brasília", () => {
-    const now = Date.parse("2026-10-24T18:00:00Z"); // 15h BRT
-    expect(endsTodayBrt("2026-10-25T02:59:00Z", now)).toBe(true); // 23h59 BRT
-    expect(endsTodayBrt("2026-10-25T03:01:00Z", now)).toBe(false); // 00h01 BRT do dia 25
   });
 });
