@@ -12,6 +12,8 @@ describe("D26 (M2): cabeçalhos de segurança", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("connect-src 'self'");
+    expect(csp).toContain("worker-src 'self'");
+    expect(csp).toContain("manifest-src 'self'");
     expect(buildCsp("abc", { dev: true })).toContain("'unsafe-eval'");
   });
 

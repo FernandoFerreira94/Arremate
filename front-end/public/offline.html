@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#6E1E2B" />
+    <title>Sem conexão · Arremate</title>
+    <style>
+      :root { color-scheme: light dark; --bg: #f6f3ec; --fg: #1f1b16; --muted: #5c5448; --brand: #6e1e2b; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #15120e; --fg: #eee7da; --muted: #b3a998; } }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      main { max-width: 420px; text-align: center; }
+      img { width: 64px; height: 64px; border-radius: 14px; }
+      h1 { font-family: Georgia, "Times New Roman", serif; font-size: 28px; margin: 16px 0 8px; }
+      p { color: var(--muted); margin: 0 0 24px; }
+      a { display: inline-flex; min-height: 44px; align-items: center; padding: 0 20px; border-radius: 8px; background: var(--brand); color: #f6f3ec; text-decoration: none; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" />
+      <h1>Você está sem conexão</h1>
+      <p>Lances e saldos são sempre conferidos ao vivo pelo servidor, então nada aparece offline. Assim que a internet voltar, tente de novo.</p>
+      <a href="/">Tentar de novo</a>
+    </main>
+  </body>
+</html>

@@ -11,7 +11,11 @@ const nextConfig: NextConfig = { poweredByHeader: false,
   },
   // D26 (M2): o proxy /api não repassa os cabeçalhos do helmet; estes valem para todas as rotas.
   async headers() {
-    return [{ source: "/:path*", headers: staticSecurityHeaders(process.env.NODE_ENV === "production") }];
+    return [
+      { source: "/:path*", headers: staticSecurityHeaders(process.env.NODE_ENV === "production") },
+      // PWA: o service worker nunca fica em cache HTTP, para a versão nova valer no próximo carregamento.
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }, { key: "Content-Type", value: "application/javascript; charset=utf-8" }] },
+    ];
   } };
 
 export default nextConfig;
