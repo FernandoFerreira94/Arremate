@@ -3,13 +3,14 @@
 import { Hint } from "@/components/app/hint";
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronRightIcon, ClockIcon, ImageOffIcon } from "lucide-react";
+import { ChevronRightIcon, ClockIcon, ImageOffIcon, MaximizeIcon } from "lucide-react";
 import { LotStateBadge } from "@/components/app/lot-state-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatBrt } from "@/lib/datetime";
 import { formatBrl } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { ArtworkZoom } from "./artwork-zoom";
 import { LotDetailsDialog } from "./lot-details";
 import { FavoriteButton } from "../favorites/favorite-button";
 import { WatchButton } from "../notifications/watch-button";
@@ -28,8 +29,23 @@ export function LotCard({ lot, now, offset, dimmed = false }: { lot: PublicLot; 
         {imageFailed ? (
           <span className="flex flex-col items-center gap-1 text-xs text-muted-foreground"><ImageOffIcon className="size-6" /> Imagem indisponível</span>
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element -- mídia local já validada pela API
-          <img src={lot.imageUrl} alt={`${lot.title}, ${lot.artist}`} className="h-full w-full object-contain" loading="lazy" onError={() => setImageFailed(true)} />
+          // 27/10: a imagem do card abre o mesmo visualizador da sala (lupa, zoom e pinça); a versão grande só carrega ao abrir.
+          <ArtworkZoom
+            src={lot.imageUrl}
+            zoomSrc={`/api/media/zoom/${encodeURIComponent(lot.externalId)}`}
+            alt={`${lot.title}, ${lot.artist}`}
+            title={lot.title}
+            credit={`${lot.credit} · ${lot.license}`}
+            trigger={
+              <button type="button" aria-label={`Ampliar imagem: ${lot.title}`} className="group relative block h-full w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+                {/* eslint-disable-next-line @next/next/no-img-element -- mídia local já validada pela API */}
+                <img src={lot.imageUrl} alt={`${lot.title}, ${lot.artist}`} className="h-full w-full object-contain" loading="lazy" onError={() => setImageFailed(true)} />
+                <span aria-hidden className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-md bg-foreground/75 px-1.5 py-1 text-[11px] font-medium text-background opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-90">
+                  <MaximizeIcon className="size-3" /> Ampliar
+                </span>
+              </button>
+            }
+          />
         )}
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
