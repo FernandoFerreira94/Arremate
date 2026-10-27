@@ -61,11 +61,15 @@ export function useRequestFavorite() {
 /** Refaz o favorito pendente quando a sessão aparece (login pela Sheet ou /entrar). */
 export function PendingFavoriteRunner() {
   const session = useSession();
+  const favorites = useFavorites();
   const toggle = useToggleFavorite();
   const done = useRef(false);
   const role = session.data?.role;
+  // Espera a lista de favoritos da sessão nova carregar: sem ela, o GET que sai junto com o login podia chegar
+  // depois do PUT com a lista antiga e o coração ficava vazio, embora o favorito estivesse salvo.
+  const ready = favorites.isSuccess && !favorites.isFetching;
   useEffect(() => {
-    if (!role || done.current) return;
+    if (!role || !ready || done.current) return;
     let pending: string | null = null;
     try {
       pending = sessionStorage.getItem(PENDING_FAVORITE_KEY);
@@ -76,6 +80,6 @@ export function PendingFavoriteRunner() {
     if (!pending) return;
     done.current = true;
     toggle.mutate({ lotId: pending, favorite: true });
-  }, [role, toggle]);
+  }, [role, ready, toggle]);
   return null;
 }
