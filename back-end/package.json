@@ -13,7 +13,8 @@
     "db:validate": "prisma validate",
     "db:generate": "prisma generate",
     "db:seed": "node --env-file-if-exists=../.env -r ts-node/register prisma/seed.ts",
-    "db:reset-demo": "node --env-file-if-exists=../.env -r ts-node/register prisma/reset-demo.ts"
+    "db:reset-demo": "node --env-file-if-exists=../.env -r ts-node/register prisma/reset-demo.ts",
+    "audit:retry": "node --env-file-if-exists=../.env -r ts-node/register prisma/audit-retry.ts"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, open, readFile, rename, rm } from "node:fs/promises";
+import { mkdir, open, readdir, readFile, rename, rm } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { encodeCheckpoint, parseCheckpoint } from "./audit-chain";
 import type { Checkpoint } from "./audit.types";
@@ -15,6 +15,7 @@ export interface CheckpointStore {
   writePending(checkpoint: Checkpoint): Promise<void>;
   clearPending(lotId: string): Promise<void>;
   advance(expectedRevision: number, next: Checkpoint): Promise<void>;
+  pendingLots?(): Promise<string[]>;
 }
 
 export class FileCheckpointStore implements CheckpointStore {
@@ -43,6 +44,16 @@ export class FileCheckpointStore implements CheckpointStore {
       }
       await this.persist(target, encodeCheckpoint(checkpoint), "pending");
     });
+  }
+
+  /** Lotes com intenção pendente (testemunha não confirmada); base da nova tentativa no startup. */
+  async pendingLots(): Promise<string[]> {
+    const entries = await readdir(this.root, { withFileTypes: true }).catch(() => []);
+    const lots: string[] = [];
+    for (const entry of entries) {
+      if (entry.isDirectory() && UUID.test(entry.name) && (await this.readAt(this.file(entry.name, "pending")).catch(() => null))) lots.push(entry.name);
+    }
+    return lots;
   }
 
   async clearPending(lotId: string): Promise<void> {
@@ -130,12 +141,15 @@ export class FileCheckpointStore implements CheckpointStore {
     const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
-    this.tails.set(lotId, previous.then(() => gate));
+    const tail = previous.then(() => gate);
+    this.tails.set(lotId, tail);
     await previous;
     try {
       return await action();
     } finally {
       release();
+      // Auditoria item 14: sem ninguém na fila, a entrada sai do mapa (não cresce um por lote para sempre).
+      if (this.tails.get(lotId) === tail) this.tails.delete(lotId);
     }
   }
 }

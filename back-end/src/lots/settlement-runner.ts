@@ -20,6 +20,7 @@ export class SettlementRunner implements OnApplicationBootstrap, OnModuleDestroy
 
   async onApplicationBootstrap(): Promise<void> {
     if (this.intervalMs === false) return;
+    await this.recover();
     await this.tick();
     this.timer = setInterval(() => void this.tick(), this.intervalMs);
     this.timer.unref();
@@ -32,6 +33,17 @@ export class SettlementRunner implements OnApplicationBootstrap, OnModuleDestroy
 
   idle(): Promise<void> {
     return this.running;
+  }
+
+  /** Nova tentativa de confirmação no startup; lote que continua divergente fica bloqueado e é registrado. */
+  private async recover(): Promise<void> {
+    try {
+      const summary = await this.settlement.recoverPendingConfirmations();
+      if (summary.confirmed + summary.discarded > 0) this.logger.log(`Auditoria: ${summary.confirmed} confirmação(ões) concluída(s), ${summary.discarded} intenção(ões) descartada(s).`);
+      if (summary.blocked.length > 0) this.logger.warn(`Auditoria: ${summary.blocked.length} lote(s) seguem bloqueados: ${summary.blocked.join(", ")}`);
+    } catch {
+      this.logger.error("Nova tentativa da auditoria falhou; rode npm run audit:retry.");
+    }
   }
 
   private tick(): Promise<void> {

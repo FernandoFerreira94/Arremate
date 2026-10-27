@@ -284,6 +284,39 @@ export class AuditService {
     });
   }
 
+  /**
+   * Nova tentativa para toda intenção pendente (startup e `npm run audit:retry`). Confirma a intenção
+   * quando o banco confere com ela; descarta quando o banco confere com a testemunha confirmada (a
+   * transação não chegou a gravar). Banco divergente dos dois fica bloqueado: nada é reassinado.
+   */
+  async recoverPending(): Promise<{ confirmed: number; discarded: number; blocked: string[] }> {
+    const summary = { confirmed: 0, discarded: 0, blocked: [] as string[] };
+    if (!this.key || !this.store.pendingLots) return summary;
+    for (const lotId of await this.store.pendingLots()) {
+      const outcome = await this.exclusive(lotId, async () => {
+        const pending = await this.store.readPending(lotId);
+        if (!pending) return "none" as const;
+        const history = await this.repository.loadHistory(lotId);
+        const committed = await this.store.read(lotId);
+        const now = this.clock();
+        if (this.classify(history, pending, null, now).status === "INTACT") {
+          if (!committed || committed.envelopeSignature !== pending.envelopeSignature) await this.store.advance(committed ? committed.revision : 0, pending);
+          await this.store.clearPending(lotId);
+          return "confirmed" as const;
+        }
+        if (committed && this.classify(history, committed, null, now).status === "INTACT") {
+          await this.store.clearPending(lotId);
+          return "discarded" as const;
+        }
+        return "blocked" as const;
+      }).catch(() => "blocked" as const);
+      if (outcome === "confirmed") summary.confirmed += 1;
+      if (outcome === "discarded") summary.discarded += 1;
+      if (outcome === "blocked") summary.blocked.push(lotId);
+    }
+    return summary;
+  }
+
   async retryCheckpoint(lotId: string): Promise<void> {
     await this.exclusive(lotId, async () => {
       this.requireKey();
@@ -397,12 +430,15 @@ export class AuditService {
     const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
-    this.tails.set(lotId, previous.then(() => gate));
+    const tail = previous.then(() => gate);
+    this.tails.set(lotId, tail);
     await previous;
     try {
       return await action();
     } finally {
       release();
+      // Auditoria item 14: sem ninguém na fila, a entrada sai do mapa (não cresce um por lote para sempre).
+      if (this.tails.get(lotId) === tail) this.tails.delete(lotId);
     }
   }
 }
