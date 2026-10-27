@@ -41,6 +41,21 @@ export class AuthController {
     await this.auth.logout(request, response);
   }
 
+  /**
+   * Sessão do site: visitante recebe 200 com `user: null`, para o navegador não registrar um 401 em toda página.
+   * `GET /me` continua 401 sem sessão (contrato da API).
+   */
+  @Get("session")
+  async session(@Req() request: Request): Promise<{ user: { role: Actor["role"]; userId: string; name: string } | null }> {
+    try {
+      const actor = await this.auth.requireActor(request);
+      return { user: { role: actor.role, userId: actor.userId, name: displayName(actor.name, actor.role) } };
+    } catch (error) {
+      if (error instanceof ApiException && error.getStatus() === 401) return { user: null };
+      throw error;
+    }
+  }
+
   @Get("me")
   @Authenticated()
   me(@Req() request: Request & { actor?: Actor }): { role: Actor["role"]; userId: string; name: string } {

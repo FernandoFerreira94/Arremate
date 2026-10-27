@@ -24,14 +24,12 @@ export function logout(): Promise<void> {
 }
 
 export async function currentSession(): Promise<Session | null> {
-  try {
-    const body = await apiFetch("/api/auth/me");
-    if (isRoleBody(body) && "userId" in body && typeof body.userId === "string" && "name" in body && typeof body.name === "string") return { role: body.role, userId: body.userId, name: body.name };
-    throw new ApiError({ statusCode: 0, code: "ERRO_INTERNO", message: "Não foi possível concluir a operação.", requestId: "" });
-  } catch (error) {
-    if (error instanceof ApiError && error.statusCode === 401) return null;
-    throw error;
-  }
+  // /session responde 200 também para visitante ({ user: null }): sem 401 no console de quem só navega.
+  const response = await apiFetch("/api/auth/session");
+  const body = typeof response === "object" && response !== null && "user" in response ? response.user : undefined;
+  if (body === null) return null;
+  if (isRoleBody(body) && "userId" in body && typeof body.userId === "string" && "name" in body && typeof body.name === "string") return { role: body.role, userId: body.userId, name: body.name };
+  throw new ApiError({ statusCode: 0, code: "ERRO_INTERNO", message: "Não foi possível concluir a operação.", requestId: "" });
 }
 
 function isPublicSession(body: unknown): body is PublicSession {
