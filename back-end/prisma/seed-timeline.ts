@@ -78,8 +78,8 @@ export async function backdateLotHistory(pool: Pool, signer: TimelineSigner, lot
     previous = signBid(event, previous, signer.key);
     return previous;
   });
-  const { envelopeSignature: _old, ...rest } = current;
-  const body: CheckpointBody = { ...rest, revision: current.revision + 1, startsAt: startsIso, genesisSignature, headSignature: previous };
+  const body: CheckpointBody = { ...current, revision: current.revision + 1, startsAt: startsIso, genesisSignature, headSignature: previous };
+  delete (body as Partial<Checkpoint>).envelopeSignature;
   const next: Checkpoint = { ...body, envelopeSignature: signCheckpoint(body, signer.key) };
 
   await signer.store.writePending(next);
