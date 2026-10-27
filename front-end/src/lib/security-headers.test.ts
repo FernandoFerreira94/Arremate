@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
 import { proxy } from "../proxy";
-import { clientAddress } from "./api-proxy";
+import { clientAddress, upstreamUnavailable } from "./api-proxy";
 import { buildCsp, createNonce, staticSecurityHeaders } from "./security-headers";
 
 describe("D26 (M2): cabeçalhos de segurança", () => {
@@ -44,5 +44,14 @@ describe("D26 (M1): IP do cliente no proxy /api", () => {
     expect(clientAddress(new Headers({ "x-forwarded-for": "::1" }))).toBe("::1");
     expect(clientAddress(new Headers({ "x-forwarded-for": "evil<script>" }))).toBeNull();
     expect(clientAddress(new Headers())).toBeNull();
+  });
+});
+
+describe("API fora do ar", () => {
+  it("o proxy responde 503 em JSON com mensagem para a pessoa, não 500 vazio", async () => {
+    const response = upstreamUnavailable();
+    expect(response.status).toBe(503);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toMatchObject({ code: "API_INDISPONIVEL", message: expect.stringContaining("Tente de novo") });
   });
 });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiProxyTarget, upstreamHeaders } from "@/lib/api-proxy";
+import { apiProxyTarget, upstreamHeaders, upstreamUnavailable } from "@/lib/api-proxy";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,15 +15,20 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
   const target = new URL(`${apiProxyTarget()}/api/${path.map((part) => encodeURIComponent(part)).join("/")}`);
   target.search = new URL(request.url).search;
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
-  const upstream = await fetch(target, {
-    method: request.method,
-    headers: upstreamHeaders(request.headers),
-    body: hasBody ? await request.arrayBuffer() : undefined,
-    redirect: "manual",
-    cache: "no-store",
-    // SSE: cliente fecha a aba, a conexão com a API fecha junto.
-    signal: request.signal,
-  });
+  let upstream: Response;
+  try {
+    upstream = await fetch(target, {
+      method: request.method,
+      headers: upstreamHeaders(request.headers),
+      body: hasBody ? await request.arrayBuffer() : undefined,
+      redirect: "manual",
+      cache: "no-store",
+      // SSE: cliente fecha a aba, a conexão com a API fecha junto.
+      signal: request.signal,
+    });
+  } catch {
+    return upstreamUnavailable();
+  }
   const headers = new Headers();
   const location = upstream.headers.get("location");
   if (location) headers.set("location", location);
