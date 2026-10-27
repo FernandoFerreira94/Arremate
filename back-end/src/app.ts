@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
-import { Module, ValidationPipe } from "@nestjs/common";
+import { Logger, Module, ValidationPipe } from "@nestjs/common";
 import type { DynamicModule, INestApplication } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { NestFactory } from "@nestjs/core";
@@ -199,10 +199,14 @@ export async function createApplication(options: ApplicationOptions = {}): Promi
   return app;
 }
 
-function auditKeyFromEnv(): Uint8Array | null {
-  const raw = process.env.AUDIT_HMAC_KEY;
-  if (typeof raw !== "string" || !/^(?:[0-9a-fA-F]{2}){32,}$/.test(raw)) return null;
-  return Buffer.from(raw, "hex");
+/** Sem chave válida a API sobe, mas todo lance responde 503: o boot avisa em vez de falhar calado. */
+export function auditKeyFromEnv(env: NodeJS.ProcessEnv = process.env, logger: Pick<Logger, "error"> = new Logger("Auditoria")): Uint8Array | null {
+  const raw = env.AUDIT_HMAC_KEY;
+  if (typeof raw === "string" && /^(?:[0-9a-fA-F]{2}){32,}$/.test(raw)) return Buffer.from(raw, "hex");
+  logger.error(
+    `AUDIT_HMAC_KEY ${raw ? "inválida" : "ausente"}: use 64+ caracteres hexadecimais (openssl rand -hex 32). Sem ela, lances e auditoria respondem 503.`,
+  );
+  return null;
 }
 
 /**
