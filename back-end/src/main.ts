@@ -1,16 +1,9 @@
 import { Logger } from "@nestjs/common";
 import { createApplication } from "./app";
 import { errorReporterFromEnv } from "./observability/error-reporter.service";
+import { installProcessHandlers } from "./observability/process-handlers";
 
-/** A5: erro fora de requisição também passa pelo relator (só log, D25). */
-const processReporter = errorReporterFromEnv();
-process.on("unhandledRejection", (reason) => {
-  processReporter.capture(reason, { source: "process" });
-});
-process.on("uncaughtException", (error) => {
-  processReporter.capture(error, { source: "process" });
-  process.exitCode = 1;
-});
+installProcessHandlers(errorReporterFromEnv());
 
 async function bootstrap(): Promise<void> {
   const port = Number(process.env.API_PORT ?? "4300");
