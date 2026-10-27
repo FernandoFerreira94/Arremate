@@ -15,8 +15,9 @@ test("busca no header acha o lote pelo nome da obra, mantém a aba e limpa", asy
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/?aba=ao-vivo");
   const header = page.locator("header");
-  await header.getByRole("searchbox", { name: "Buscar obra ou artista" }).fill(term);
-  await header.getByRole("searchbox", { name: "Buscar obra ou artista" }).press("Enter");
+  // Filtra enquanto digita, sem Enter (27/10).
+  await header.getByRole("searchbox", { name: "Buscar obra ou artista" }).pressSequentially(term, { delay: 40 });
+  await expect(header.getByRole("searchbox", { name: "Buscar obra ou artista" })).toBeFocused();
 
   await expect(page).toHaveURL(/aba=ao-vivo/);
   await expect(page).toHaveURL(new RegExp(`q=${encodeURIComponent(term).replace(/%20/g, "\\+")}`));
@@ -24,7 +25,6 @@ test("busca no header acha o lote pelo nome da obra, mantém a aba e limpa", asy
   await expect(page.locator(`a[href="/lotes/${lotId}"]`)).toBeVisible();
 
   await header.getByRole("searchbox", { name: "Buscar obra ou artista" }).fill("zzz-obra-que-nao-existe");
-  await header.getByRole("searchbox", { name: "Buscar obra ou artista" }).press("Enter");
   await expect(page.getByText(/Nada encontrado para "zzz-obra-que-nao-existe"/)).toBeVisible();
 
   await page.getByRole("button", { name: "Limpar busca" }).click();
