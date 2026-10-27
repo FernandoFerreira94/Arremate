@@ -13,6 +13,6 @@
     "skipLibCheck": true,
     "types": ["node", "jest"]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "prisma.config.ts", "prisma/seed.ts", "prisma/reset-demo.ts", "prisma/audit-retry.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "prisma.config.ts", "prisma/seed.ts", "prisma/reset-demo.ts", "prisma/audit-retry.ts", "prisma/seed-timeline.ts", "prisma/seed-catalog.ts"],
   "exclude": ["node_modules", "dist", "src/generated"]
 }
