@@ -23,6 +23,10 @@ const SHOWCASE_ORDER = `
 export const SHOWCASE_STATES = ["live", "scheduled", "ended", "ending"] as const;
 export type ShowcaseState = (typeof SHOWCASE_STATES)[number];
 export type ShowcaseCounts = Record<ShowcaseState, number>;
+/** Painel do leiloeiro: as abas da vitrine (sem "ending") mais cancelados. */
+export const SELLER_STATES = ["live", "scheduled", "ended", "cancelled"] as const;
+export type SellerState = (typeof SELLER_STATES)[number];
+export type SellerCounts = Record<SellerState | "all", number>;
 
 /** Mesmas regras de `lotState`; "ending" são os ao vivo que terminam hoje no horário de Brasília. */
 const LIVE_SQL = `(l.status = 'PUBLISHED' AND l.starts_at <= clock_timestamp() AND l.ends_at > clock_timestamp())`;
@@ -31,6 +35,13 @@ const SHOWCASE_STATE_SQL: Record<ShowcaseState, string> = {
   scheduled: `(l.status = 'PUBLISHED' AND l.starts_at > clock_timestamp())`,
   ended: `(l.status <> 'PUBLISHED' OR l.ends_at <= clock_timestamp())`,
   ending: `(${LIVE_SQL} AND (l.ends_at AT TIME ZONE 'America/Sao_Paulo')::date = (clock_timestamp() AT TIME ZONE 'America/Sao_Paulo')::date)`,
+};
+
+const SELLER_STATE_SQL: Record<SellerState, string> = {
+  live: SHOWCASE_STATE_SQL.live,
+  scheduled: SHOWCASE_STATE_SQL.scheduled,
+  ended: `(l.status <> 'CANCELLED' AND ${SHOWCASE_STATE_SQL.ended})`,
+  cancelled: `(l.status = 'CANCELLED')`,
 };
 
 export type LotRow = {
@@ -106,13 +117,24 @@ export class LotsRepository {
     return { rows: rows.rows, total: state === null ? total : byTab[state], counts: byTab };
   }
 
-  async ownedBy(ownerId: string, limit: number, offset: number): Promise<{ rows: LotRow[]; total: number }> {
+  /** Code review item 4: filtro e paginação no SQL e totais por aba numa consulta só, como a vitrine. */
+  async ownedBy(ownerId: string, limit: number, offset: number, state: SellerState | null = null): Promise<{ rows: LotRow[]; total: number; counts: SellerCounts }> {
     const rows = await this.database.query<LotRow>(
-      `SELECT ${LOT_COLUMNS} ${LOT_FROM} WHERE l.owner_id = $1 ORDER BY l.created_at DESC, l.id LIMIT $2 OFFSET $3`,
+      `SELECT ${LOT_COLUMNS} ${LOT_FROM} WHERE l.owner_id = $1 AND ${state === null ? "true" : SELLER_STATE_SQL[state]}
+       ORDER BY l.created_at DESC, l.id LIMIT $2 OFFSET $3`,
       [ownerId, limit, offset],
     );
-    const total = await this.database.query<{ n: number }>(`SELECT count(*)::int AS n FROM lots WHERE owner_id = $1`, [ownerId]);
-    return { rows: rows.rows, total: total.rows[0]?.n ?? 0 };
+    const counts = await this.database.query<SellerCounts>(
+      `SELECT count(*)::int AS "all",
+              count(*) FILTER (WHERE ${SELLER_STATE_SQL.live})::int AS live,
+              count(*) FILTER (WHERE ${SELLER_STATE_SQL.scheduled})::int AS scheduled,
+              count(*) FILTER (WHERE ${SELLER_STATE_SQL.ended})::int AS ended,
+              count(*) FILTER (WHERE ${SELLER_STATE_SQL.cancelled})::int AS cancelled
+       FROM lots l WHERE l.owner_id = $1`,
+      [ownerId],
+    );
+    const byTab = counts.rows[0] ?? { all: 0, live: 0, scheduled: 0, ended: 0, cancelled: 0 };
+    return { rows: rows.rows, total: byTab[state ?? "all"], counts: byTab };
   }
 
   async find(id: string): Promise<LotRow | null> {

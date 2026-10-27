@@ -275,6 +275,25 @@ describe("lotes", () => {
     expect(await audit.verifyLot(cancelledInDb.body.id)).toMatchObject({ status: "TAMPERED", reasonCode: "STATUS_MISMATCH" });
   });
 
+  it("painel do leiloeiro filtra a aba no SQL e conta todas as abas (code review item 4)", async () => {
+    const owner = await login("AUCTIONEER");
+    const live = await Promise.all(Array.from({ length: 3 }, () => publish(owner.session)));
+    const ended = await publish(owner.session);
+    const cancelled = await publish(owner.session);
+    await pool.query(`UPDATE lots SET starts_at = clock_timestamp() - interval '2 hours', ends_at = clock_timestamp() - interval '1 hour' WHERE id = $1`, [ended.body.id]);
+    expect((await owner.session.post(`/api/lots/${cancelled.body.id}/cancel`, {})).status).toBe(200);
+
+    const all = await owner.session.get("/api/seller/lots?limit=2");
+    expect(all.body).toMatchObject({ total: 5, counts: { all: 5, live: 3, scheduled: 0, ended: 1, cancelled: 1 } });
+    expect(all.body.items).toHaveLength(2);
+    const liveTab = await owner.session.get("/api/seller/lots?state=live&limit=2&page=2");
+    expect(liveTab.body.total).toBe(3);
+    expect(liveTab.body.items.map((item: { id: string }) => item.id)).toHaveLength(1);
+    expect(live.map((item) => item.body.id)).toContain(liveTab.body.items[0].id);
+    expect((await owner.session.get("/api/seller/lots?state=cancelled")).body.items.map((item: { id: string }) => item.id)).toEqual([cancelled.body.id]);
+    expect((await owner.session.get("/api/seller/lots?state=ending")).status).toBe(400);
+  });
+
   it("lote apagado com testemunha é Adulterado (LOT_REMOVED) na rota pública; sem testemunha é 404 (auditoria item 4)", async () => {
     const owner = await login("AUCTIONEER");
     const created = await publish(owner.session);

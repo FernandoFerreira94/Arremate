@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { CheckCircle2Icon, InfoIcon, PlusIcon } from "lucide-react";
-import { LotStateBadge, type LotState } from "@/components/app/lot-state-badge";
+import { LotStateBadge } from "@/components/app/lot-state-badge";
 import { EmptyState, ErrorState, LoadingRows } from "@/components/app/page-states";
 import { PageShell } from "@/components/app/page-shell";
 import { Alert } from "@/components/ui/alert";
@@ -26,26 +26,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatBrl } from "@/lib/money";
 import { cancelWithRefresh } from "./cancel-lot";
-import { cancelLot, getSellerSummary, listSellerLots, type LotView } from "./seller-api";
+import { cancelLot, getSellerSummary, listSellerLots, SELLER_PAGE_SIZE, type LotView, type SellerState } from "./seller-api";
 import { notifyErrorText, notifySuccess } from "@/lib/notify";
 
-type Filter = "ALL" | LotState;
+type Filter = "all" | SellerState;
 const FILTERS: { value: Filter; label: string }[] = [
-  { value: "ALL", label: "Todos" },
-  { value: "LIVE", label: "Ao vivo" },
-  { value: "SCHEDULED", label: "Agendados" },
-  { value: "ENDED", label: "Encerrados" },
-  { value: "CANCELLED", label: "Cancelados" },
+  { value: "all", label: "Todos" },
+  { value: "live", label: "Ao vivo" },
+  { value: "scheduled", label: "Agendados" },
+  { value: "ended", label: "Encerrados" },
+  { value: "cancelled", label: "Cancelados" },
 ];
 
 export function MyLotsPage() {
   const client = useQueryClient();
-  const lots = useQuery({ queryKey: ["seller", "lots"], queryFn: () => listSellerLots(1) });
+  const [filter, setFilter] = useState<Filter>("all");
+  const [page, setPage] = useState(1);
+  // Code review item 4: aba e página vão para o servidor; os totais contam todos os lotes, não só a página.
+  const lots = useQuery({
+    queryKey: ["seller", "lots", filter, page],
+    queryFn: () => listSellerLots(page, filter === "all" ? undefined : filter),
+    placeholderData: (previous) => previous,
+  });
   const summary = useQuery({ queryKey: ["seller", "summary"], queryFn: getSellerSummary });
-  const [filter, setFilter] = useState<Filter>("ALL");
   const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
-  const items = lots.data?.items ?? [];
-  const visible = filter === "ALL" ? items : items.filter((lot) => lot.state === filter);
+  const visible = lots.isPlaceholderData ? [] : (lots.data?.items ?? []);
+  const pages = Math.max(1, Math.ceil((lots.data?.total ?? 0) / SELLER_PAGE_SIZE));
+  const owned = lots.data?.counts.all ?? 0;
 
   async function onCancel(lot: LotView) {
     const outcome = await cancelWithRefresh(client, cancelLot, lot.id);
@@ -96,10 +103,10 @@ export function MyLotsPage() {
             <p>{notice.message}</p>
           </Alert>
         ) : null}
-        <Tabs value={filter} onValueChange={(value) => setFilter(value as Filter)}>
-          <TabsList aria-label="Filtrar lotes">
+        <Tabs value={filter} onValueChange={(value) => { setFilter(value as Filter); setPage(1); }} className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <TabsList aria-label="Filtrar lotes" className="flex-nowrap">
             {FILTERS.map((item) => {
-              const count = item.value === "ALL" ? items.length : items.filter((lot) => lot.state === item.value).length;
+              const count = lots.data?.counts[item.value] ?? 0;
               return (
                 <TabsTrigger key={item.value} value={item.value}>
                   {item.label} <span className="rounded-full bg-muted px-1.5 text-xs">{count}</span>
@@ -110,18 +117,35 @@ export function MyLotsPage() {
         </Tabs>
         <Card>
           <CardContent>
-            {lots.isPending ? (
+            {lots.isPending || lots.isPlaceholderData ? (
               <LoadingRows label="Carregando lotes" />
             ) : lots.isError ? (
               <ErrorState message="Não foi possível carregar seus lotes." onRetry={() => void lots.refetch()} />
             ) : visible.length === 0 ? (
               <EmptyState
-                title={items.length === 0 ? "Você ainda não criou lotes" : "Nenhum lote neste filtro"}
-                description={items.length === 0 ? "Busque uma obra de domínio público no The Met e configure o leilão." : "Escolha outro filtro para ver os demais lotes."}
-                action={items.length === 0 ? <Button asChild><Link href="/painel/lotes/novo"><PlusIcon /> Criar lote</Link></Button> : undefined}
+                title={owned === 0 ? "Você ainda não criou lotes" : "Nenhum lote neste filtro"}
+                description={owned === 0 ? "Busque uma obra de domínio público no The Met e configure o leilão." : "Escolha outro filtro para ver os demais lotes."}
+                action={owned === 0 ? <Button asChild><Link href="/painel/lotes/novo"><PlusIcon /> Criar lote</Link></Button> : undefined}
               />
             ) : (
-              <Table>
+              <>
+              {/* Code review item 4: no celular, cards; a tabela de 7 colunas fica para telas largas. */}
+              <ul aria-label="Lotes" className="flex flex-col gap-3 md:hidden">
+                {visible.map((lot) => (
+                  <li key={lot.id} className="flex min-w-0 gap-3 rounded-lg border p-3">
+                    <ArtworkImage src={lot.imageUrl} alt="" width={56} height={56} sizes="56px" className="size-14 shrink-0 rounded-sm object-cover" />
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <p className="line-clamp-2 font-medium">{lot.title}</p>
+                      <div className="flex flex-wrap items-center gap-2"><LotStateBadge state={lot.state} /><Result lot={lot} /></div>
+                      <p className="text-sm tabular-nums text-muted-foreground">
+                        Inicial {formatBrl(lot.initialCents)} · {lot.currentCents ? `${lot.state === "LIVE" ? "atual" : "final"} ${formatBrl(lot.currentCents)}` : "sem lances"} · {lot.bidCount} lance(s)
+                      </p>
+                      <div className="self-start"><RowAction lot={lot} onCancel={onCancel} /></div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <Table className="hidden md:table">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Lote</TableHead>
@@ -153,6 +177,16 @@ export function MyLotsPage() {
                   ))}
                 </TableBody>
               </Table>
+              {pages > 1 ? (
+                <nav aria-label="Paginação dos lotes" className="mt-4 flex items-center justify-between gap-3 text-sm">
+                  <span className="tabular-nums">Página {page} de {pages}</span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>Anterior</Button>
+                    <Button variant="outline" size="sm" disabled={page >= pages} onClick={() => setPage((current) => current + 1)}>Próxima</Button>
+                  </div>
+                </nav>
+              ) : null}
+              </>
             )}
           </CardContent>
         </Card>

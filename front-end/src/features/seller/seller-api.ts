@@ -39,8 +39,15 @@ export type CatalogItem = {
 };
 export type CatalogPage = { items: CatalogItem[]; page: number; pageSize: number; total: number; hasMore: boolean };
 
-export async function listSellerLots(page = 1): Promise<Paged<LotView>> {
-  return (await apiFetch(`/api/seller/lots?page=${page}&limit=50`)) as Paged<LotView>;
+/** Abas do painel; filtro, paginação e totais vêm do servidor (code review item 4). */
+export type SellerState = "live" | "scheduled" | "ended" | "cancelled";
+export type SellerCounts = Record<SellerState | "all", number>;
+export const SELLER_PAGE_SIZE = 10;
+
+export async function listSellerLots(page = 1, state?: SellerState): Promise<Paged<LotView> & { counts: SellerCounts }> {
+  const search = new URLSearchParams({ page: String(page), limit: String(SELLER_PAGE_SIZE) });
+  if (state) search.set("state", state);
+  return (await apiFetch(`/api/seller/lots?${search.toString()}`)) as Paged<LotView> & { counts: SellerCounts };
 }
 
 export async function getSellerSummary(): Promise<SellerSummary> {
