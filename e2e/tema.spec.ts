@@ -6,24 +6,40 @@ import { markTourSeen } from "./support/tour";
 
 const SHOTS = resolve(__dirname, "../../casadeleilao-runs/tema-shots");
 
-test("sem escolha segue o sistema; o botão alterna e a escolha sobrevive ao recarregar", async ({ browser }) => {
+test("sem escolha segue o sistema; menu Claro, Escuro e Sistema, e a escolha sobrevive ao recarregar", async ({ browser }) => {
   const context = await browser.newContext({ colorScheme: "dark", viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
   await markTourSeen(page);
   await page.goto("/");
   const html = page.locator("html");
   await expect(html).toHaveAttribute("data-theme", "dark");
+  const choose = async (name: string) => {
+    await page.getByRole("button", { name: "Tema" }).click();
+    await page.getByRole("menuitemradio", { name }).click();
+  };
 
-  await page.getByRole("button", { name: "Usar tema claro" }).click();
+  await choose("Claro");
   await expect(html).toHaveAttribute("data-theme", "light");
   await page.reload();
   await expect(html).toHaveAttribute("data-theme", "light");
-  const background = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(background).toBe("rgb(246, 243, 236)");
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(246, 243, 236)");
+  await page.getByRole("button", { name: "Tema" }).click();
+  await expect(page.getByRole("menuitemradio", { name: "Claro" })).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("Escape");
 
-  await page.getByRole("button", { name: "Usar tema escuro" }).click();
+  await choose("Escuro");
   await expect(html).toHaveAttribute("data-theme", "dark");
   expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(21, 18, 14)");
+
+  // Sistema: apaga a escolha e acompanha o sistema operacional, inclusive se ele mudar com a página aberta.
+  await choose("Sistema");
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await page.reload();
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  expect(await page.evaluate(() => localStorage.getItem("arremate:theme"))).toBeNull();
   await context.close();
 });
 

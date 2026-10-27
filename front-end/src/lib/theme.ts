@@ -1,4 +1,10 @@
 export type Theme = "light" | "dark";
+/** Escolha no menu do header; "system" apaga a escolha salva e segue o sistema operacional. */
+export type ThemePreference = Theme | "system";
+
+export function preferenceOf(stored: string | null): ThemePreference {
+  return stored === "light" || stored === "dark" ? stored : "system";
+}
 
 export const THEME_STORAGE_KEY = "arremate:theme";
 
