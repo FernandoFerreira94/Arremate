@@ -47,7 +47,7 @@ export function isRuleRejection(error: unknown): boolean {
  */
 export function notifyError(error: unknown, fallback = "Não foi possível concluir a operação.", options: { id?: string; retry?: () => void } = {}) {
   if (error instanceof ApiError) {
-    if (error.code === "CONFIRMATION_PENDING") return notifyWarning("Confirmação pendente.", "Repita com a mesma chave em instantes.");
+    if (error.code === "CONFIRMATION_PENDING") return notifyWarning("Confirmação em andamento.", "Atualize em instantes para ver o resultado; nada foi cobrado em dobro.");
     const id = options.id ?? (error.message || fallback);
     const shown = isRuleRejection(error)
       ? toast.warning(error.message || fallback, { id, duration: TOAST_DURATION.warning })
