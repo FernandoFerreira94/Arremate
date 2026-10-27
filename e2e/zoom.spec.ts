@@ -29,6 +29,26 @@ const translateX = (page: Page) =>
 test.describe("desktop", () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
+  test("lupa: o cursor amplia a obra em alta resolução onde passa; clique troca para o zoom de 2×", async ({ page }) => {
+    const { viewport, level } = await openZoom(page);
+    const box = (await viewport.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    const lens = page.getByTestId("zoom-lens");
+    await expect(lens).toBeVisible();
+    expect(Number(await lens.getAttribute("data-factor"))).toBeGreaterThanOrEqual(2);
+    expect(await lens.evaluate((el) => getComputedStyle(el).backgroundImage)).toContain(`/api/media/zoom/${EXTERNAL_ID}`);
+    const before = await lens.evaluate((el) => getComputedStyle(el).backgroundPosition);
+    await page.mouse.move(box.x + box.width / 2 + 60, box.y + box.height / 2 + 40);
+    await expect.poll(() => lens.evaluate((el) => getComputedStyle(el).backgroundPosition)).not.toBe(before);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(level).toHaveText("200%");
+    await expect(lens).toHaveCount(0);
+    await page.mouse.move(box.x + 2, box.y + 2);
+    await page.mouse.move(box.x - 20, box.y - 20);
+    await expect(lens).toHaveCount(0);
+  });
+
   test("clique 1×→2×→3×→1×, minimapa, barra, teclado, arrastar e Esc devolve o foco", async ({ page }) => {
     const { trigger, dialog, viewport, level } = await openZoom(page);
     await expect(viewport).toBeFocused();

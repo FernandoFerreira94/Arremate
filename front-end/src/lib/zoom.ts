@@ -101,7 +101,39 @@ export function percent(scale: number): string {
 
 /** Dica do Dialog: cita os dois limites reais (clique até 3×, pinça até 4×). */
 export function zoomHint(scale: number): string {
+  if (scale === 1) return `${percent(scale)} · passe o mouse para a lupa · clique para ampliar até ${DESKTOP_MAX}× · pinça até ${TOUCH_MAX}×`;
   return scale < DESKTOP_MAX
     ? `${percent(scale)} · clique para ampliar até ${DESKTOP_MAX}× · pinça até ${TOUCH_MAX}×`
     : `${percent(scale)} · clique volta a 1×`;
+}
+
+/** Lupa: diâmetro em px e limites do aumento sobre a imagem exibida. */
+export const LENS_SIZE = 220;
+const LENS_MIN = 2;
+const LENS_MAX = 4;
+
+export type Lens = { left: number; top: number; backgroundSize: string; backgroundPosition: string; factor: number };
+
+/**
+ * Lupa sob o cursor (pedido do Fernando, 27/10): o cursor em `at` (relativo ao viewport) vira o centro de um círculo
+ * que mostra a imagem de zoom (~2500 px) ampliada. O aumento acompanha a resolução real da imagem (entre 2× e 4×),
+ * para a lupa nunca esticar pixels além do original. Fora da imagem (barras do object-contain) não há lupa.
+ */
+export function lensAt(at: Point, view: Size, natural: Size, size = LENS_SIZE): Lens | null {
+  if (!view.width || !view.height || !natural.width || !natural.height) return null;
+  const fit = Math.min(view.width / natural.width, view.height / natural.height);
+  const shown = { width: natural.width * fit, height: natural.height * fit };
+  const offset = { x: (view.width - shown.width) / 2, y: (view.height - shown.height) / 2 };
+  const u = (at.x - offset.x) / shown.width;
+  const v = (at.y - offset.y) / shown.height;
+  if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+  const factor = Math.min(LENS_MAX, Math.max(LENS_MIN, 1 / fit));
+  const bg = { width: shown.width * factor, height: shown.height * factor };
+  return {
+    left: at.x - size / 2,
+    top: at.y - size / 2,
+    backgroundSize: `${bg.width}px ${bg.height}px`,
+    backgroundPosition: `${size / 2 - u * bg.width}px ${size / 2 - v * bg.height}px`,
+    factor,
+  };
 }
