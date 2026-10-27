@@ -100,6 +100,40 @@ test("remover favorito mostra Desfazer, que refaz o favorito", async ({ browser 
   await page.context().close();
 });
 
+test("dois avisos seguidos empilham em coluna: o novo embaixo, longe do feed de lances", async ({ browser }) => {
+  const lotId = await publishLot(await apiAs("auctioneer"), { endsInMs: 30 * 60_000 });
+  const viewport = { width: 1440, height: 900 };
+  const page = await bidderPage(browser, viewport);
+  await page.goto(`/lotes/${lotId}`);
+  await page.getByRole("button", { name: /^Favoritar/ }).first().click();
+  const older = toasts(page).filter({ hasText: "Adicionado aos favoritos." });
+  await expect(older).toBeVisible();
+  await page.getByRole("button", { name: /Remover .* dos favoritos/ }).first().click();
+  const newer = toasts(page).filter({ hasText: "Removido dos favoritos." });
+  await expect(newer).toBeVisible();
+  await expect(older).toBeVisible();
+  // Coluna aberta: sem sobreposição, o mais novo embaixo e o anterior empurrado para cima, no canto esquerdo.
+  await expect.poll(async () => {
+    const [a, b] = [await older.boundingBox(), await newer.boundingBox()];
+    return a && b ? a.y + a.height <= b.y : false;
+  }).toBe(true);
+  expect((await newer.boundingBox())?.x ?? viewport.width).toBeLessThan(viewport.width / 2);
+  await page.screenshot({ path: resolve(SHOTS, "coluna-desktop.png") });
+  await page.context().close();
+});
+
+test("o mesmo aviso repetido renova o toast aberto em vez de duplicar", async ({ browser }) => {
+  const page = await bidderPage(browser, { width: 1440, height: 900 });
+  await page.goto("/carteira?aba=pix");
+  for (let i = 0; i < 2; i += 1) {
+    await page.getByRole("button", { name: "R$ 1.000", exact: true }).click();
+    await page.getByRole("button", { name: "Simular pagamento aprovado" }).click();
+    await expect(toasts(page).filter({ hasText: "Depósito de R$ 1.000,00 adicionado à carteira." })).toBeVisible();
+  }
+  await expect(toasts(page).filter({ hasText: "Depósito de R$ 1.000,00 adicionado à carteira." })).toHaveCount(1);
+  await page.context().close();
+});
+
 test("relato de erro do navegador chega à API (202) quando a tela de erro aparece", async ({ page }) => {
   const reported = page.waitForRequest((request) => request.url().endsWith("/api/client-errors") && request.method() === "POST");
   await markTourSeen(page);

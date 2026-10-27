@@ -10,6 +10,7 @@ import { reportClientError } from "./error-reporter";
  * C2 (plano erros-e-toasts, G2): um só caminho para toasts. Sucesso 4 s, aviso 6 s, erro 8 s; toast com ação fica
  * até fechar. A mensagem vem da API (`message`) quando existir; senão, o texto local (fallback).
  */
+/** Sem id explícito, o texto vira o id: o mesmo aviso repetido renova o toast aberto em vez de empilhar uma cópia. */
 export const TOAST_DURATION = { success: 4000, info: 4000, warning: 6000, error: 8000, action: Number.POSITIVE_INFINITY } as const;
 
 export type ToastAction = { label: string; onClick: () => void };
@@ -20,15 +21,15 @@ export function messageOf(value: unknown, fallback: string): string {
 }
 
 export function notifySuccess(message: string, options: { id?: string; action?: ToastAction } = {}) {
-  return toast.success(message, withAction({ id: options.id, duration: TOAST_DURATION.success }, options.action));
+  return toast.success(message, withAction({ id: options.id ?? message, duration: TOAST_DURATION.success }, options.action));
 }
 
 export function notifyInfo(message: string, options: { id?: string } = {}) {
-  return toast.info(message, { id: options.id, duration: TOAST_DURATION.info });
+  return toast.info(message, { id: options.id ?? message, duration: TOAST_DURATION.info });
 }
 
 export function notifyWarning(message: string, description?: string) {
-  return toast.warning(message, { description, duration: TOAST_DURATION.warning });
+  return toast.warning(message, { id: message, description, duration: TOAST_DURATION.warning });
 }
 
 /**
@@ -47,7 +48,7 @@ export function isRuleRejection(error: unknown): boolean {
 export function notifyError(error: unknown, fallback = "Não foi possível concluir a operação.", options: { id?: string; retry?: () => void } = {}) {
   if (error instanceof ApiError) {
     if (error.code === "CONFIRMATION_PENDING") return notifyWarning("Confirmação pendente.", "Repita com a mesma chave em instantes.");
-    const id = options.id;
+    const id = options.id ?? (error.message || fallback);
     const shown = isRuleRejection(error)
       ? toast.warning(error.message || fallback, { id, duration: TOAST_DURATION.warning })
       : toast.error(error.message || fallback, withAction({ id, duration: TOAST_DURATION.error, description: error.requestId ? <SupportCode code={error.requestId} /> : undefined }, options.retry ? { label: "Tentar de novo", onClick: options.retry } : undefined));
@@ -59,12 +60,12 @@ export function notifyError(error: unknown, fallback = "Não foi possível concl
     return shown;
   }
   reportClientError(error);
-  return toast.error(fallback, withAction({ id: options.id, duration: TOAST_DURATION.error, description: "Tente de novo." }, options.retry ? { label: "Tentar de novo", onClick: options.retry } : undefined));
+  return toast.error(fallback, withAction({ id: options.id ?? fallback, duration: TOAST_DURATION.error, description: "Tente de novo." }, options.retry ? { label: "Tentar de novo", onClick: options.retry } : undefined));
 }
 
 /** Erro já traduzido em texto (sem ApiError), ex.: desfecho do cancelamento. */
 export function notifyErrorText(message: string) {
-  return toast.error(message, { duration: TOAST_DURATION.error });
+  return toast.error(message, { id: message, duration: TOAST_DURATION.error });
 }
 
 /** Carregando sem prazo; vira sucesso (4 s) ou erro (8 s) no mesmo toast. */
