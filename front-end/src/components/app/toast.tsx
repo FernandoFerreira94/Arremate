@@ -19,8 +19,9 @@ function useMobile(): boolean {
 }
 
 /**
- * Toaster do Arremate (Sonner, G1/G2; substitui o toast local da D22). Segue o tema do site. Desktop embaixo à direita,
- * mobile no topo; até 3 visíveis; corpo --card e cor de estado só na borda esquerda e no ícone (prancha T1/T2).
+ * Toaster do Arremate (Sonner, G1/G2; substitui o toast local da D22). Segue o tema do site. Desktop embaixo à esquerda,
+ * porque o canto direito é do feed de lances (D32); mobile no topo. Até 3 visíveis, sempre abertos em coluna: o aviso novo
+ * entra embaixo e empurra os anteriores para cima. Corpo --card e cor de estado só na borda esquerda e no ícone (prancha T1/T2).
  */
 export function AppToaster() {
   const mobile = useMobile();
@@ -28,10 +29,12 @@ export function AppToaster() {
   return (
     <Toaster
       theme={theme}
-      position={mobile ? "top-center" : "bottom-right"}
+      position={mobile ? "top-center" : "bottom-left"}
       offset={mobile ? { top: 72, left: 8, right: 8 } : 24}
       mobileOffset={{ top: 72, left: 8, right: 8 }}
       visibleToasts={3}
+      expand
+      gap={12}
       closeButton
       containerAriaLabel="Notificações"
       icons={{
