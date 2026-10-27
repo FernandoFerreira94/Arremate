@@ -78,6 +78,7 @@ export class BiddingService {
         incrementCents: BigInt(lot.increment_cents),
         currentCents: leader ? BigInt(leader.amount_cents) : null,
         actorIsLeader: leader?.user_id === actor.userId,
+        actorIsOwner: lot.owner_id === actor.userId,
         availableCents: own ? BigInt(own.total_cents) - BigInt(own.committed_cents) : 0n,
         amountCents: amount,
         now,

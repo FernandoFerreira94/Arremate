@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bidShortcuts, clockOffset, remainingMs, formatCountdown, rankByBidder, insufficientBalanceMessage, confirmationHolds, becameOutbid } from "./room-logic";
+import { bidShortcuts, clockOffset, remainingMs, formatCountdown, rankByBidder, insufficientBalanceMessage, followsMinimum, confirmationHolds, becameOutbid } from "./room-logic";
 
 describe("bidShortcuts", () => {
   it("mínimo, +1 e +2 incrementos sobre o mínimo", () => {
@@ -54,5 +54,13 @@ describe("QA N4: virada para superado", () => {
     expect(becameOutbid(undefined, "OUTBID")).toBe(false);
     expect(becameOutbid("OUTBID", "OUTBID")).toBe(false);
     expect(becameOutbid("OUTBID", "LEADING")).toBe(false);
+  });
+});
+
+describe("followsMinimum (auditoria item 13)", () => {
+  it("acompanha o novo mínimo quando o valor digitado ficou abaixo dele; preserva valor maior", () => {
+    expect(followsMinimum("1.000,00", "105000")).toBe(true);
+    expect(followsMinimum("", "105000")).toBe(true);
+    expect(followsMinimum("2.000,00", "105000")).toBe(false);
   });
 });

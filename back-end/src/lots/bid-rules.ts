@@ -6,7 +6,8 @@ export type BidRejectionCode =
   | "ALREADY_LEADING"
   | "LOT_NOT_STARTED"
   | "LOT_ENDED"
-  | "LOT_CANCELLED";
+  | "LOT_CANCELLED"
+  | "OWN_LOT";
 
 export class BidRejection extends Error {
   constructor(readonly code: BidRejectionCode) {
@@ -23,6 +24,8 @@ export type BidContext = {
   incrementCents: bigint;
   currentCents: bigint | null;
   actorIsLeader: boolean;
+  /** Auditoria item 16: o papel já impede leiloeiro de dar lance; a regra pura fecha o caso sozinha. */
+  actorIsOwner: boolean;
   availableCents: bigint;
   amountCents: bigint;
   /** Relógio do banco lido depois dos locks; o relógio do cliente nunca decide. */
@@ -41,6 +44,7 @@ export function decideBid(input: BidContext): BidDecision {
   if (input.status === "CANCELLED") throw new BidRejection("LOT_CANCELLED");
   if (input.status !== "PUBLISHED" || now >= input.endsAt.getTime()) throw new BidRejection("LOT_ENDED");
   if (now < input.startsAt.getTime()) throw new BidRejection("LOT_NOT_STARTED");
+  if (input.actorIsOwner) throw new BidRejection("OWN_LOT");
   if (input.actorIsLeader) throw new BidRejection("ALREADY_LEADING");
   if (input.amountCents < minimumNext(input.initialCents, input.incrementCents, input.currentCents)) {
     throw new BidRejection("BID_BELOW_MINIMUM");

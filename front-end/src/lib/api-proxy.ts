@@ -22,9 +22,13 @@ export function upstreamHeaders(headers: Headers): Headers {
 const IPV4 = /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
 const IPV6 = /^[0-9a-f:.]{2,45}$/i;
 
-/** Primeiro valor do X-Forwarded-For definido pelo servidor do Next (ou pela borda da hospedagem); inválido é descartado. */
+/**
+ * Auditoria item 10: usa o ÚLTIMO valor do X-Forwarded-For, o que o salto mais próximo acrescentou. O primeiro
+ * vem do cliente e pode ser forjado. No deploy só o Caddy alcança o Next e ele troca o cabeçalho pelo IP real
+ * (sem `trusted_proxies`); o Next só preenche o cabeçalho quando ele não veio. Inválido é descartado.
+ */
 export function clientAddress(headers: Headers): string | null {
-  const first = headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
-  if (IPV4.test(first) || (first.includes(":") && IPV6.test(first))) return first;
+  const last = headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ?? "";
+  if (IPV4.test(last) || (last.includes(":") && IPV6.test(last))) return last;
   return null;
 }

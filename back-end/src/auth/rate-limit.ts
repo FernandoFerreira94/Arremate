@@ -8,11 +8,14 @@ export class RateLimiter {
   private readonly hits = new Map<string, { count: number; resetAt: number }>();
   private readonly sse = new Map<string, number>();
 
+  private nextSweep = 0;
+
   constructor(private readonly now: () => number) {}
 
   consume(bucket: RateBucket, key: string): void {
     const id = `${bucket}:${key}`;
     const now = this.now();
+    this.sweep(now);
     const current = this.hits.get(id);
     if (!current || now >= current.resetAt) {
       this.hits.set(id, { count: 1, resetAt: now + WINDOW_MS });
@@ -20,6 +23,17 @@ export class RateLimiter {
     }
     if (current.count >= LIMITS[bucket]) throw new Error("LIMITE_EXCEDIDO");
     current.count += 1;
+  }
+
+  /** Auditoria item 14: janelas vencidas saem do mapa uma vez por janela, para não crescer com cada IP visto. */
+  private sweep(now: number): void {
+    if (now < this.nextSweep) return;
+    this.nextSweep = now + WINDOW_MS;
+    for (const [id, entry] of this.hits) if (now >= entry.resetAt) this.hits.delete(id);
+  }
+
+  size(): number {
+    return this.hits.size;
   }
 
   tryAcquireSse(key: string): boolean {

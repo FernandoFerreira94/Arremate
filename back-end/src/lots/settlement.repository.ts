@@ -107,22 +107,26 @@ export class SettlementRepository {
     return result.rows.map((row) => row.id);
   }
 
-  async participations(database: DatabaseRepository, userId: string, limit: number, offset: number): Promise<{ rows: ParticipationRow[]; total: number }> {
+  /** `lotId` restringe a um lote (a sala usa para o status "ganhando/superado" sem depender da 1ª página). */
+  async participations(database: DatabaseRepository, userId: string, limit: number, offset: number, lotId: string | null = null): Promise<{ rows: ParticipationRow[]; total: number }> {
     const rows = await database.query<ParticipationRow>(
       `SELECT l.id AS lot_id, s.title, s.media_key, l.status::text AS status, l.ends_at,
               mine.top::text AS my_top_cents, mine.my_bids, top.amount_cents::text AS top_cents, top.user_id = $1 AS i_lead,
               CASE WHEN l.status = 'SETTLED' AND top.user_id = $1 THEN r.public_token END AS public_token,
               clock_timestamp() AS server_now
-       FROM (SELECT lot_id, max(amount_cents) AS top, max(accepted_at) AS last_at, jsonb_agg(jsonb_build_object('amountCents', amount_cents::text, 'acceptedAt', accepted_at) ORDER BY sequence) AS my_bids FROM bids WHERE user_id = $1 GROUP BY lot_id) mine
+       FROM (SELECT lot_id, max(amount_cents) AS top, max(accepted_at) AS last_at, jsonb_agg(jsonb_build_object('amountCents', amount_cents::text, 'acceptedAt', accepted_at) ORDER BY sequence) AS my_bids FROM bids WHERE user_id = $1 AND ($4::uuid IS NULL OR lot_id = $4) GROUP BY lot_id) mine
        JOIN lots l ON l.id = mine.lot_id
        JOIN catalog_item_snapshots s ON s.id = l.snapshot_id
        JOIN LATERAL (SELECT user_id, amount_cents FROM bids WHERE lot_id = l.id ORDER BY sequence DESC LIMIT 1) top ON true
        LEFT JOIN settlements st ON st.lot_id = l.id
        LEFT JOIN receipts r ON r.settlement_id = st.id
        ORDER BY l.ends_at DESC, l.id LIMIT $2 OFFSET $3`,
-      [userId, limit, offset],
+      [userId, limit, offset, lotId],
     );
-    const total = await database.query<{ n: number }>(`SELECT count(DISTINCT lot_id)::int AS n FROM bids WHERE user_id = $1`, [userId]);
+    const total = await database.query<{ n: number }>(
+      `SELECT count(DISTINCT lot_id)::int AS n FROM bids WHERE user_id = $1 AND ($2::uuid IS NULL OR lot_id = $2)`,
+      [userId, lotId],
+    );
     return { rows: rows.rows, total: total.rows[0]?.n ?? 0 };
   }
 

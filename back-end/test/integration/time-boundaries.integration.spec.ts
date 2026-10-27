@@ -56,6 +56,27 @@ describe("fronteiras de tempo do lance", () => {
     expect((await fx.lotRow(relaxed)).endsAt.getTime()).toBe(before.endsAt.getTime());
   });
 
+  it("prorrogações seguidas: cada lance na reta final empurra o fim para aceite + 120s (auditoria item 17)", async () => {
+    const first = await fx.bidder(100000n);
+    const second = await fx.bidder(100000n);
+    const lotId = await fx.lot(seller, { endsInMs: 30_000 });
+    const ends: number[] = [];
+    let amount = 10000n;
+    for (const bidder of [first, second, first, second]) {
+      const accepted = await bid(bidder, lotId, amount);
+      expect(accepted.extended).toBe(true);
+      expect(new Date(accepted.endsAt).getTime()).toBe(new Date(accepted.bid.acceptedAt).getTime() + ANTI_SNIPING_MS);
+      ends.push(new Date(accepted.endsAt).getTime());
+      amount += 500n;
+    }
+    // Nunca encurta e o banco guarda o último fim; a liquidação não roda no meio da disputa.
+    for (let index = 1; index < ends.length; index += 1) expect(ends[index]).toBeGreaterThanOrEqual(ends[index - 1] ?? 0);
+    const row = await fx.lotRow(lotId);
+    expect(row.endsAt.getTime()).toBe(ends.at(-1));
+    expect(row.status).toBe("PUBLISHED");
+    await fx.assertInvariants([lotId]);
+  });
+
   it("rejeição perto do fim nunca prorroga", async () => {
     const bidder = await fx.bidder(50000n);
     const closing = await fx.lot(seller, { endsInMs: 30_000 });

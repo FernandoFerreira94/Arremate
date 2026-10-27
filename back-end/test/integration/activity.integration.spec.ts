@@ -53,9 +53,48 @@ describe("feed de lances ao vivo (D32)", () => {
     await fx.service.placeBid(other, lotId, money(11000n), randomUUID());
     const next = await session.get(`/api/me/activity?after=${encodeURIComponent(start.body.cursor as string)}`);
     expect(next.status).toBe(200);
-    expect(next.body.items).toEqual([expect.objectContaining({ lotId, title: "Obra de teste", amountCents: "11000", alias: expect.stringMatching(/^Licitante \d+$/) })]);
-    expect(next.body.cursor).toBe(next.body.items[0].acceptedAt);
+    type Item = { id: string; amountCents: string; acceptedAt: string };
+    const latest = (next.body.items as Item[]).at(-1);
+    expect(latest).toEqual(expect.objectContaining({ lotId, title: "Obra de teste", amountCents: "11000", alias: expect.stringMatching(/^Licitante \d+$/) }));
+    expect((next.body.items as Item[]).map((item) => item.amountCents)).not.toContain("10500");
+    expect(next.body.cursor).toBe(latest?.acceptedAt);
+    // A janela de 5 s para trás pode repetir itens já vistos (o feed descarta por id), nunca traz um novo antigo demais.
     const again = await session.get(`/api/me/activity?after=${encodeURIComponent(next.body.cursor as string)}`);
-    expect(again.body.items).toEqual([]);
+    const seen = new Set((next.body.items as Item[]).map((item) => item.id));
+    expect((again.body.items as Item[]).every((item) => seen.has(item.id))).toBe(true);
+    expect(again.body.cursor).toBe(next.body.cursor);
+  });
+
+  it("não perde lance que confirmou depois do cursor com horário anterior (auditoria item 11)", async () => {
+    const lotId = await fx.lot(seller, { initialCents: 10000n, incrementCents: 500n });
+    const me = await fx.bidder(100000n, passwordHash);
+    const other = await fx.bidder(100000n);
+    const session = new Session(app);
+    await session.login(me.email);
+    await fx.service.placeBid(other, lotId, money(10000n), randomUUID());
+    const first = await session.get(`/api/me/activity?after=${encodeURIComponent(new Date(Date.now() - 60_000).toISOString())}`);
+    const cursor = first.body.cursor as string;
+    // Lance que entra depois da leitura, mas com relógio 2 s antes do cursor (commit fora de ordem).
+    const third = await fx.bidder(100000n);
+    await fx.service.placeBid(third, lotId, money(10500n), randomUUID());
+    await fx.pool.query(`UPDATE bids SET accepted_at = $2::timestamptz - interval '2 seconds' WHERE lot_id = $1 AND amount_cents = 10500`, [lotId, cursor]);
+    const late = await session.get(`/api/me/activity?after=${encodeURIComponent(cursor)}`);
+    expect((late.body.items as Array<{ amountCents: string }>).map((item) => item.amountCents)).toContain("10500");
+  });
+
+  it("participações filtram por lote, para a sala não depender da 1ª página (auditoria item 12)", async () => {
+    const me = await fx.bidder(100000n, passwordHash);
+    const first = await fx.lot(seller, { initialCents: 10000n, incrementCents: 500n });
+    const second = await fx.lot(seller, { initialCents: 10000n, incrementCents: 500n });
+    await fx.service.placeBid(me, first, money(10000n), randomUUID());
+    await fx.service.placeBid(me, second, money(10000n), randomUUID());
+    const session = new Session(app);
+    await session.login(me.email);
+    const only = await session.get(`/api/me/participations?lotId=${second.toUpperCase()}`);
+    expect(only.status).toBe(200);
+    expect(only.body.total).toBe(1);
+    expect(only.body.items.map((item: { lotId: string }) => item.lotId)).toEqual([second]);
+    expect((await session.get("/api/me/participations")).body.total).toBe(2);
+    expect((await session.get("/api/me/participations?lotId=nao-e-uuid")).status).toBe(400);
   });
 });

@@ -12,6 +12,7 @@ function context(overrides: Partial<BidContext> = {}): BidContext {
     incrementCents: 500n,
     currentCents: null,
     actorIsLeader: false,
+    actorIsOwner: false,
     availableCents: 1_000_000n,
     amountCents: 10000n,
     now: new Date(START.getTime() + 60_000),
@@ -72,5 +73,12 @@ describe("regras de lance", () => {
   it("rejeição nunca estende o prazo", () => {
     const now = new Date(END.getTime() - 1_000);
     expect(() => decideBid(context({ now, amountCents: 1n }))).toThrow(BidRejection);
+  });
+});
+
+describe("dono do lote (auditoria item 16)", () => {
+  it("recusa lance no próprio lote antes de qualquer outra regra de valor", () => {
+    expect(rejection(context({ actorIsOwner: true }))).toBe("OWN_LOT");
+    expect(rejection(context({ actorIsOwner: true, amountCents: 1n }))).toBe("OWN_LOT");
   });
 });
