@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { InstallAppButton } from "./pwa";
 
 /**
  * F3-cor (D22): fundo --brand, textos em brand-foreground (iguais nos dois temas), títulos e crédito a 80 %, frase em Fraunces com a 2ª linha em
@@ -47,6 +48,7 @@ export function SiteFooter() {
             {/* Logo L3 (martelo) na variante para fundo bordô: quadrado e nome em papel. */}
             <Image src="/brand/l3-horizontal-bordo.svg" alt="" width={135} height={32} className="h-8 w-auto" />
           </Link>
+          <InstallAppButton className="inline-flex min-h-11 items-center gap-2 self-start rounded-md border border-accent px-4 text-sm font-semibold text-brand-foreground hover:bg-brand-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:self-auto" />
           <p className="text-xs opacity-80">Obras: domínio público (CC0) · The Metropolitan Museum of Art Open Access · valores simulados · horário de Brasília (UTC−3)</p>
         </div>
       </div>

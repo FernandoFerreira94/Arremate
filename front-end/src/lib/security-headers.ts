@@ -12,6 +12,9 @@ export function buildCsp(nonce: string, options: { dev: boolean }): string {
     "img-src 'self' data: blob:",
     "font-src 'self'",
     `connect-src 'self'${options.dev ? " ws: wss:" : ""}`,
+    // PWA: o service worker e o manifesto vêm da própria origem; strict-dynamic não cobre workers.
+    "worker-src 'self'",
+    "manifest-src 'self'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     // O início do Google redireciona para accounts.google.com.

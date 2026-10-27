@@ -8,6 +8,7 @@ import { TourProvider } from "@/features/tour/tour";
 import { AppToaster } from "@/components/app/toast";
 import { ActivityFeed } from "@/features/activity/activity-feed";
 import { ErrorListeners } from "@/components/app/error-listeners";
+import { ServiceWorkerRegistration } from "@/components/app/pwa";
 import { NotificationToaster } from "@/features/notifications/use-notifications";
 import { PendingWatchRunner } from "@/features/notifications/use-watches";
 
@@ -24,6 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <AuthSheetProvider>
         <TourProvider>
           <ErrorListeners />
+          <ServiceWorkerRegistration />
           <PendingFavoriteRunner />
           <PendingWatchRunner />
           <NotificationToaster />
