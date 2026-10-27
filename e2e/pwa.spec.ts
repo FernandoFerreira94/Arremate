@@ -29,3 +29,38 @@ test("PWA: manifesto, ícones e service worker; sem rede mostra a página offlin
   await page.getByRole("link", { name: "Tentar de novo" }).click();
   await expect(page.getByRole("heading", { name: "Leilões de arte de acervo público" })).toBeVisible();
 });
+
+test("header mostra o ícone discreto de instalar quando o navegador oferece, com cartão de contexto", async ({ page }) => {
+  await markTourSeen(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const install = page.locator("header").getByRole("button", { name: "Instalar o app Arremate" });
+  await expect(install).toHaveCount(0);
+  await page.evaluate(() => {
+    const event = new Event("beforeinstallprompt", { cancelable: true }) as Event & { prompt?: () => Promise<void>; userChoice?: Promise<unknown> };
+    event.prompt = async () => undefined;
+    event.userChoice = Promise.resolve({ outcome: "dismissed" });
+    window.dispatchEvent(event);
+  });
+  await expect(install).toBeVisible();
+  await install.hover();
+  await expect(page.getByRole("tooltip")).toContainText("Instalar o Arremate");
+  await install.click();
+  await expect(install).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Instalar o app" })).toHaveCount(0);
+});
+
+test("cartão de contexto no hover e no foco do teclado (tema)", async ({ page }) => {
+  await markTourSeen(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const theme = page.getByRole("button", { name: "Tema" });
+  await theme.hover();
+  await expect(page.getByRole("tooltip")).toContainText("Claro, escuro ou igual ao sistema");
+  // Movimento real do mouse (vários eventos), como a pessoa faz ao sair do botão.
+  await page.mouse.move(0, 400, { steps: 8 });
+  await page.mouse.move(5, 420);
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+  await theme.focus();
+  await expect(page.getByRole("tooltip")).toContainText("Tema");
+});

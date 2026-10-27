@@ -49,6 +49,8 @@ import { formatBrl } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { LotSearch } from "./lot-search";
 import { ThemeToggle } from "./theme-toggle";
+import { InstallAppButton } from "./pwa";
+import { Hint } from "./hint";
 import { Logo } from "./logo";
 
 type NavItem = { href: string; label: string; icon: LucideIcon; hint?: string };
@@ -98,9 +100,11 @@ function BalanceChip() {
   const wallet = useQuery({ queryKey: ["wallet"], queryFn: getWallet, staleTime: 15_000 });
   if (!wallet.data) return null;
   return (
-    <Link href="/carteira" data-tour="balance" className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 text-sm tabular-nums hover:bg-muted" aria-label={`Saldo disponível ${formatBrl(wallet.data.availableCents)}`}>
-      <WalletIcon className="size-4 text-muted-foreground" /> {formatBrl(wallet.data.availableCents)}
-    </Link>
+    <Hint title="Saldo disponível" description="Total da carteira menos o que está reservado nos lances em que você lidera.">
+      <Link href="/carteira" data-tour="balance" className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 text-sm tabular-nums hover:bg-muted" aria-label={`Saldo disponível ${formatBrl(wallet.data.availableCents)}`}>
+        <WalletIcon className="size-4 text-muted-foreground" /> {formatBrl(wallet.data.availableCents)}
+      </Link>
+    </Hint>
   );
 }
 
@@ -206,6 +210,7 @@ export function SiteHeader() {
           <Suspense fallback={null}>
             <LotSearch className="hidden w-56 xl:block" />
           </Suspense>
+          <InstallAppButton variant="icon" />
           <ThemeToggle />
           {role ? <NotificationBell /> : null}
           <div className="hidden items-center gap-2 md:flex">

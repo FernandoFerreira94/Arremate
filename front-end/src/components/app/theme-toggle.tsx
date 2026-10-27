@@ -2,6 +2,7 @@
 
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Hint } from "./hint";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { ThemePreference } from "@/lib/theme";
 import { setThemePreference, useTheme, useThemePreference } from "@/lib/use-theme";
@@ -12,11 +13,13 @@ export function ThemeToggle() {
   const preference = useThemePreference();
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Tema" title="Tema" disabled={theme === null}>
-          {theme === "dark" ? <MoonIcon /> : <SunIcon />}
-        </Button>
-      </DropdownMenuTrigger>
+      <Hint title="Tema" description="Claro, escuro ou igual ao sistema do seu aparelho.">
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Tema" disabled={theme === null}>
+            {theme === "dark" ? <MoonIcon /> : <SunIcon />}
+          </Button>
+        </DropdownMenuTrigger>
+      </Hint>
       <DropdownMenuContent className="min-w-44">
         <DropdownMenuLabel>Tema</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={preference ?? "system"} onValueChange={(value) => setThemePreference(value as ThemePreference)}>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/app/hint";
 import { ExternalLinkIcon, InfoIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,9 +40,11 @@ export function LotDetailRows({ lot }: { lot: PublicLot }) {
 export function LotDetailsDialog({ lot, compact = false }: { lot: PublicLot; compact?: boolean }) {
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size={compact ? "icon" : "sm"} aria-label={`Detalhes de ${lot.title}`} title="Detalhes" className={compact ? "size-9" : undefined}><InfoIcon />{compact ? null : " Detalhes"}</Button>
-      </DialogTrigger>
+      <Hint title="Detalhes do lote" description="Ficha da obra, valores, estimativa e prazos.">
+        <DialogTrigger asChild>
+          <Button variant="outline" size={compact ? "icon" : "sm"} aria-label={`Detalhes de ${lot.title}`} className={compact ? "size-9" : undefined}><InfoIcon />{compact ? null : " Detalhes"}</Button>
+        </DialogTrigger>
+      </Hint>
       <DialogContent>
         <div className="flex gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element -- mídia local já validada pela API */}

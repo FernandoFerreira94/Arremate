@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/app/hint";
 import { HeartIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,10 +32,12 @@ export function FavoriteButton({ lotId, title, variant = "icon", className }: { 
     );
   }
   return (
+    <Hint title={active ? "Nos seus favoritos" : "Favoritar"} description={!loggedIn ? "Entre para acompanhar este lote em Favoritos." : active ? "Clique para remover dos favoritos." : "Acompanhe este lote na página Favoritos."} side="left">
     <button type="button" aria-pressed={active} aria-label={label} aria-busy={busy || undefined} onClick={onClick} data-tour="favorite"
       className={cn("group inline-flex size-11 items-center justify-center rounded-full", className)}>
       <span className={cn("inline-flex size-9 items-center justify-center rounded-full border bg-card/95 shadow-sm transition-colors group-hover:bg-muted [&_svg]:size-4",
         active ? "border-primary text-primary" : "text-foreground")}>{icon}</span>
     </button>
+    </Hint>
   );
 }
