@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/app/hint";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -137,7 +138,9 @@ function FeedCard({ item, leaving, onDismiss }: { item: ActivityItem; leaving: b
       </span>
       <div className="feed-card__body">
         <div className="flex items-start gap-2">
-          <p className="min-w-0 flex-1 truncate font-serif text-sm font-semibold" title={item.title}>{item.title}</p>
+          <Hint title={item.title} description="Lance de outra pessoa agora há pouco." side="left">
+            <p className="min-w-0 flex-1 truncate font-serif text-sm font-semibold">{item.title}</p>
+          </Hint>
           <button type="button" onClick={onDismiss} aria-label={`Fechar aviso de ${item.title}`} className="-m-1 grid size-6 shrink-0 place-items-center rounded text-muted-foreground hover:bg-muted hover:text-foreground">
             <XIcon className="size-3.5" />
           </button>

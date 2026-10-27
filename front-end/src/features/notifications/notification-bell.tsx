@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/app/hint";
 import { BellIcon, BellOffIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -47,7 +48,9 @@ export function NotificationBell() {
   if (desktop) {
     return (
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+        <Hint title="Notificações" description={unread > 0 ? `${unread} aviso(s) não lido(s): lances, lotes que abriram e arremates.` : "Lances nos seus lotes, lotes que abriram e arremates."}>
+          <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+        </Hint>
         <PopoverContent aria-label="Notificações">{panel}</PopoverContent>
       </Popover>
     );

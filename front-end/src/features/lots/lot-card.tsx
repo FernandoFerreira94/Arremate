@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/app/hint";
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronRightIcon, ClockIcon, ImageOffIcon } from "lucide-react";
@@ -34,7 +35,9 @@ export function LotCard({ lot, now, offset, dimmed = false }: { lot: PublicLot; 
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
         <LotStateBadge state={lot.state} />
         <div className="min-h-0">
-          <h2 className="line-clamp-2 font-serif text-lg leading-tight" title={lot.title}>{lot.title}</h2>
+          <Hint title={lot.title} description={[lot.artist, lot.date].filter(Boolean).join(" · ") || undefined} side="top">
+            <h2 className="line-clamp-2 font-serif text-lg leading-tight">{lot.title}</h2>
+          </Hint>
           <p className="line-clamp-1 text-sm text-muted-foreground">{[lot.artist, lot.date].filter(Boolean).join(" · ")}</p>
         </div>
         <dl className="mt-auto grid grid-cols-2 gap-y-1 text-sm">

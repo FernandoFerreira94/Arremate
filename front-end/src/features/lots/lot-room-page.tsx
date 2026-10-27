@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/app/hint";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
@@ -337,7 +338,9 @@ function BidForm({ lot, availableCents, leading, onDone }: { lot: PublicLot; ava
               {/* eslint-disable-next-line @next/next/no-img-element -- mídia local já validada pela API */}
               <img src={lot.imageUrl} alt="" className="size-16 shrink-0 rounded-md bg-muted object-contain" />
               <div className="min-w-0">
-                <p className="line-clamp-2 font-serif font-semibold leading-snug" title={lot.title}>{lot.title}</p>
+                <Hint title={lot.title} description={lot.artist || undefined} side="top">
+                  <p className="line-clamp-2 font-serif font-semibold leading-snug">{lot.title}</p>
+                </Hint>
                 <p className="line-clamp-1 text-xs text-muted-foreground">{lot.artist}</p>
               </div>
             </div>
