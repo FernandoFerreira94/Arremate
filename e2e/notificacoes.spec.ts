@@ -84,7 +84,8 @@ test("carrossel do hero alterna sozinho, responde a setas, pontos e teclado e re
   await markTourSeen(still);
   await still.goto("/");
   const quiet = still.getByRole("region", { name: "Próximos leilões" });
-  await expect(quiet.getByRole("button", { name: "Leilão anterior" }).first()).toBeAttached();
+  // Contexto novo: primeira carga ainda hidratando (botão de tema desabilitado, vitrine carregando) passava dos 5 s.
+  await expect(quiet.getByRole("button", { name: "Leilão anterior" }).first()).toBeAttached({ timeout: 15_000 });
   await expect(quiet.getByRole("button", { name: "Pausar" })).toHaveCount(0);
   await reduced.close();
 });
