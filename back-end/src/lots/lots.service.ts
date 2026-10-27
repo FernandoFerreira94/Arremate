@@ -51,6 +51,11 @@ export type LotView = {
 export type Paged<T> = { items: T[]; page: number; pageSize: number; total: number; serverNow: string };
 
 const UPCOMING_MAX = 5;
+const ACTIVITY_LOOKBACK_MS = 5_000;
+const TRANSIENT_REASONS = new Set(["CONFIRMATION_GAP", "CONCURRENT_READ"]);
+const TRANSIENT_RETRIES = 3;
+const TRANSIENT_WAIT_MS = 150;
+const ACTIVITY_LIMIT = 50;
 
 export type ActivityView = { id: string; lotId: string; title: string; alias: string; amountCents: string; acceptedAt: string };
 
@@ -150,9 +155,12 @@ export class LotsService {
     if (rawAfter === undefined) return { items: [], cursor: (await this.lots.clock()).toISOString() };
     const after = new Date(rawAfter);
     if (!/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(rawAfter) || Number.isNaN(after.getTime())) throw new ApiException(400, "REQUISICAO_INVALIDA");
-    const rows = await this.lots.activity(actor.userId, after, 5);
+    // Auditoria item 11: `accepted_at` é o relógio do lance, não a ordem de commit; um lance pode aparecer
+    // com horário anterior ao cursor. A consulta olha ACTIVITY_LOOKBACK_MS para trás e o feed descarta ids repetidos.
+    const rows = await this.lots.activity(actor.userId, new Date(after.getTime() - ACTIVITY_LOOKBACK_MS), ACTIVITY_LIMIT);
     const items = rows.map((row) => ({ id: row.id, lotId: row.lot_id, title: row.title, alias: row.alias, amountCents: row.amount_cents, acceptedAt: row.accepted_at.toISOString() }));
-    return { items, cursor: items.at(-1)?.acceptedAt ?? rawAfter };
+    const last = items.at(-1)?.acceptedAt;
+    return { items, cursor: last && Date.parse(last) > after.getTime() ? last : rawAfter };
   }
 
   generateOpenedNotifications(): Promise<number> {
@@ -163,12 +171,29 @@ export class LotsService {
   async publicAudit(lotId: string) {
     if (!UUID.test(lotId)) throw new ApiException(404, "NAO_ENCONTRADO");
     const row = await this.lots.find(lotId);
-    if (!row) throw new ApiException(404, "NAO_ENCONTRADO");
+    if (!row) {
+      // Auditoria item 4: lote apagado com testemunha remanescente é adulteração (LOT_REMOVED), não 404.
+      const removed = this.audit ? await this.audit.verifyLot(lotId.toLowerCase()) : null;
+      if (removed?.status === "TAMPERED") return { lotId: lotId.toLowerCase(), ...removed };
+      throw new ApiException(404, "NAO_ENCONTRADO");
+    }
     if (!this.audit) {
       return { lotId: row.id, status: "INDETERMINATE" as const, revision: null, count: null, verifiedAt: new Date().toISOString(), reasonCode: "MISSING_KEY", message: "Verificação indisponível." };
     }
-    const result = await this.audit.verifyLot(row.id);
-    return { lotId: row.id, ...result };
+    return { lotId: row.id, ...(await this.settledVerification(row.id)) };
+  }
+
+  /**
+   * Auditoria item 8: um lance em andamento deixa a testemunha com intenção pendente por milissegundos; a
+   * página pública esperava esse instante e mostrava "Indeterminado". Agora espera a confirmação um pouco.
+   */
+  private async settledVerification(lotId: string) {
+    let result = await this.audit!.verifyLot(lotId);
+    for (let attempt = 0; attempt < TRANSIENT_RETRIES && result.status === "INDETERMINATE" && TRANSIENT_REASONS.has(result.reasonCode); attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, TRANSIENT_WAIT_MS));
+      result = await this.audit!.verifyLot(lotId);
+    }
+    return result;
   }
 
   async bids(lotId: string, page: number, limit: number) {

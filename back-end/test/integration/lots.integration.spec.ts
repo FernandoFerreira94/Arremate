@@ -8,6 +8,7 @@ import { Pool } from "pg";
 import request from "supertest";
 import { createApplication } from "../../src/app";
 import { AuditService } from "../../src/audit/audit.service";
+import type { CheckpointStore } from "../../src/audit/checkpoint-store";
 import { hashPassword } from "../../src/auth/password-hash";
 import { createUser, PASSWORD, Session } from "../support/http-session";
 import { FakeMet, jpeg, metObject } from "../support/met-fake";
@@ -272,6 +273,29 @@ describe("lotes", () => {
     // Desfazer um cancelamento selado também é detectado.
     await pool.query(`UPDATE lots SET status = 'PUBLISHED' WHERE id = $1`, [cancelledInDb.body.id]);
     expect(await audit.verifyLot(cancelledInDb.body.id)).toMatchObject({ status: "TAMPERED", reasonCode: "STATUS_MISMATCH" });
+  });
+
+  it("lote apagado com testemunha é Adulterado (LOT_REMOVED) na rota pública; sem testemunha é 404 (auditoria item 4)", async () => {
+    const owner = await login("AUCTIONEER");
+    const created = await publish(owner.session);
+    const lotId = created.body.id as string;
+    await pool.query(`DELETE FROM lots WHERE id = $1`, [lotId]);
+    const removed = await request(app.getHttpServer()).get(`/api/lots/${lotId.toUpperCase()}/audit`);
+    expect(removed.status).toBe(200);
+    expect(removed.body).toMatchObject({ lotId, status: "TAMPERED", reasonCode: "LOT_REMOVED" });
+    expect((await request(app.getHttpServer()).get(`/api/lots/${randomUUID()}/audit`)).status).toBe(404);
+  });
+
+  it("auditoria pública espera a confirmação em andamento em vez de mostrar Indeterminado (auditoria item 8)", async () => {
+    const owner = await login("AUCTIONEER");
+    const lotId = (await publish(owner.session)).body.id as string;
+    const store = (app.get(AuditService) as unknown as { store: CheckpointStore }).store;
+    const committed = await store.read(lotId);
+    if (!committed) throw new Error("gênese ausente");
+    await store.writePending({ ...committed, revision: committed.revision + 1 });
+    setTimeout(() => void store.clearPending(lotId), 120);
+    const response = await request(app.getHttpServer()).get(`/api/lots/${lotId}/audit`);
+    expect(response.body).toMatchObject({ status: "INTACT" });
   });
 
   it("não cancela com lance nem depois do fim", async () => {

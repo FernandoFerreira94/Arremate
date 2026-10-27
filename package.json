@@ -22,6 +22,7 @@
     "build": "npm run build --workspaces",
     "db:up": "docker compose up -d --wait",
     "db:stop": "docker compose stop",
+    "audit:retry": "npm run audit:retry --workspace back-end",
     "db:validate": "npm run db:validate --workspace back-end",
     "db:generate": "npm run db:generate --workspace back-end"
   },

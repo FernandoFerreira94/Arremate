@@ -27,7 +27,9 @@ export function AuditPage({ lotId }: { lotId: string }) {
   const audit = useQuery({ queryKey: ["lot", lotId, "audit"], queryFn: () => getAudit(lotId) });
   // A página do histórico fica presa à revisão verificada; revisão nova reinicia a consulta.
   const revision = audit.data?.revision ?? null;
-  const bids = useQuery({ queryKey: ["lot", lotId, "audit-bids", revision, page], queryFn: () => getBids(lotId, page, PAGE), enabled: audit.isSuccess });
+  // Auditoria item 4: lote apagado do banco (LOT_REMOVED) não tem histórico para listar.
+  const removed = audit.data?.reasonCode === "LOT_REMOVED";
+  const bids = useQuery({ queryKey: ["lot", lotId, "audit-bids", revision, page], queryFn: () => getBids(lotId, page, PAGE), enabled: audit.isSuccess && !removed });
   const pages = bids.data ? Math.max(1, Math.ceil(bids.data.total / PAGE)) : 1;
 
   return (
@@ -53,7 +55,9 @@ export function AuditPage({ lotId }: { lotId: string }) {
         <Card>
           <CardHeader><CardTitle>Histórico completo</CardTitle></CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {bids.isPending ? (
+            {removed ? (
+              <p className="text-sm text-muted-foreground">O lote foi apagado do banco, mas a testemunha da auditoria continua registrando {audit.data?.count ?? 0} lance(s). Não há histórico para mostrar.</p>
+            ) : bids.isPending ? (
               <LoadingRows label="Carregando histórico" />
             ) : bids.isError ? (
               <ErrorState message="Não foi possível carregar o histórico." onRetry={() => void bids.refetch()} />
