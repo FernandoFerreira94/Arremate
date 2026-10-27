@@ -229,6 +229,8 @@ export class LotsService {
     }
     if (!this.audit) throw new ApiException(503, "AUDITORIA_INDISPONIVEL");
     const snapshot = await this.catalog.importItem(input.externalId);
+    // A mesma chave em paralelo: quem perde desfaz o próprio INSERT (rollback), senão sobra um lote órfão sem gênese.
+    const lostRace = new Error("idempotência concorrente");
     const created = await this.database.transaction(async (client) => {
       const lot = await client.query<{ id: string }>(
         `INSERT INTO lots (owner_id, snapshot_id, initial_cents, increment_cents, starts_at, ends_at)
@@ -243,8 +245,11 @@ export class LotsService {
          ON CONFLICT (user_id, operation, resource_key, idempotency_key) DO NOTHING RETURNING id`,
         [actor.userId, CREATE_OPERATION, key, requestHash, JSON.stringify({ lotId })],
       );
-      if (record.rowCount !== 1) return null;
+      if (record.rowCount !== 1) throw lostRace;
       return lotId;
+    }).catch((error: unknown) => {
+      if (error === lostRace) return null;
+      throw error;
     });
     if (!created) {
       const winner = await this.findRecord(actor.userId, key);
