@@ -2,16 +2,17 @@
  * D26 (M2): cabeçalhos de segurança do front. A CSP usa nonce por requisição (gerado no proxy.ts);
  * o Next aplica o mesmo nonce nos próprios scripts ao ler a CSP da requisição.
  */
-export function buildCsp(nonce: string, options: { dev: boolean }): string {
+export function buildCsp(nonce: string, options: { dev: boolean; demo?: boolean }): string {
   const script = ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", ...(options.dev ? ["'unsafe-eval'"] : [])];
   return [
     "default-src 'self'",
     `script-src ${script.join(" ")}`,
     // next/font e os estilos inline do React/Sonner; scripts continuam restritos ao nonce.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    // Modo demo: miniaturas e busca do acervo do Met direto do navegador.
+    `img-src 'self' data: blob:${options.demo ? " https://images.metmuseum.org" : ""}`,
     "font-src 'self'",
-    `connect-src 'self'${options.dev ? " ws: wss:" : ""}`,
+    `connect-src 'self'${options.dev ? " ws: wss:" : ""}${options.demo ? " https://collectionapi.metmuseum.org" : ""}`,
     // PWA: o service worker e o manifesto vêm da própria origem; strict-dynamic não cobre workers.
     "worker-src 'self'",
     "manifest-src 'self'",

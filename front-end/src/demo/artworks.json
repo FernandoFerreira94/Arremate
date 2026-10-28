@@ -1,0 +1,967 @@
+[
+ {
+  "lot": "0001",
+  "externalId": "459080",
+  "initial": 3000,
+  "estimate": [
+   6000,
+   9000
+  ],
+  "state": "OPEN",
+  "offsetMs": 172800000,
+  "bids": {
+   "n": 8,
+   "final": 5400,
+   "winner": 1,
+   "with": [
+    1,
+    2,
+    3
+   ]
+  },
+  "condition": "Painel estável, sem empenamento ativo. Craquelê fino uniforme e retoques antigos localizados nas bordas.",
+  "title": "Erasmus of Rotterdam",
+  "artist": "Hans Holbein the Younger",
+  "artistBio": "German, Augsburg 1497/98–1543 London",
+  "date": "ca. 1532",
+  "medium": "Oil on linden panel",
+  "dimensions": "7 1/4 x 5 9/16 in. (18.4 x 14.2 cm); painted surface 6 15/16 x 5 1/2 in. (17.6 x 14 cm)",
+  "credit": "Robert Lehman Collection, 1975",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/459080"
+ },
+ {
+  "lot": "0002",
+  "externalId": "435809",
+  "initial": 20000,
+  "estimate": [
+   40000,
+   60000
+  ],
+  "state": "ENDING",
+  "offsetMs": 1500000,
+  "bids": {
+   "n": 12,
+   "final": 38000,
+   "winner": 2,
+   "with": [
+    1,
+    2,
+    4
+   ]
+  },
+  "condition": "Painel estável, sem empenamento ativo. Craquelê fino uniforme e retoques antigos localizados nas bordas.",
+  "title": "The Harvesters",
+  "artist": "Pieter Bruegel the Elder",
+  "artistBio": "Netherlandish, Breda (?) ca. 1525–1569 Brussels",
+  "date": "1565",
+  "medium": "Oil on oak",
+  "dimensions": "Overall, including added strips at top, bottom, and right, 46 7/8 x 63 3/4 in. (119 x 162 cm); original painted surface 45 7/8 x 62 7/8 in. (116.5 x 159.5 cm)",
+  "credit": "Rogers Fund, 1919",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/435809"
+ },
+ {
+  "lot": "0003",
+  "externalId": "436575",
+  "initial": 15000,
+  "estimate": [
+   30000,
+   45000
+  ],
+  "state": "OPEN",
+  "offsetMs": 259200000,
+  "bids": {
+   "n": 6,
+   "final": 21000,
+   "winner": 3,
+   "with": [
+    3,
+    2
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "View of Toledo",
+  "artist": "El Greco (Domenikos Theotokopoulos)",
+  "artistBio": "Greek, Iráklion (Candia) 1541–1614 Toledo",
+  "date": "ca. 1599–1600",
+  "medium": "Oil on canvas",
+  "dimensions": "47 3/4 x 42 3/4 in. (121.3 x 108.6 cm)",
+  "credit": "H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436575"
+ },
+ {
+  "lot": "0004",
+  "externalId": "53162",
+  "initial": 9000,
+  "estimate": [
+   18000,
+   25000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": {
+   "n": 9,
+   "final": 19500,
+   "winner": 2,
+   "with": [
+    2,
+    3,
+    4
+   ]
+  },
+  "condition": "Madeira com fissuras de secagem estabilizadas e perdas de policromia. Traços de cor original preservados.",
+  "title": "Tobatsu Bishamonten",
+  "artist": "Artista desconhecido",
+  "artistBio": "",
+  "date": "late 10th–early 11th century",
+  "medium": "Zelkova wood with traces of color",
+  "dimensions": "H. 49 1/4 in. (125.1 cm)",
+  "credit": "Mary Griggs Burke Collection, Gift of the Mary and Jackson Burke Foundation, 2015",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/53162"
+ },
+ {
+  "lot": "0005",
+  "externalId": "436545",
+  "initial": 12000,
+  "estimate": [
+   25000,
+   35000
+  ],
+  "state": "OPEN",
+  "offsetMs": 345600000,
+  "bids": {
+   "n": 5,
+   "final": 16000,
+   "winner": 4,
+   "with": [
+    4,
+    1
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Manuel Osorio Manrique de Zuñiga (1784–1792)",
+  "artist": "Goya (Francisco de Goya y Lucientes)",
+  "artistBio": "Spanish, Fuendetodos 1746–1828 Bordeaux",
+  "date": "1787–88",
+  "medium": "Oil on canvas",
+  "dimensions": "50 x 40 in. (127 x 101.6 cm)",
+  "credit": "The Jules Bache Collection, 1949",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436545"
+ },
+ {
+  "lot": "0006",
+  "externalId": "45585",
+  "initial": 300,
+  "estimate": [
+   800,
+   1200
+  ],
+  "state": "OPEN",
+  "offsetMs": 108000000,
+  "bids": {
+   "n": 10,
+   "final": 780,
+   "winner": 1,
+   "with": [
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "condition": "Laca com microrriscos de uso e incrustações íntegras. Cordão e netsuke não acompanham o lote.",
+  "title": "Case (Inrō) with Design of a Suit of Armor (obverse); Flasks for Boys Festival (reverse)",
+  "artist": "Yamada Jōkasai (1681–1704)",
+  "artistBio": "",
+  "date": "second half of the 19th century",
+  "medium": "Gold and colored lacquer with inlaid mother-of-pearl on ro-iro black lacquer; ojime: metal bead inlaid with silver; netsuke: carved ebony inlaid with ivory design of Daruma",
+  "dimensions": "3 7/8 x 1 15/16 x 1 1/4 in. (9.8 x 4.9 x 3.2 cm)",
+  "credit": "Rogers Fund, 1913",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/45585"
+ },
+ {
+  "lot": "0007",
+  "externalId": "436105",
+  "initial": 5000,
+  "estimate": [
+   10000,
+   14000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": {
+   "n": 12,
+   "final": 12900,
+   "winner": 1,
+   "with": [
+    1,
+    2
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "The Death of Socrates",
+  "artist": "Jacques Louis David",
+  "artistBio": "French, Paris 1748–1825 Brussels",
+  "date": "1787",
+  "medium": "Oil on canvas",
+  "dimensions": "51 x 77 1/4 in. (129.5 x 196.2 cm)",
+  "credit": "Catharine Lorillard Wolfe Collection, Wolfe Fund, 1931",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436105"
+ },
+ {
+  "lot": "0008",
+  "externalId": "45434",
+  "initial": 1000,
+  "estimate": [
+   2000,
+   3500
+  ],
+  "state": "ENDING",
+  "offsetMs": 720000,
+  "bids": {
+   "n": 14,
+   "final": 2600,
+   "winner": 2,
+   "with": [
+    1,
+    2,
+    3
+   ]
+  },
+  "condition": "Papel com leve amarelecimento e cores ainda vivas. Pequena dobra no canto inferior, sem perda de imagem.",
+  "title": "Under the Wave off Kanagawa (Kanagawa oki nami ura), also known as The Great Wave, from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)",
+  "artist": "Katsushika Hokusai",
+  "artistBio": "Japanese, Tokyo (Edo) 1760–1849 Tokyo (Edo)",
+  "date": "ca. 1830–32",
+  "medium": "Woodblock print; ink and color on paper",
+  "dimensions": "10 1/8 x 14 15/16 in. (25.7 x 37.9 cm)",
+  "credit": "H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/45434"
+ },
+ {
+  "lot": "0009",
+  "externalId": "438815",
+  "initial": 100,
+  "estimate": [
+   35000,
+   50000
+  ],
+  "state": "OPEN",
+  "offsetMs": 432000000,
+  "bids": {
+   "n": 7,
+   "final": 4200,
+   "winner": 1,
+   "with": [
+    1,
+    3
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Madame Georges Charpentier (Marguerite-Louise Lemonnier, 1848–1904) and Her Children, Georgette-Berthe (1872–1945) and Paul-Emile-Charles (1875–1895)",
+  "artist": "Auguste Renoir",
+  "artistBio": "French, Limoges 1841–1919 Cagnes-sur-Mer",
+  "date": "1878",
+  "medium": "Oil on canvas",
+  "dimensions": "60 1/2 x 74 7/8 in. (153.7 x 190.2 cm)",
+  "credit": "Catharine Lorillard Wolfe Collection, Wolfe Fund, 1907",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/438815"
+ },
+ {
+  "lot": "0010",
+  "externalId": "437853",
+  "initial": 10000,
+  "estimate": [
+   20000,
+   30000
+  ],
+  "state": "SCHEDULED",
+  "offsetMs": 10800000,
+  "bids": null,
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Venice, from the Porch of Madonna della Salute",
+  "artist": "Joseph Mallord William Turner",
+  "artistBio": "British, London 1775–1851 London",
+  "date": "ca. 1835",
+  "medium": "Oil on canvas",
+  "dimensions": "36 x 48 1/8 in. (91.4 x 122.2 cm)",
+  "credit": "Bequest of Cornelius Vanderbilt, 1899",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/437853"
+ },
+ {
+  "lot": "0011",
+  "externalId": "11417",
+  "initial": 30000,
+  "estimate": [
+   60000,
+   90000
+  ],
+  "state": "OPEN",
+  "offsetMs": 518400000,
+  "bids": {
+   "n": 4,
+   "final": 42000,
+   "winner": 3,
+   "with": [
+    3,
+    4
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Washington Crossing the Delaware",
+  "artist": "Emanuel Leutze",
+  "artistBio": "American, Schwäbisch Gmünd 1816–1868 Washington, D.C.",
+  "date": "1851",
+  "medium": "Oil on canvas",
+  "dimensions": "149 x 255 in. (378.5 x 647.7 cm)",
+  "credit": "Gift of John Stewart Kennedy, 1897",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/11417"
+ },
+ {
+  "lot": "0012",
+  "externalId": "437984",
+  "initial": 8000,
+  "estimate": [
+   15000,
+   20000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": {
+   "n": 10,
+   "final": 14600,
+   "winner": 3,
+   "with": [
+    1,
+    3
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "La Berceuse (Woman Rocking a Cradle; Augustine-Alix Pellicot Roulin, 1851–1930)",
+  "artist": "Vincent van Gogh",
+  "artistBio": "Dutch, Zundert 1853–1890 Auvers-sur-Oise",
+  "date": "1889",
+  "medium": "Oil on canvas",
+  "dimensions": "36 1/2 × 29 in. (92.7 × 73.7 cm)",
+  "credit": "The Walter H. and Leonore Annenberg Collection, Gift of Walter H. and Leonore Annenberg, 1996, Bequest of Walter H. Annenberg, 2002",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/437984"
+ },
+ {
+  "lot": "0013",
+  "externalId": "10481",
+  "initial": 25000,
+  "estimate": [
+   50000,
+   80000
+  ],
+  "state": "OPEN",
+  "offsetMs": 561600000,
+  "bids": {
+   "n": 3,
+   "final": 31000,
+   "winner": 4,
+   "with": [
+    4,
+    2
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Heart of the Andes",
+  "artist": "Frederic Edwin Church",
+  "artistBio": "American, Hartford, Connecticut 1826–1900 New York",
+  "date": "1859",
+  "medium": "Oil on canvas",
+  "dimensions": "66 1/8 x 120 3/16 in. (168 x 302.9cm)",
+  "credit": "Bequest of Margaret E. Dows, 1909",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/10481"
+ },
+ {
+  "lot": "0014",
+  "externalId": "10154",
+  "initial": 22000,
+  "estimate": [
+   45000,
+   70000
+  ],
+  "state": "SCHEDULED",
+  "offsetMs": 172800000,
+  "bids": null,
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "The Rocky Mountains, Lander's Peak",
+  "artist": "Albert Bierstadt",
+  "artistBio": "American, Solingen 1830–1902 New York",
+  "date": "1863",
+  "medium": "Oil on canvas",
+  "dimensions": "73 1/2 x 120 3/4 in. (186.7 x 306.7 cm)",
+  "credit": "Rogers Fund, 1907",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/10154"
+ },
+ {
+  "lot": "0015",
+  "externalId": "436002",
+  "initial": 11000,
+  "estimate": [
+   22000,
+   32000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": null,
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Woman with a Parrot",
+  "artist": "Gustave Courbet",
+  "artistBio": "French, Ornans 1819–1877 La Tour-de-Peilz",
+  "date": "1866",
+  "medium": "Oil on canvas",
+  "dimensions": "51 x 77 in. (129.5 x 195.6 cm)",
+  "credit": "H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436002"
+ },
+ {
+  "lot": "0016",
+  "externalId": "437329",
+  "initial": 2000,
+  "estimate": [
+   5000,
+   8000
+  ],
+  "state": "OPEN",
+  "offsetMs": 604800000,
+  "bids": {
+   "n": 6,
+   "final": 3400,
+   "winner": 2,
+   "with": [
+    2,
+    1
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "The Abduction of the Sabine Women",
+  "artist": "Nicolas Poussin",
+  "artistBio": "French, Les Andelys 1594–1665 Rome",
+  "date": "probably 1633–34",
+  "medium": "Oil on canvas",
+  "dimensions": "60 7/8 x 82 5/8 in. (154.6 x 209.9 cm)",
+  "credit": "Harris Brisbane Dick Fund, 1946",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/437329"
+ },
+ {
+  "lot": "0017",
+  "externalId": "436121",
+  "initial": 7000,
+  "estimate": [
+   14000,
+   20000
+  ],
+  "state": "OPEN",
+  "offsetMs": 288000000,
+  "bids": {
+   "n": 5,
+   "final": 9800,
+   "winner": 1,
+   "with": [
+    1,
+    4
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "A Woman Seated beside a Vase of Flowers (Madame Paul Valpinçon?)",
+  "artist": "Edgar Degas",
+  "artistBio": "French, Paris 1834–1917 Paris",
+  "date": "1865",
+  "medium": "Oil on canvas",
+  "dimensions": "29 x 36 1/2 in. (73.7 x 92.7 cm)",
+  "credit": "H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436121"
+ },
+ {
+  "lot": "0018",
+  "externalId": "438817",
+  "initial": 14000,
+  "estimate": [
+   28000,
+   40000
+  ],
+  "state": "ENDING",
+  "offsetMs": 2400000,
+  "bids": {
+   "n": 9,
+   "final": 26500,
+   "winner": 4,
+   "with": [
+    1,
+    3,
+    4
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "The Dance Class",
+  "artist": "Edgar Degas",
+  "artistBio": "French, Paris 1834–1917 Paris",
+  "date": "1874",
+  "medium": "Oil on canvas",
+  "dimensions": "32 7/8 x 30 3/8 in. (83.5 x 77.2 cm)",
+  "credit": "Bequest of Mrs. Harry Payne Bingham, 1986",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/438817"
+ },
+ {
+  "lot": "0019",
+  "externalId": "436947",
+  "initial": 9000,
+  "estimate": [
+   18000,
+   26000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": {
+   "n": 11,
+   "final": 21800,
+   "winner": 1,
+   "with": [
+    1,
+    2,
+    4
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Boating",
+  "artist": "Edouard Manet",
+  "artistBio": "French, Paris 1832–1883 Paris",
+  "date": "1874",
+  "medium": "Oil on canvas",
+  "dimensions": "38 1/4 x 51 1/4 in. (97.2 x 130.2 cm)",
+  "credit": "H. O. Havemeyer Collection, Bequest of Mrs. H. O. Havemeyer, 1929",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436947"
+ },
+ {
+  "lot": "0020",
+  "externalId": "12127",
+  "initial": 15000,
+  "estimate": [
+   30000,
+   45000
+  ],
+  "state": "OPEN",
+  "offsetMs": 360000000,
+  "bids": {
+   "n": 8,
+   "final": 24500,
+   "winner": 2,
+   "with": [
+    2,
+    3
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Madame X (Virginie Amélie Avegno Gautreau)",
+  "artist": "John Singer Sargent",
+  "artistBio": "American, Florence 1856–1925 London",
+  "date": "1883–84",
+  "medium": "Oil on canvas",
+  "dimensions": "82 1/8 × 43 1/4 in. (208.6 × 109.9 cm)\r\nFramed: 95 3/4 × 56 5/8 × 5 in. (243.2 × 143.8 × 12.7 cm)",
+  "credit": "Arthur Hoppock Hearn Fund, 1916",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/12127"
+ },
+ {
+  "lot": "0021",
+  "externalId": "437654",
+  "initial": 12000,
+  "estimate": [
+   24000,
+   34000
+  ],
+  "state": "OPEN",
+  "offsetMs": 439200000,
+  "bids": null,
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Circus Sideshow (Parade de cirque)",
+  "artist": "Georges Seurat",
+  "artistBio": "French, Paris 1859–1891 Paris",
+  "date": "1887–88",
+  "medium": "Oil on canvas",
+  "dimensions": "39 1/4 x 59 in. (99.7 x 149.9 cm)",
+  "credit": "Bequest of Stephen C. Clark, 1960",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/437654"
+ },
+ {
+  "lot": "0022",
+  "externalId": "436535",
+  "initial": 18000,
+  "estimate": [
+   35000,
+   55000
+  ],
+  "state": "ENDING",
+  "offsetMs": 3000000,
+  "bids": {
+   "n": 10,
+   "final": 41000,
+   "winner": 3,
+   "with": [
+    2,
+    3
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Wheat Field with Cypresses",
+  "artist": "Vincent van Gogh",
+  "artistBio": "Dutch, Zundert 1853–1890 Auvers-sur-Oise",
+  "date": "1889",
+  "medium": "Oil on canvas",
+  "dimensions": "28 13/16 × 36 3/4 in. (73.2 × 93.4 cm)",
+  "credit": "Purchase, The Annenberg Foundation Gift, 1993",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436535"
+ },
+ {
+  "lot": "0023",
+  "externalId": "435882",
+  "initial": 8000,
+  "estimate": [
+   16000,
+   24000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": {
+   "n": 8,
+   "final": 18200,
+   "winner": 2,
+   "with": [
+    1,
+    2
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Still Life with Apples and a Pot of Primroses",
+  "artist": "Paul Cézanne",
+  "artistBio": "French, Aix-en-Provence 1839–1906 Aix-en-Provence",
+  "date": "ca. 1890",
+  "medium": "Oil on canvas",
+  "dimensions": "28 3/4 x 36 3/8 in. (73 x 92.4 cm)",
+  "credit": "Bequest of Sam A. Lewisohn, 1951",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/435882"
+ },
+ {
+  "lot": "0024",
+  "externalId": "11122",
+  "initial": 10000,
+  "estimate": [
+   20000,
+   30000
+  ],
+  "state": "ENDING",
+  "offsetMs": 3300000,
+  "bids": {
+   "n": 2,
+   "final": 10500,
+   "winner": 4,
+   "with": [
+    4,
+    1
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "The Gulf Stream",
+  "artist": "Winslow Homer",
+  "artistBio": "American, Boston, Massachusetts 1836–1910 Prouts Neck, Maine",
+  "date": "1899; reworked by 1906",
+  "medium": "Oil on canvas",
+  "dimensions": "28 1/8 x 49 1/8 in. (71.4 x 124.8 cm)\r\nFramed: 42 5/16 x 62 11/16 x 5 7/8 in. (107.5 x 159.3 x 15 cm)",
+  "credit": "Catharine Lorillard Wolfe Collection, Wolfe Fund, 1906",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/11122"
+ },
+ {
+  "lot": "0025",
+  "externalId": "436532",
+  "initial": 20000,
+  "estimate": [
+   40000,
+   60000
+  ],
+  "state": "SCHEDULED",
+  "offsetMs": 86400000,
+  "bids": null,
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Self-Portrait with a Straw Hat (obverse: The Potato Peeler)",
+  "artist": "Vincent van Gogh",
+  "artistBio": "Dutch, Zundert 1853–1890 Auvers-sur-Oise",
+  "date": "1887",
+  "medium": "Oil on canvas",
+  "dimensions": "16 x 12 1/2 in. (40.6 x 31.8 cm)",
+  "credit": "Bequest of Miss Adelaide Milton de Groot (1876-1967), 1967",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436532"
+ },
+ {
+  "lot": "0026",
+  "externalId": "436528",
+  "initial": 25000,
+  "estimate": [
+   50000,
+   80000
+  ],
+  "state": "SCHEDULED",
+  "offsetMs": 97200000,
+  "bids": null,
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Irises",
+  "artist": "Vincent van Gogh",
+  "artistBio": "Dutch, Zundert 1853–1890 Auvers-sur-Oise",
+  "date": "1890",
+  "medium": "Oil on canvas",
+  "dimensions": "29 x 36 1/4 in. (73.7 x 92.1 cm)",
+  "credit": "Gift of Adele R. Levy, 1958",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436528"
+ },
+ {
+  "lot": "0027",
+  "externalId": "436965",
+  "initial": 12000,
+  "estimate": [
+   24000,
+   36000
+  ],
+  "state": "SCHEDULED",
+  "offsetMs": 194400000,
+  "bids": null,
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "The Monet Family in Their Garden at Argenteuil",
+  "artist": "Edouard Manet",
+  "artistBio": "French, Paris 1832–1883 Paris",
+  "date": "1874",
+  "medium": "Oil on canvas",
+  "dimensions": "24 x 39 1/4 in. (61 x 99.7 cm)",
+  "credit": "Bequest of Joan Whitney Payson, 1975",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436965"
+ },
+ {
+  "lot": "0028",
+  "externalId": "437397",
+  "initial": 18000,
+  "estimate": [
+   36000,
+   50000
+  ],
+  "state": "SCHEDULED",
+  "offsetMs": 259200000,
+  "bids": null,
+  "condition": "Painel estável, sem empenamento ativo. Craquelê fino uniforme e retoques antigos localizados nas bordas.",
+  "title": "Self-Portrait",
+  "artist": "Rembrandt (Rembrandt van Rijn)",
+  "artistBio": "Dutch, Leiden 1606–1669 Amsterdam",
+  "date": "1660",
+  "medium": "Oil on canvas",
+  "dimensions": "31 5/8 x 26 1/2 in. (80.3 x 67.3 cm)",
+  "credit": "Bequest of Benjamin Altman, 1913",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/437397"
+ },
+ {
+  "lot": "0029",
+  "externalId": "436838",
+  "initial": 15000,
+  "estimate": [
+   30000,
+   45000
+  ],
+  "state": "SCHEDULED",
+  "offsetMs": 345600000,
+  "bids": null,
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "The Fortune-Teller",
+  "artist": "Georges de La Tour",
+  "artistBio": "French, Vic-sur-Seille 1593–1652 Lunéville",
+  "date": "probably 1630s",
+  "medium": "Oil on canvas",
+  "dimensions": "40 1/8 x 48 5/8 in. (101.9 x 123.5 cm)",
+  "credit": "Rogers Fund, 1960",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436838"
+ },
+ {
+  "lot": "0030",
+  "externalId": "435868",
+  "initial": 22000,
+  "estimate": [
+   45000,
+   65000
+  ],
+  "state": "SCHEDULED",
+  "offsetMs": 432000000,
+  "bids": null,
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "The Card Players",
+  "artist": "Paul Cézanne",
+  "artistBio": "French, Aix-en-Provence 1839–1906 Aix-en-Provence",
+  "date": "1890–92",
+  "medium": "Oil on canvas",
+  "dimensions": "25 3/4 x 32 1/4 in. (65.4 x 81.9 cm)",
+  "credit": "Bequest of Stephen C. Clark, 1960",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/435868"
+ },
+ {
+  "lot": "0031",
+  "externalId": "436944",
+  "initial": 6000,
+  "estimate": [
+   12000,
+   18000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": {
+   "n": 7,
+   "final": 9400,
+   "winner": 3,
+   "with": [
+    3,
+    4
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "The Spanish Singer",
+  "artist": "Edouard Manet",
+  "artistBio": "French, Paris 1832–1883 Paris",
+  "date": "1860",
+  "medium": "Oil on canvas",
+  "dimensions": "58 x 45 in. (147.3 x 114.3 cm)",
+  "credit": "Gift of William Church Osborn, 1949",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436944"
+ },
+ {
+  "lot": "0032",
+  "externalId": "459123",
+  "initial": 7000,
+  "estimate": [
+   14000,
+   20000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": {
+   "n": 6,
+   "final": 10200,
+   "winner": 4,
+   "with": [
+    4,
+    2
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Madame Roulin and Her Baby",
+  "artist": "Vincent van Gogh",
+  "artistBio": "Dutch, Zundert 1853–1890 Auvers-sur-Oise",
+  "date": "1888",
+  "medium": "Oil on canvas",
+  "dimensions": "25 × 20 in. (63.5 × 50.8 cm)\r\nFramed: 37 3/8 × 32 in. (94.9 × 81.3 cm)",
+  "credit": "Robert Lehman Collection, 1975",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/459123"
+ },
+ {
+  "lot": "0033",
+  "externalId": "436896",
+  "initial": 4000,
+  "estimate": [
+   9000,
+   14000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": {
+   "n": 5,
+   "final": 6100,
+   "winner": 2,
+   "with": [
+    2,
+    3
+   ]
+  },
+  "condition": "Painel estável, sem empenamento ativo. Craquelê fino uniforme e retoques antigos localizados nas bordas.",
+  "title": "Portrait of a Woman with a Man at a Casement",
+  "artist": "Fra Filippo Lippi",
+  "artistBio": "Italian, Florence ca. 1406–1469 Spoleto",
+  "date": "ca. 1440",
+  "medium": "Tempera on wood",
+  "dimensions": "25 1/4 x 16 1/2 in. (64.1 x 41.9 cm)",
+  "credit": "Marquand Collection, Gift of Henry G. Marquand, 1889",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436896"
+ },
+ {
+  "lot": "0034",
+  "externalId": "437790",
+  "initial": 3000,
+  "estimate": [
+   7000,
+   10000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": {
+   "n": 8,
+   "final": 5600,
+   "winner": 3,
+   "with": [
+    1,
+    3,
+    4
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Allegory of the Planets and Continents",
+  "artist": "Giovanni Battista Tiepolo",
+  "artistBio": "Italian, Venice 1696–1770 Madrid",
+  "date": "1752",
+  "medium": "Oil on canvas",
+  "dimensions": "73 x 54 7/8 in. (185.4 x 139.4 cm)",
+  "credit": "Gift of Mr. and Mrs. Charles Wrightsman, 1977",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/437790"
+ },
+ {
+  "lot": "0035",
+  "externalId": "436155",
+  "initial": 5000,
+  "estimate": [
+   10000,
+   15000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": {
+   "n": 6,
+   "final": 7800,
+   "winner": 4,
+   "with": [
+    4,
+    1
+   ]
+  },
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "The Rehearsal of the Ballet Onstage",
+  "artist": "Edgar Degas",
+  "artistBio": "French, Paris 1834–1917 Paris",
+  "date": "ca. 1874",
+  "medium": "Oil colors freely mixed with turpentine, with traces of watercolor and pastel over pen-and-ink drawing on cream-colored wove paper, laid down on bristol board and mounted on canvas",
+  "dimensions": "21 3/8 x 28 3/4 in. (54.3 x 73 cm)",
+  "credit": "H. O. Havemeyer Collection, Gift of Horace Havemeyer, 1929",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/436155"
+ },
+ {
+  "lot": "0036",
+  "externalId": "438012",
+  "initial": 4000,
+  "estimate": [
+   8000,
+   12000
+  ],
+  "state": "CLOSED",
+  "offsetMs": null,
+  "bids": null,
+  "condition": "Pintura estável, verniz levemente amarelado e craquelê fino compatível com a idade. Pequenos retoques antigos visíveis sob luz UV.",
+  "title": "Bouquet of Chrysanthemums",
+  "artist": "Auguste Renoir",
+  "artistBio": "French, Limoges 1841–1919 Cagnes-sur-Mer",
+  "date": "1881",
+  "medium": "Oil on canvas",
+  "dimensions": "26 x 21 7/8 in. (66 x 55.6 cm)",
+  "credit": "The Walter H. and Leonore Annenberg Collection, Bequest of Walter H. Annenberg, 2002",
+  "sourceUrl": "https://www.metmuseum.org/art/collection/search/438012"
+ }
+]

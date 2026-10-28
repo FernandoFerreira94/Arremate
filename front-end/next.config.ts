@@ -5,7 +5,8 @@ import { staticSecurityHeaders } from "./src/lib/security-headers";
 const nextConfig: NextConfig = { poweredByHeader: false,
  distDir: process.env.NEXT_DIST_DIR === ".next-e2e" ? ".next-e2e" : ".next",
   images: {
-    localPatterns: [{ pathname: "/api/media/**", search: "" }],
+    // Modo demo: as obras do seed são arquivos estáticos em public/demo.
+    localPatterns: [{ pathname: "/api/media/**", search: "" }, ...(process.env.NEXT_PUBLIC_DEMO_MODE === "1" ? [{ pathname: "/demo/**", search: "" }] : [])],
     remotePatterns: [{ protocol: "https", hostname: "images.metmuseum.org", port: "", pathname: "/CRDImages/**", search: "" }],
     maximumRedirects: 0,
   },
