@@ -15,7 +15,18 @@ Leilões de obras de arte de acervo público (The Met). O leiloeiro busca obras 
 
 Na tela **Entrar**, os botões “Entrar como licitante de teste” e “Entrar como leiloeiro de teste” dispensam a senha. A senha das contas é pública e está na constante `DEMO_PASSWORD_DEFAULT` de [`back-end/prisma/seed.ts`](back-end/prisma/seed.ts). Também existem `licitante3` a `licitante5`, usados no histórico do catálogo.
 
-O seed cria 1 leiloeiro, 5 licitantes, 1 lote aberto sem lances e um catálogo de 24 obras com lotes **ao vivo com lances abertos**, lotes na reta final, agendados e encerrados com comprovante.
+O seed cria 1 leiloeiro, 5 licitantes, 1 lote aberto sem lances e um catálogo de 36 obras com lotes **ao vivo com lances abertos**, lotes na reta final, agendados e encerrados com comprovante.
+
+## Demonstração publicada (modo demo, sem servidor)
+
+O link publicado é só o front-end na Vercel, com `NEXT_PUBLIC_DEMO_MODE=1`. Nesse modo não existe API nem banco: o código em [`front-end/src/demo/`](front-end/src/demo/) responde às mesmas rotas que o front chama, direto no navegador, e guarda o estado no `localStorage` (cada visitante tem a sua demo; o aviso no topo tem **Reiniciar demo**).
+
+- **Mesmas regras do back:** lance mínimo, quem lidera não cobre o próprio lance, saldo reservado para quem está ganhando e liberado quando é superado, lance nos últimos 2 minutos estende o lote por mais 2, e no fim o vencedor é debitado, o leiloeiro creditado e o comprovante emitido. A ordem das recusas copia `back-end/src/lots/bid-rules.ts`, e os testes ficam em `front-end/src/demo/engine.test.ts`.
+- **Mesmos dados do seed:** as 36 obras de `back-end/prisma/seed-catalog.ts`, com lances, agendados e encerrados. `node scripts/demo-snapshot.mjs` gera `artworks.json` e as imagens a partir da API do Met. A busca do leiloeiro chama a API do Met direto do navegador.
+- **Ao vivo:** licitantes automáticos dão lances a cada 30 s com a aba aberta, e outras abas do mesmo navegador recebem o aviso pelo `BroadcastChannel`.
+- **Auditoria:** cadeia SHA-256 dos lances com uma testemunha guardada à parte. Na página de auditoria, **Simular adulteração no banco** altera um lance sem refazer a cadeia, como um `UPDATE` manual faria, e a verificação passa a mostrar **Adulterado**. A garantia é mais fraca que a do back (não há chave HMAC nem testemunha fora do alcance de quem altera, porque tudo está no navegador). A versão completa é a do servidor, descrita em [Auditoria à prova de adulteração](#auditoria-à-prova-de-adulteração).
+
+Para avaliar o sistema de verdade, com Postgres, SSE e a auditoria com HMAC, rode localmente pelos passos abaixo. A demo também roda local: `NEXT_PUBLIC_DEMO_MODE=1 npm run build --workspace front-end` e depois `npm run start --workspace front-end`.
 
 ## Como rodar (local)
 
@@ -161,5 +172,6 @@ Nós somos os agentes de IA que construíram o Arremate, dentro de uma arquitetu
 - **Onde usei:** planejamento e quebra em tarefas, pranchas de UI (Grok), código do front e da API (Codex e Claude Code), testes, uma revisão de segurança independente e QA navegando como usuário.
 - **Como usei:** a IA escreveu a maior parte do código dentro de um processo que eu defini: cada entrega com testes e evidência em `docs/evidence/`, e nenhuma dependência, push ou deploy sem a minha validação. As escolhas relevantes estão registradas, com alternativas, em `docs/decisoes.md`.
 - **O que revisei e ajustei:** a revisão de segurança achou o login travado por um IP único atrás do proxy e cabeçalhos ausentes no front, corrigidos com teste. O QA achou a sala mostrando “superado” e “ganhando” ao mesmo tempo e recusas de regra exibidas como erro do sistema; corrigi e cobri com E2E. O cadastro, o Google e os pagamentos simulados foram começados pelo Codex e terminados com o Claude Code. Também corrigi o próprio README quando ele afirmava algo que o código não sustentava, como a chave de auditoria e a migration que faltavam no passo a passo.
+- **Modo demo da Vercel:** o simulador de `front-end/src/demo/` foi escrito com o Claude Code a partir das regras do back, com testes próprios e verificado no navegador (lance, reserva, anti-sniping, liquidação, comprovante e adulteração detectada). A decisão de publicar só o front com o back simulado foi minha, para manter custo zero; o back real segue no repositório.
 
 Roteiro para explicar as decisões em voz alta: [como explicar o projeto](docs/entrevista.md).
