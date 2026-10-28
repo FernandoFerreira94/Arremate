@@ -100,7 +100,8 @@ export async function demoFetch(path: string, init: RequestInit = {}): Promise<u
 // ---------- catálogo: The Met direto do navegador (CORS aberto), 8 por página ----------
 
 const MET = "https://collectionapi.metmuseum.org/public/collection/v1";
-const searchCache = new Map<string, number[]>();
+const MET_SEARCH = "https://collectionapi.metmuseum.org/public/collection/v1.1/search";
+const searchCache = new Map<string, { total: number; ids: number[] }>();
 
 async function searchCatalog(q: string, page: number) {
   const term = q.trim();
@@ -108,14 +109,17 @@ async function searchCatalog(q: string, page: number) {
   const safe = Math.max(1, Math.floor(page) || 1);
   if (term.length < 2) return { items: [], page: safe, pageSize, total: 0, hasMore: false };
   try {
-    let ids = searchCache.get(term);
-    if (!ids) {
-      const response = await fetch(`${MET}/search?hasImages=true&q=${encodeURIComponent(term)}`, { signal: AbortSignal.timeout(12000) });
+    // A busca v1 do Met responde 410; a v1.1 pagina com offset/limit (a mesma que o back usa).
+    const cacheKey = `${term}|${safe}`;
+    let found = searchCache.get(cacheKey);
+    if (!found) {
+      const response = await fetch(`${MET_SEARCH}?hasImages=true&q=${encodeURIComponent(term)}&offset=${(safe - 1) * pageSize}&limit=${pageSize}`, { signal: AbortSignal.timeout(12000) });
       if (!response.ok) throw new Error("met");
-      ids = ((await response.json()) as { objectIDs: number[] | null }).objectIDs ?? [];
-      searchCache.set(term, ids);
+      const body = (await response.json()) as { total?: number; objectIDs?: number[] | null };
+      found = { total: body.total ?? 0, ids: body.objectIDs ?? [] };
+      searchCache.set(cacheKey, found);
     }
-    const slice = ids.slice((safe - 1) * pageSize, safe * pageSize);
+    const { total, ids: slice } = found;
     const objects = await Promise.all(slice.map(async (objectId) => {
       const response = await fetch(`${MET}/objects/${objectId}`, { signal: AbortSignal.timeout(12000) });
       return response.ok ? ((await response.json()) as Record<string, unknown>) : null;
@@ -153,7 +157,7 @@ async function searchCatalog(q: string, page: number) {
       };
     });
     save(state);
-    return { items, page: safe, pageSize, total: ids.length, hasMore: safe * pageSize < ids.length };
+    return { items, page: safe, pageSize, total, hasMore: safe * pageSize < total };
   } catch {
     throw toApiError(new DemoFailure("PROVEDOR_INDISPONIVEL"));
   }
