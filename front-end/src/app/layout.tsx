@@ -7,6 +7,8 @@ import { siteUrl } from "@/lib/page-metadata";
 import { BrandIntro, INTRO_BOOT_SCRIPT } from "@/components/app/brand-intro";
 import { PageEntrance } from "@/components/app/page-entrance";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { DemoBanner } from "@/demo/demo-banner";
+import { DEMO_MODE } from "@/demo/seed";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -39,6 +41,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           Pular para o conteúdo
         </a>
         <Providers>
+          {DEMO_MODE ? <DemoBanner /> : null}
           <SiteHeader />
           <main id="conteudo" className="mx-auto w-full max-w-[1360px] flex-1 px-4 py-8 lg:px-10 lg:py-10">
             <PageEntrance>{children}</PageEntrance>

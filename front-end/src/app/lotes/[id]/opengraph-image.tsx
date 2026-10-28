@@ -14,7 +14,12 @@ export default async function LotImage({ params }: { params: Promise<{ id: strin
   const lot = await fetchPublicLotMeta(id);
   if (!lot) notFound();
   let artwork: string | null = null;
-  if (lot.imageUrl) {
+  if (lot.imageUrl?.startsWith("/demo/")) {
+    // Modo demo: a imagem é arquivo estático do próprio front.
+    try {
+      artwork = "data:image/jpeg;base64," + (await readFile(join(process.cwd(), "public", lot.imageUrl))).toString("base64");
+    } catch { /* sem imagem, o preview segue só com o título */ }
+  } else if (lot.imageUrl) {
     try {
       const response = await fetch(apiProxyTarget() + lot.imageUrl, { redirect: "error", signal: AbortSignal.timeout(5000) });
       if (response.ok && ["image/jpeg", "image/png", "image/webp"].includes(response.headers.get("content-type")?.split(";")[0] ?? "")) {

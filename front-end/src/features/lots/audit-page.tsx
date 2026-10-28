@@ -10,6 +10,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DEMO_MODE } from "@/demo/seed";
 import { formatBrt } from "@/lib/datetime";
 import { formatBrl } from "@/lib/money";
 import { getAudit, getBids, type AuditView } from "./lots-api";
@@ -20,6 +21,21 @@ export function AuditStatusAlert({ status, message }: { status: AuditView["statu
   if (status === "INTACT") return <Alert className="border-success/30 bg-success-soft"><ShieldCheckIcon /><p><strong>Íntegro.</strong> A cadeia de lances confere com a testemunha. {message}</p></Alert>;
   if (status === "TAMPERED") return <Alert variant="destructive"><ShieldAlertIcon /><p><strong>Adulterado.</strong> O histórico não confere com a cadeia registrada. {message}</p></Alert>;
   return <Alert><HelpCircleIcon /><p><strong>Indeterminado.</strong> Não foi possível concluir a verificação agora. {message}</p></Alert>;
+}
+
+/** Modo demo: altera um lance "direto no banco" (sem refazer a cadeia) para mostrar a detecção, e desfaz. */
+function DemoTamperControls({ lotId, tampered, onChange }: { lotId: string; tampered: boolean; onChange: () => void }) {
+  const run = async (action: "tamper" | "restore") => {
+    const demo = await import("@/demo/client");
+    if (action === "tamper") demo.tamperDemoLot(lotId);
+    else demo.restoreDemoLot(lotId);
+    onChange();
+  };
+  return tampered ? (
+    <Button variant="outline" size="sm" onClick={() => void run("restore")}>Desfazer adulteração</Button>
+  ) : (
+    <Button variant="destructive" size="sm" onClick={() => void run("tamper")}>Simular adulteração no banco</Button>
+  );
 }
 
 export function AuditPage({ lotId }: { lotId: string }) {
@@ -49,7 +65,10 @@ export function AuditPage({ lotId }: { lotId: string }) {
             <p className="text-xs text-muted-foreground">
               Verificado em {formatBrt(audit.data.verifiedAt)}{audit.data.revision !== null ? ` · revisão ${audit.data.revision}` : ""}{audit.data.count !== null ? ` · ${audit.data.count} registro(s)` : ""}
             </p>
-            <Button variant="outline" size="sm" className="self-start" onClick={() => { setPage(1); void audit.refetch(); }}>Verificar de novo</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => { setPage(1); void audit.refetch(); }}>Verificar de novo</Button>
+              {DEMO_MODE && !removed ? <DemoTamperControls lotId={lotId} tampered={audit.data.status === "TAMPERED"} onChange={() => { setPage(1); void audit.refetch(); void bids.refetch(); }} /> : null}
+            </div>
           </>
         )}
         <Card>

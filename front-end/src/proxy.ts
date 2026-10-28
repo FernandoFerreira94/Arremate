@@ -5,7 +5,7 @@ import { buildCsp, createNonce } from "./lib/security-headers";
 function withCsp(request: NextRequest, init: { status?: number; headers?: Record<string, string> } = {}) {
   // D26 (M2): nonce novo por requisição; o layout lê x-nonce para o script inline de entrada.
   const nonce = createNonce();
-  const csp = buildCsp(nonce, { dev: process.env.NODE_ENV === "development" });
+  const csp = buildCsp(nonce, { dev: process.env.NODE_ENV === "development", demo: process.env.NEXT_PUBLIC_DEMO_MODE === "1" });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("content-security-policy", csp);

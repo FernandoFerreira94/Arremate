@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { DEMO_MODE } from "../demo/seed";
 
 export const POLL_MS = 10_000;
 export const HEARTBEAT_TIMEOUT_MS = 40_000;
@@ -40,6 +41,21 @@ export function useLotChannel(lotId: string | null, onRefresh: () => void): Chan
     let poll: ReturnType<typeof setInterval> | null = null;
     let watchdog: ReturnType<typeof setTimeout> | null = null;
     let closed = false;
+
+    if (DEMO_MODE) {
+      // Demo: o aviso vem do motor no navegador (mesma aba e outras abas), sem EventSource.
+      let unsubscribe: () => void = () => undefined;
+      void import("../demo/client").then(({ subscribeDemoLot }) => {
+        if (closed) return;
+        unsubscribe = subscribeDemoLot(lotId, () => refresh.current());
+        setState("live");
+        refresh.current();
+      });
+      return () => {
+        closed = true;
+        unsubscribe();
+      };
+    }
 
     const startPolling = () => {
       setState("degraded");

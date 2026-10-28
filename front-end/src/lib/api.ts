@@ -1,3 +1,4 @@
+import { DEMO_MODE } from "../demo/seed";
 import { ApiError, toApiError } from "./api-error";
 
 let csrfToken: string | null = null;
@@ -7,6 +8,8 @@ export function clearCsrfMemory(): void {
 }
 
 export async function apiFetch(path: string, init: RequestInit & { timeoutMs?: number } = {}): Promise<unknown> {
+  // Modo demo (Vercel sem back-end): as rotas são simuladas no navegador.
+  if (DEMO_MODE) return (await import("../demo/client")).demoFetch(path, init);
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
   if (method !== "GET" && method !== "HEAD" && !csrfToken) await refreshCsrf();

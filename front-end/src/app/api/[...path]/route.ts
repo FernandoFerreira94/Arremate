@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { DEMO_ARTWORKS, DEMO_MODE, demoImageUrl } from "@/demo/seed";
 import { apiProxyTarget, upstreamHeaders, upstreamUnavailable } from "@/lib/api-proxy";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +13,7 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
       { status: 400, headers: { "cache-control": "no-store" } },
     );
   }
+  if (DEMO_MODE) return demoRoute(request, path);
   const target = new URL(`${apiProxyTarget()}/api/${path.map((part) => encodeURIComponent(part)).join("/")}`);
   target.search = new URL(request.url).search;
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
@@ -39,6 +41,17 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
   if (requestId) headers.set("x-request-id", requestId);
   for (const cookie of upstream.headers.getSetCookie()) headers.append("set-cookie", cookie);
   return new NextResponse(upstream.body, { status: upstream.status, headers });
+}
+
+/** Modo demo: as rotas de dados rodam no navegador; aqui sobram o zoom da obra (arquivo estático) e o relato de erro. */
+async function demoRoute(request: Request, path: string[]): Promise<Response> {
+  if (path[0] === "client-errors") return new NextResponse(null, { status: 204 });
+  const externalId = path[0] === "media" && path[1] === "zoom" ? path[2] : undefined;
+  if (externalId && DEMO_ARTWORKS.some((art) => art.externalId === externalId)) {
+    const file = await fetch(new URL(demoImageUrl(externalId), request.url), { cache: "no-store" });
+    if (file.ok) return new NextResponse(file.body, { status: 200, headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=86400" } });
+  }
+  return NextResponse.json({ statusCode: 404, code: "NAO_ENCONTRADO", message: "Recurso não encontrado.", requestId: "demo" }, { status: 404, headers: { "cache-control": "no-store" } });
 }
 
 export const GET = proxy;
