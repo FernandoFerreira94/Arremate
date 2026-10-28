@@ -1,7 +1,9 @@
 # Arremate — Casa de Leilões online (Desafio Verzel)
 
-> **Aplicação publicada:** _pendente — o link entra aqui assim que o deploy for verificado._
+> **Aplicação publicada:** https://arremate-three.vercel.app/
 > **Repositório:** https://github.com/FernandoFerreira94/Arremate
+>
+> O link publicado é a **demonstração simulada no navegador**: só o front-end na Vercel, sem API nem banco, com as mesmas regras de lance, os mesmos dados do seed e a auditoria com detecção de adulteração (detalhes em [Demonstração publicada](#demonstração-publicada-modo-demo-sem-servidor)). O desafio pede o deploy da aplicação, e é isso que o link entrega. O sistema completo, com Node, Postgres, SSE e auditoria com HMAC, roda local pelos passos de [Como rodar](#como-rodar-local) e pode ir para um servidor seguindo [`docs/deploy.md`](docs/deploy.md).
 
 Leilões de obras de arte de acervo público (The Met). O leiloeiro busca obras na API do museu e cria lotes; o licitante deposita saldo simulado, dá lances ao vivo e recebe um comprovante quando arremata. Toda a regra de dinheiro fica no back-end, e uma página pública de auditoria detecta qualquer adulteração do histórico, inclusive feita direto no banco.
 
@@ -27,6 +29,8 @@ O link publicado é só o front-end na Vercel, com `NEXT_PUBLIC_DEMO_MODE=1`. Ne
 - **Auditoria:** cadeia SHA-256 dos lances com uma testemunha guardada à parte. Na página de auditoria, **Simular adulteração no banco** altera um lance sem refazer a cadeia, como um `UPDATE` manual faria, e a verificação passa a mostrar **Adulterado**. A garantia é mais fraca que a do back (não há chave HMAC nem testemunha fora do alcance de quem altera, porque tudo está no navegador). A versão completa é a do servidor, descrita em [Auditoria à prova de adulteração](#auditoria-à-prova-de-adulteração).
 
 Para avaliar o sistema de verdade, com Postgres, SSE e a auditoria com HMAC, rode localmente pelos passos abaixo. A demo também roda local: `NEXT_PUBLIC_DEMO_MODE=1 npm run build --workspace front-end` e depois `npm run start --workspace front-end`.
+
+Na Vercel, o projeto usa Root Directory `front-end`, `NEXT_PUBLIC_DEMO_MODE=1` e `SITE_URL=https://arremate-three.vercel.app` (sem barra no fim). O `SITE_URL` só alimenta o link canônico e a imagem de prévia dos metadados; sem ele o site funciona, mas a prévia de um link compartilhado aponta para `127.0.0.1`.
 
 ## Como rodar (local)
 
