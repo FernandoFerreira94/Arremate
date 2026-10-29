@@ -3,10 +3,10 @@
 > **Aplicação publicada (sistema completo):** https://arremate-app-production.up.railway.app
 > **Demo simulada no navegador (alternativa, só front-end):** https://arremate-three.vercel.app/
 > **Repositório:** https://github.com/FernandoFerreira94/Arremate
->
-> O link principal roda o sistema completo no Railway: site Next.js e API NestJS no mesmo container, PostgreSQL gerenciado e volume persistente para a testemunha da auditoria, com SSE, liquidação e auditoria com HMAC reais (detalhes em [Deploy publicado](#deploy-publicado-railway)). O link da Vercel é uma demonstração simulada no navegador, sem API nem banco, com as mesmas regras de lance e os mesmos dados do seed (ver [Demonstração simulada](#demonstração-publicada-modo-demo-sem-servidor)). Para rodar local, use [Como rodar](#como-rodar-local); o passo a passo de hospedagem está em [`docs/deploy.md`](docs/deploy.md).
 
 Leilões de obras de arte de acervo público (The Met). O leiloeiro busca obras na API do museu e cria lotes; o licitante deposita saldo simulado, dá lances ao vivo e recebe um comprovante quando arremata. Toda a regra de dinheiro fica no back-end, e uma página pública de auditoria detecta qualquer adulteração do histórico, inclusive feita direto no banco.
+
+Para avaliar: entre no link principal com uma [conta de demonstração](#contas-de-demonstração) e siga o [roteiro rápido](#roteiro-rápido-de-avaliação). Para rodar local, [Como rodar](#como-rodar-local). Como o projeto foi feito com IA e o que é decisão minha: [Uso de IA](#uso-de-ia).
 
 ## Deploy publicado (Railway)
 
@@ -24,18 +24,15 @@ Na tela **Entrar**, os botões “Entrar como licitante de teste” e “Entrar 
 
 O seed cria 1 leiloeiro, 5 licitantes, 1 lote aberto sem lances e um catálogo de 36 obras com lotes **ao vivo com lances abertos**, lotes na reta final, agendados e encerrados com comprovante.
 
-## Demonstração publicada (modo demo, sem servidor)
+## Roteiro rápido de avaliação
 
-O link da Vercel é só o front-end, com `NEXT_PUBLIC_DEMO_MODE=1`. Nesse modo não existe API nem banco: o código em [`front-end/src/demo/`](front-end/src/demo/) responde às mesmas rotas que o front chama, direto no navegador, e guarda o estado no `localStorage` (cada visitante tem a sua demo; o aviso no topo tem **Reiniciar demo**).
-
-- **Mesmas regras do back:** lance mínimo, quem lidera não cobre o próprio lance, saldo reservado para quem está ganhando e liberado quando é superado, lance nos últimos 2 minutos estende o lote por mais 2, e no fim o vencedor é debitado, o leiloeiro creditado e o comprovante emitido. A ordem das recusas copia `back-end/src/lots/bid-rules.ts`, e os testes ficam em `front-end/src/demo/engine.test.ts`.
-- **Mesmos dados do seed:** as 36 obras de `back-end/prisma/seed-catalog.ts`, com lances, agendados e encerrados. `node scripts/demo-snapshot.mjs` gera `artworks.json` e as imagens a partir da API do Met. A busca do leiloeiro chama a API do Met direto do navegador.
-- **Ao vivo:** licitantes automáticos dão lances a cada 30 s com a aba aberta, e outras abas do mesmo navegador recebem o aviso pelo `BroadcastChannel`.
-- **Auditoria:** cadeia SHA-256 dos lances com uma testemunha guardada à parte. Na página de auditoria, **Simular adulteração no banco** altera um lance sem refazer a cadeia, como um `UPDATE` manual faria, e a verificação passa a mostrar **Adulterado**. A garantia é mais fraca que a do back (não há chave HMAC nem testemunha fora do alcance de quem altera, porque tudo está no navegador). A versão completa é a do servidor, descrita em [Auditoria à prova de adulteração](#auditoria-à-prova-de-adulteração).
-
-Para avaliar o sistema de verdade, com Postgres, SSE e a auditoria com HMAC, rode localmente pelos passos abaixo. A demo também roda local: `NEXT_PUBLIC_DEMO_MODE=1 npm run build --workspace front-end` e depois `npm run start --workspace front-end`.
-
-Na Vercel, o projeto usa Root Directory `front-end`, `NEXT_PUBLIC_DEMO_MODE=1` e `SITE_URL=https://arremate-three.vercel.app` (sem barra no fim). O `SITE_URL` só alimenta o link canônico e a imagem de prévia dos metadados; sem ele o site funciona, mas a prévia de um link compartilhado aponta para `127.0.0.1`.
+1. Entre como licitante, abra **Carteira** e faça um depósito simulado. Veja total, comprometido e disponível.
+2. Abra um lote ao vivo e dê um lance. Em outra janela anônima, entre com `licitante2` e cubra o lance: a primeira janela atualiza sozinha, avisa “Você foi superado” e o valor volta ao disponível.
+3. Tente as recusas: lance abaixo do mínimo, sem saldo, cobrindo a si mesmo, lote agendado e lote encerrado. Cada uma tem mensagem própria.
+4. Dê um lance nos últimos 2 minutos de um lote da reta final e veja o fim ser prorrogado.
+5. Abra um lote encerrado: comprovante público, apelidos no lugar de nomes e a auditoria com o resultado “íntegro”.
+6. Como leiloeiro: busque uma obra no The Met, crie um lote com lance inicial, incremento, início e fim, e cancele um lote sem lances. O painel mostra resultados e o total recebido.
+7. Prove a detecção de adulteração (abaixo).
 
 ## Como rodar (local)
 
@@ -50,16 +47,6 @@ Pré-requisitos: Node 24.22.1 (`.nvmrc`), Docker com Compose e internet no prime
 6. `npm run dev:api` (API em 4300) e, em outro terminal, `npm run dev:web` (site em http://127.0.0.1:3300). Se a API parou no meio de uma confirmação da auditoria, ela tenta de novo ao subir; `npm run audit:retry` faz o mesmo manualmente.
 
 Opcional: `DEMO_BOTS=1` no `.env` liga licitantes automáticos que cobrem o seu lance, para ver o tempo real sem abrir duas contas.
-
-## Roteiro rápido de avaliação
-
-1. Entre como licitante, abra **Carteira** e faça um depósito simulado. Veja total, comprometido e disponível.
-2. Abra um lote ao vivo e dê um lance. Em outra janela anônima, entre com `licitante2` e cubra o lance: a primeira janela atualiza sozinha, avisa “Você foi superado” e o valor volta ao disponível.
-3. Tente as recusas: lance abaixo do mínimo, sem saldo, cobrindo a si mesmo, lote agendado e lote encerrado. Cada uma tem mensagem própria.
-4. Dê um lance nos últimos 2 minutos de um lote da reta final e veja o fim ser prorrogado.
-5. Abra um lote encerrado: comprovante público, apelidos no lugar de nomes e a auditoria com o resultado “íntegro”.
-6. Como leiloeiro: busque uma obra no The Met, crie um lote com lance inicial, incremento, início e fim, e cancele um lote sem lances. O painel mostra resultados e o total recebido.
-7. Prove a detecção de adulteração (abaixo).
 
 ## Regras de negócio e onde são garantidas
 
@@ -150,37 +137,62 @@ O CI (`.github/workflows/ci.yml`) migra um banco vazio, roda o seed duas vezes, 
 - **Extras além do pedido:** cadastro, cartão de teste e Pix simulados na carteira, favoritos, “Avise-me”, notificações, zoom da obra e tour guiado.
 - **Não verificado:** Safari/Firefox e aparelho físico.
 
-## Como o projeto foi construído
+## Demonstração publicada (modo demo, sem servidor)
 
-_Na voz dos agentes que construíram o Arremate. Texto completo em [docs/narrativa-agentes.md](docs/narrativa-agentes.md) e, tarefa a tarefa, no [diário de construção](docs/diario-construcao.md)._
+O link da Vercel é só o front-end, com `NEXT_PUBLIC_DEMO_MODE=1`: sem API nem banco, o código em [`front-end/src/demo/`](front-end/src/demo/) responde às mesmas rotas que o front chama, direto no navegador, e guarda o estado no `localStorage` (cada visitante tem a sua demo; o aviso no topo tem **Reiniciar demo**). Ele existe como alternativa de custo zero ao Railway e para mostrar as regras sem servidor.
 
-Nós somos os agentes de IA que construíram o Arremate, dentro de uma arquitetura que o Fernando projetou. Antes da primeira linha de código ele já tinha desenhado o caminho: um ciclo de vida em treze estágios (S0 a S12) que funciona como máquina de estados. Nenhum de nós escolhe a próxima etapa pela memória da conversa; lemos o Lifecycle Control e avançamos pelo primeiro gate ainda não cumprido ([docs/lifecycle.md](docs/lifecycle.md)).
+- **Mesmas regras do back:** lance mínimo, quem lidera não cobre o próprio lance, reserva e liberação de saldo, anti-sniping e liquidação com comprovante. A ordem das recusas copia `back-end/src/lots/bid-rules.ts`; testes em `front-end/src/demo/engine.test.ts`.
+- **Mesmos dados do seed:** as 36 obras de `back-end/prisma/seed-catalog.ts`. `node scripts/demo-snapshot.mjs` gera `artworks.json` e as imagens a partir da API do Met.
+- **Ao vivo:** licitantes automáticos a cada 30 s com a aba aberta; outras abas do mesmo navegador recebem o aviso pelo `BroadcastChannel`.
+- **Auditoria:** cadeia SHA-256 com testemunha à parte e o botão **Simular adulteração no banco**. A garantia é mais fraca que a do servidor (não há chave HMAC fora do alcance de quem altera, porque tudo está no navegador).
 
-**Quem fez o quê**
-
-- **Orquestrador:** leu o enunciado, quebrou o trabalho em tarefas pequenas e conduziu os gates. Nenhuma etapa avançou sem a saída exigida pelo gate anterior.
-- **Fred, designer de UI/UX:** desenhou as pranchas e o design system antes de qualquer componente novo. Hero, header e footer foram escolhidos entre três variações dele; a interface saiu das pranchas congeladas (Design Freeze D12, adendo D21), não o contrário.
-- **Executores (Codex e Cursor/Claude Code):** implementaram cada tarefa com testes e deixaram a evidência em `docs/evidence/`.
-- **QA/E2E:** rodou os testes ponta a ponta num mundo à parte, com build, portas e banco próprios, navegando como usuário.
-
-**Passo a passo**
-
-1. **Ideia, validação e produto (S0 a S2):** o desafio virou um intake sem negócio inventado; o escopo técnico passou com condições (dinheiro simulado, qualidade) e o produto foi descrito a partir do PDF.
-2. **Pesquisa e prontidão (S3 e S4):** a lacuna do anti-sniping foi levada ao Fernando e resolvida por ele; as escolhas técnicas ficaram registradas como abertas.
-3. **Arquitetura e design (S5 e S6):** propusemos a arquitetura; o Fernando aceitou os riscos em aberto e aprovou as pranchas HTML/PNG como fonte visual (D09 a D13).
-4. **Boot do repositório:** pasta, dependências, bancos isolados, health check e placeholder técnico, sem nenhuma tela final antes do design.
-5. **Desenvolvimento, tarefa a tarefa:** núcleo de dinheiro e schema (Tarefa 1), cadeia HMAC com testemunha fora do banco para a auditoria (Tarefa 2), sessão, CSRF e papéis (Tarefa 3), e depois lances ao vivo, liquidação, carteira, entrada animada, cadastro, Google e pagamentos simulados. Cada tarefa fechou com teste e evidência.
-6. **Saúde e release:** revisão de segurança independente, rodadas de QA e correções cobertas por E2E antes de qualquer publicação.
-
-**Onde paramos para o Fernando decidir:** troca de decisão já congelada, direção visual com mais de uma opção válida, credencial, produção, gasto real ou ação destrutiva. Nesses pontos levamos as alternativas e o trade-off, e ele decidiu pelo critério. Foi assim que entraram `@node-rs/argon2` (D15) e `radix-ui` (D16), cada uma com motivo em `docs/decisoes.md`.
-
-**O que aprendemos a respeitar:** planejado não é executado, e o que não verificamos fica marcado como **não verificado**. Commits pequenos com diff conferido, migration só no banco local e nada hospedado sem validação humana. O Fernando projetou a arquitetura; nós executamos dentro dela, e cada entrega passou pelo olhar dele antes de virar produto.
+Local: `NEXT_PUBLIC_DEMO_MODE=1 npm run build --workspace front-end` e `npm run start --workspace front-end`. Na Vercel: Root Directory `front-end`, `NEXT_PUBLIC_DEMO_MODE=1` e `SITE_URL=https://arremate-three.vercel.app` (só alimenta canonical e imagem de prévia).
 
 ## Uso de IA
 
-- **Onde usei:** planejamento e quebra em tarefas, pranchas de UI (Grok), código do front e da API (Codex e Claude Code), testes, uma revisão de segurança independente e QA navegando como usuário.
-- **Como usei:** a IA escreveu a maior parte do código dentro de um processo que eu defini: cada entrega com testes e evidência em `docs/evidence/`, e nenhuma dependência, push ou deploy sem a minha validação. As escolhas relevantes estão registradas, com alternativas, em `docs/decisoes.md`.
-- **O que revisei e ajustei:** a revisão de segurança achou o login travado por um IP único atrás do proxy e cabeçalhos ausentes no front, corrigidos com teste. O QA achou a sala mostrando “superado” e “ganhando” ao mesmo tempo e recusas de regra exibidas como erro do sistema; corrigi e cobri com E2E. O cadastro, o Google e os pagamentos simulados foram começados pelo Codex e terminados com o Claude Code. Também corrigi o próprio README quando ele afirmava algo que o código não sustentava, como a chave de auditoria e a migration que faltavam no passo a passo.
-- **Modo demo da Vercel:** o simulador de `front-end/src/demo/` foi escrito com o Claude Code a partir das regras do back, com testes próprios e verificado no navegador (lance, reserva, anti-sniping, liquidação, comprovante e adulteração detectada). O link principal publicado roda o sistema completo (back-end real em Node e PostgreSQL no Railway); a demo simulada da Vercel ficou como alternativa de custo zero. O deploy no Railway foi configurado com o Claude Code, conforme `docs/deploy.md`, e conferido por mim no navegador (cadastro, login e sessões em duas abas).
+Declaro aqui o que foi feito com IA, como controlei o processo e o que é decisão minha. A IA escreveu a maior parte do código; o processo, as decisões de produto e de arquitetura e a validação de cada entrega são meus. Nada abaixo é narrativa: cada item tem fonte no repositório.
 
-Roteiro para explicar as decisões em voz alta: [como explicar o projeto](docs/entrevista.md).
+### Ferramentas e onde entraram
+
+| Etapa | Ferramenta | Saída |
+| --- | --- | --- |
+| Planejamento e quebra em tarefas | Codex e Claude Code | [`docs/superpowers/plans/`](docs/superpowers/plans/) e specs em [`docs/superpowers/specs/`](docs/superpowers/specs/) |
+| Pranchas de UI e design system | Grok | [`docs/design/pranchas/`](docs/design/pranchas/INDICE.md) e [`docs/design/HANDOFF-GROK.md`](docs/design/HANDOFF-GROK.md) |
+| Código do front e da API, testes | Codex e Claude Code (no Cursor e no terminal) | commits pequenos, um contexto por commit |
+| Revisão de segurança independente | Claude Code em contexto limpo (só código e contrato, sem a conclusão do autor) | achados em [`docs/decisoes.md`](docs/decisoes.md) (D26) |
+| QA navegando como usuário e E2E | Claude Code + Playwright | rodadas D29 a D31 em `docs/decisoes.md` e [`e2e/`](e2e/) |
+| Deploy no Railway | Claude Code, seguindo [`docs/deploy.md`](docs/deploy.md) | serviço publicado; conferido por mim no navegador |
+
+### O processo que a IA seguiu
+
+O projeto roda dentro de um ciclo de vida que eu defino para todos os meus projetos e que os agentes leem antes de agir ([`docs/lifecycle.md`](docs/lifecycle.md)). São treze estágios, S0 a S12, tratados como máquina de estados: ideia, validação, definição de produto, pesquisa de lacunas, prontidão, Architecture Freeze, Design Freeze, handoff, boot do repositório, desenvolvimento, saúde, release e produção. Cada estágio tem uma fonte obrigatória e um gate de saída; o agente só avança quando o gate passa, e nunca escolhe a próxima etapa pela memória da conversa. Os achados de cada gate são classificados como `BLOCKER / WARNING / RECOMMENDATION / INFO`: só `BLOCKER` segura o avanço. O histórico das transições está no `Stage History` do mesmo arquivo.
+
+Dentro do desenvolvimento (S9), cada tarefa percorre o mesmo loop, registrado em [`docs/qualidade.md`](docs/qualidade.md) e cobrado no [`AGENTS.md`](AGENTS.md):
+
+1. **Requisito e critério de aceite** identificados; diff restrito ao escopo. Mais de 3 arquivos ou regra nova exige plano antes do código.
+2. **Teste que falha pelo motivo certo** (red). Financeiro, auth e integridade exigem casos positivos, negativos e de falha/retry/concorrência; concorrência é provada em PostgreSQL real, nunca em mock.
+3. **Código mínimo** para o teste passar (green), depois refatoração sem quebrar.
+4. **Lint, TypeScript strict e testes** do pacote tocado; `build` e E2E nas tarefas de fechamento.
+5. **Revisão de código e de segurança** de todo diff (guard/ownership, DTO, IDOR, PII, segredo em log). Antes de migration, auth/sessão ou decisão irreversível, a revisão é adversária e em contexto limpo. Máximo de 3 ciclos de correção; se o achado persistir, a decisão volta para mim. Nenhum `High/Critical` aberto permite fechar a tarefa.
+6. **Evidência** em [`docs/evidence/`](docs/evidence/): comando, saída, exit code, o que foi provado em banco real e o que ficou `NOT RUN` ou **não verificado**.
+7. **Fontes atualizadas no mesmo trabalho:** decisão em `docs/decisoes.md`, plano, README e a página do projeto no Notion.
+
+O agente para e me chama quando a escolha é minha: troca de decisão já congelada, direção visual com mais de uma opção válida, dependência nova, migration, credencial, push, deploy, gasto real ou ação destrutiva. Nesses pontos ele traz recomendação, alternativa e trade-off, e eu decido. Desculpas como "mudança pequena, não precisa teste" ou "estou confiante" são proibidas por escrito no `AGENTS.md`.
+
+### O que é meu
+
+- **Produto e regras:** obras de acervo público do The Met (U02); anti-sniping relativo ao lance, com o fim renovado para 120 s após o aceite (U03), escolhido porque garante sempre 2 minutos de reação a quem foi superado; depósito simulado de R$ 1 a R$ 100 mil (D05); vitrine ordenada pelo término mais próximo (D06); cancelamento só de lote sem lances, em vez de estorno (seção [Opcionais do PDF](#opcionais-do-pdf)).
+- **Arquitetura:** monólito modular com todas as regras de dinheiro no back-end e nada decidido no cliente (U07); Next.js na Vercel com API Node persistente separada (U09), depois reunidos num container no Railway para o deploy completo; qualidade próxima de produção e escopo fiel ao PDF (U07). A auditoria à prova de adulteração com testemunha fora do banco foi a minha exigência de integridade; a técnica foi proposta pela IA, provada na Tarefa 2 e revisada por um segundo contexto, que achou e corrigiu uma falha de contrato antes do código (a assinatura não protegia o usuário interno do lance).
+- **Dependências e design:** cada dependência fora do plano passou por mim, com motivo registrado: `@node-rs/argon2` (D15) e `radix-ui` (D16). Nome, logo, paleta, tipografia e pranchas foram aprovados por mim antes de qualquer componente (D01 a D12, Design Freeze), e a interface saiu das pranchas, não o contrário.
+- **Processo:** o ciclo de vida, o loop acima, o `AGENTS.md` e as regras de parada são meus, escritos antes deste projeto e aplicados aqui.
+- **Validação:** cada diff passou por mim antes do commit e cada entrega antes de virar produto; o deploy publicado foi conferido por mim no navegador (cadastro, login e sessões em duas abas).
+
+### O que a IA errou e eu corrigi
+
+- A revisão de segurança achou o login travado por um IP único atrás do proxy e cabeçalhos ausentes no front; corrigidos com teste (D26).
+- O QA achou a sala mostrando "superado" e "ganhando" ao mesmo tempo, recusas de regra exibidas como erro do sistema e um E2E que só passava sozinho; corrigidos e cobertos por E2E (D29 a D31).
+- O cadastro, o Google e os pagamentos simulados foram começados pelo Codex e terminados com o Claude Code.
+- O próprio README afirmava coisas que o código não sustentava (a chave de auditoria e a migration que faltavam no passo a passo); corrigi.
+- O que não verifiquei fica marcado como **não verificado** (Safari/Firefox e aparelho físico).
+
+Versão narrativa do processo, na voz dos agentes: [docs/narrativa-agentes.md](docs/narrativa-agentes.md). Tarefa a tarefa: [diário de construção](docs/diario-construcao.md). Roteiro para explicar as decisões em voz alta: [como explicar o projeto](docs/entrevista.md).
