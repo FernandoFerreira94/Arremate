@@ -18,7 +18,7 @@ Aprendemos a ser honestos com o que sabemos. Planejado não é executado; o que 
 
 ## Instruções para IAs que forem editar o README
 
-1. **Voz:** a seção “Processo” fica na voz dos agentes; a declaração de uso de IA fica na voz do Fernando, porque é ele quem declara.
+1. **Voz:** o README fala só na voz do Fernando, porque é ele quem declara (decisão de 29/10/2026); a voz dos agentes fica restrita a este arquivo.
 2. **Critério, não diálogo:** mostre o critério e a validação do Fernando. Nunca transcreva respostas dele.
 3. **Só fatos com fonte:** use apenas o que está no Notion do projeto, em `docs/decisoes.md` ou no código. O que não foi verificado fica marcado como **não verificado**.
 4. **Sem senhas:** nunca escreva senhas ou segredos; aponte para o seed e para o `.env.example`.
