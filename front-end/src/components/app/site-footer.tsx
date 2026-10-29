@@ -1,13 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
+import { DEMO_VIDEO_URL } from "@/lib/demo-video";
 import { InstallAppButton } from "./pwa";
 
 /**
  * F3-cor (D22): fundo --brand, textos em brand-foreground (iguais nos dois temas), títulos e crédito a 80 %, frase em Fraunces com a 2ª linha em
  * latão (--accent) e filete em accent. LEGAL traz Termos e Privacidade (páginas do Codex) e as âncoras de Regras e Auditoria.
  */
-const GROUPS: { title: string; links: { label: string; href: string }[] }[] = [
-  { title: "Leilão", links: [{ label: "Como funciona a demonstração", href: "/como-funciona" }, { label: "FAQ", href: "/suporte" }] },
+const GROUPS: { title: string; links: { label: string; href: string; external?: boolean }[] }[] = [
+  {
+    title: "Leilão",
+    links: [
+      { label: "Como funciona a demonstração", href: "/como-funciona" },
+      { label: "FAQ", href: "/suporte" },
+      // Link discreto para o vídeo comercial hospedado no GitHub (abre em nova aba).
+      { label: "Vídeo de demonstração", href: DEMO_VIDEO_URL, external: true },
+    ],
+  },
   { title: "Minha conta", links: [{ label: "Perfil", href: "/perfil" }, { label: "Carteira", href: "/carteira" }, { label: "Favoritos", href: "/favoritos" }] },
   { title: "Ajuda", links: [{ label: "Suporte", href: "/suporte" }] },
   { title: "Legal", links: [{ label: "Termos de uso", href: "/termos" }, { label: "Privacidade", href: "/privacidade" }, { label: "Regras do leilão", href: "/como-funciona#regras" }, { label: "Auditoria", href: "/como-funciona#auditoria" }] },
@@ -33,9 +42,16 @@ export function SiteFooter() {
                 <ul className="mt-2 flex flex-col">
                   {group.links.map((link) => (
                     <li key={link.label}>
-                      <Link href={link.href} className="inline-flex min-h-11 items-center text-sm text-brand-foreground underline-offset-4 hover:underline">
-                        {link.label}
-                      </Link>
+                      {link.external ? (
+                        <a href={link.href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-sm text-brand-foreground underline-offset-4 hover:underline">
+                          {link.label}
+                          <span className="sr-only"> (abre em nova aba)</span>
+                        </a>
+                      ) : (
+                        <Link href={link.href} className="inline-flex min-h-11 items-center text-sm text-brand-foreground underline-offset-4 hover:underline">
+                          {link.label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
