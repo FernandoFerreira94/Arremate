@@ -3,6 +3,7 @@
 > **Aplicação publicada (sistema completo):** https://arremate-app-production.up.railway.app
 > **Demo simulada no navegador (alternativa, só front-end):** https://arremate-three.vercel.app/
 > **Repositório:** https://github.com/FernandoFerreira94/Arremate
+> **Vídeo de demonstração (27 s, com narração):** [docs/media/arremate-demo.mp4](docs/media/arremate-demo.mp4) — clique em **View raw** (ou **Download**) na página do arquivo no GitHub para assistir; ou, com o repositório clonado, abra o arquivo direto. Mostra vitrine, sala do lote, lance, carteira e auditoria com adulteração detectada.
 
 Leilões de obras de arte de acervo público (The Met). O leiloeiro busca obras na API do museu e cria lotes; o licitante deposita saldo simulado, dá lances ao vivo e recebe um comprovante quando arremata. Toda a regra de dinheiro fica no back-end, e uma página pública de auditoria detecta qualquer adulteração do histórico, inclusive feita direto no banco.
 
