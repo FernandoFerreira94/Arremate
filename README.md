@@ -129,6 +129,7 @@ O CI (`.github/workflows/ci.yml`) migra um banco vazio, roda o seed duas vezes, 
 - **Até 3 conexões ao vivo por IP:** a partir da 4ª aba aberta na mesma rede, a sala usa polling de 10 s em vez de SSE.
 - **Limites de login e de mutação em memória** de uma instância; não são distribuídos.
 - **Splash de entrada** só no primeiro acesso da sessão (3 s, pula com qualquer tecla ou clique; aba anônima para rever).
+- **Vídeo de boas-vindas** (28 s, `front-end/public/media/`) oferecido uma vez por navegador, depois do splash; "Assistir"/"Agora não"/Esc ficam no `localStorage` (`arremate.welcome.v1`; aba anônima para rever). No primeiro login o tour guiado só começa depois dessa escolha.
 - **Licitantes automáticos** (`DEMO_BOTS=1`) cobrem lances de pessoas até um teto, pelas mesmas regras e com a mesma auditoria.
 - **Seed sem internet:** obras do catálogo que falham geram só um aviso; o lote base continua sendo criado.
 - **Login com Google** aparece desabilitado sem `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_REDIRECT_URI`.

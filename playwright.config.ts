@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig } from "@playwright/test";
 import { E2E_API, E2E_API_PORT, E2E_BASE, E2E_WEB_PORT, e2eDatabaseUrl } from "./e2e/support/e2e-env";
+import { welcomeSeenStorage } from "./e2e/support/welcome";
 
 const envFile = resolve(__dirname, ".env");
 if (!process.env.TEST_DATABASE_URL && existsSync(envFile)) process.loadEnvFile(envFile);
@@ -15,7 +16,8 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: "list",
   globalSetup: "./e2e/support/global-setup.ts",
-  use: { baseURL: E2E_BASE, trace: "retain-on-failure" },
+  // O card de boas-vindas só é exercitado em boas-vindas.spec.ts (contexto sem este storage).
+  use: { baseURL: E2E_BASE, trace: "retain-on-failure", storageState: welcomeSeenStorage(E2E_BASE) },
   webServer: [
     {
       command: "node --env-file-if-exists=../.env -r ts-node/register src/main.ts",

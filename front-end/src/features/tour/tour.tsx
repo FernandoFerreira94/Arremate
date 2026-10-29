@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSession } from "../auth/use-session";
+import { WELCOME_DONE_EVENT, welcomeSeen } from "../welcome/welcome-video";
 import { cutoutFor, stepsFor, tourKey, type TourStep } from "./tour-steps";
 
 type TourContextValue = { start: () => void };
@@ -51,10 +52,16 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       seen = true;
     }
     if (seen) return;
-    const timer = window.setTimeout(() => {
+    const begin = () => {
       autoChecked.current = userId;
       setWanted(true);
-    }, 0);
+    };
+    // O card de boas-vindas (primeira visita) tem prioridade; o tour começa quando ele é decidido.
+    if (!welcomeSeen()) {
+      window.addEventListener(WELCOME_DONE_EVENT, begin, { once: true });
+      return () => window.removeEventListener(WELCOME_DONE_EVENT, begin);
+    }
+    const timer = window.setTimeout(begin, 0);
     return () => window.clearTimeout(timer);
   }, [userId, pathname]);
 
