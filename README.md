@@ -1,11 +1,16 @@
 # Arremate — Casa de Leilões online (Desafio Verzel)
 
-> **Aplicação publicada:** https://arremate-three.vercel.app/
+> **Aplicação publicada (sistema completo):** https://arremate-app-production.up.railway.app
+> **Demo simulada no navegador (alternativa, só front-end):** https://arremate-three.vercel.app/
 > **Repositório:** https://github.com/FernandoFerreira94/Arremate
 >
-> O link publicado é a **demonstração simulada no navegador**: só o front-end na Vercel, sem API nem banco, com as mesmas regras de lance, os mesmos dados do seed e a auditoria com detecção de adulteração (detalhes em [Demonstração publicada](#demonstração-publicada-modo-demo-sem-servidor)). O desafio pede o deploy da aplicação, e é isso que o link entrega. O sistema completo, com Node, Postgres, SSE e auditoria com HMAC, roda local pelos passos de [Como rodar](#como-rodar-local) e pode ir para um servidor seguindo [`docs/deploy.md`](docs/deploy.md).
+> O link principal roda o sistema completo no Railway: site Next.js e API NestJS no mesmo container, PostgreSQL gerenciado e volume persistente para a testemunha da auditoria, com SSE, liquidação e auditoria com HMAC reais (detalhes em [Deploy publicado](#deploy-publicado-railway)). O link da Vercel é uma demonstração simulada no navegador, sem API nem banco, com as mesmas regras de lance e os mesmos dados do seed (ver [Demonstração simulada](#demonstração-publicada-modo-demo-sem-servidor)). Para rodar local, use [Como rodar](#como-rodar-local); o passo a passo de hospedagem está em [`docs/deploy.md`](docs/deploy.md).
 
 Leilões de obras de arte de acervo público (The Met). O leiloeiro busca obras na API do museu e cria lotes; o licitante deposita saldo simulado, dá lances ao vivo e recebe um comprovante quando arremata. Toda a regra de dinheiro fica no back-end, e uma página pública de auditoria detecta qualquer adulteração do histórico, inclusive feita direto no banco.
+
+## Deploy publicado (Railway)
+
+O deploy segue o [Caminho B de `docs/deploy.md`](docs/deploy.md): um serviço construído a partir do `Dockerfile` da raiz (site Next.js + API NestJS no mesmo container), um PostgreSQL do Railway e um volume em `/data` para a testemunha da auditoria e as imagens. As migrations, o papel `auction_app` (sem DDL) e o seed rodam na primeira subida; os segredos (`AUDIT_HMAC_KEY` e a senha do papel da API) são gerados pelo próprio Railway e não estão no repositório. O seed carrega as contas de demonstração abaixo, e o cadastro de novos usuários também está disponível no link publicado.
 
 ## Contas de demonstração
 
@@ -21,7 +26,7 @@ O seed cria 1 leiloeiro, 5 licitantes, 1 lote aberto sem lances e um catálogo d
 
 ## Demonstração publicada (modo demo, sem servidor)
 
-O link publicado é só o front-end na Vercel, com `NEXT_PUBLIC_DEMO_MODE=1`. Nesse modo não existe API nem banco: o código em [`front-end/src/demo/`](front-end/src/demo/) responde às mesmas rotas que o front chama, direto no navegador, e guarda o estado no `localStorage` (cada visitante tem a sua demo; o aviso no topo tem **Reiniciar demo**).
+O link da Vercel é só o front-end, com `NEXT_PUBLIC_DEMO_MODE=1`. Nesse modo não existe API nem banco: o código em [`front-end/src/demo/`](front-end/src/demo/) responde às mesmas rotas que o front chama, direto no navegador, e guarda o estado no `localStorage` (cada visitante tem a sua demo; o aviso no topo tem **Reiniciar demo**).
 
 - **Mesmas regras do back:** lance mínimo, quem lidera não cobre o próprio lance, saldo reservado para quem está ganhando e liberado quando é superado, lance nos últimos 2 minutos estende o lote por mais 2, e no fim o vencedor é debitado, o leiloeiro creditado e o comprovante emitido. A ordem das recusas copia `back-end/src/lots/bid-rules.ts`, e os testes ficam em `front-end/src/demo/engine.test.ts`.
 - **Mesmos dados do seed:** as 36 obras de `back-end/prisma/seed-catalog.ts`, com lances, agendados e encerrados. `node scripts/demo-snapshot.mjs` gera `artworks.json` e as imagens a partir da API do Met. A busca do leiloeiro chama a API do Met direto do navegador.
@@ -176,6 +181,6 @@ Nós somos os agentes de IA que construíram o Arremate, dentro de uma arquitetu
 - **Onde usei:** planejamento e quebra em tarefas, pranchas de UI (Grok), código do front e da API (Codex e Claude Code), testes, uma revisão de segurança independente e QA navegando como usuário.
 - **Como usei:** a IA escreveu a maior parte do código dentro de um processo que eu defini: cada entrega com testes e evidência em `docs/evidence/`, e nenhuma dependência, push ou deploy sem a minha validação. As escolhas relevantes estão registradas, com alternativas, em `docs/decisoes.md`.
 - **O que revisei e ajustei:** a revisão de segurança achou o login travado por um IP único atrás do proxy e cabeçalhos ausentes no front, corrigidos com teste. O QA achou a sala mostrando “superado” e “ganhando” ao mesmo tempo e recusas de regra exibidas como erro do sistema; corrigi e cobri com E2E. O cadastro, o Google e os pagamentos simulados foram começados pelo Codex e terminados com o Claude Code. Também corrigi o próprio README quando ele afirmava algo que o código não sustentava, como a chave de auditoria e a migration que faltavam no passo a passo.
-- **Modo demo da Vercel:** o simulador de `front-end/src/demo/` foi escrito com o Claude Code a partir das regras do back, com testes próprios e verificado no navegador (lance, reserva, anti-sniping, liquidação, comprovante e adulteração detectada). A decisão de publicar só o front com o back simulado foi minha, para manter custo zero; o back real segue no repositório.
+- **Modo demo da Vercel:** o simulador de `front-end/src/demo/` foi escrito com o Claude Code a partir das regras do back, com testes próprios e verificado no navegador (lance, reserva, anti-sniping, liquidação, comprovante e adulteração detectada). O link principal publicado roda o sistema completo (back-end real em Node e PostgreSQL no Railway); a demo simulada da Vercel ficou como alternativa de custo zero. O deploy no Railway foi configurado com o Claude Code, conforme `docs/deploy.md`, e conferido por mim no navegador (cadastro, login e sessões em duas abas).
 
 Roteiro para explicar as decisões em voz alta: [como explicar o projeto](docs/entrevista.md).
