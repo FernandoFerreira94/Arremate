@@ -5,6 +5,7 @@ import { useState } from "react";
 import { AuthSheetProvider } from "@/features/auth/auth-sheet";
 import { PendingFavoriteRunner } from "@/features/favorites/use-favorites";
 import { TourProvider } from "@/features/tour/tour";
+import { WelcomeCard } from "@/features/welcome/welcome-card";
 import { AppToaster } from "@/components/app/toast";
 import { ActivityFeed } from "@/features/activity/activity-feed";
 import { ErrorListeners } from "@/components/app/error-listeners";
@@ -31,6 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <PendingFavoriteRunner />
           <PendingWatchRunner />
           <NotificationToaster />
+          <WelcomeCard />
           {children}
           <ActivityFeed />
           <AppToaster />
