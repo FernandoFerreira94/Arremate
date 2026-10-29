@@ -196,4 +196,4 @@ O agente para e me chama quando a escolha é minha: troca de decisão já congel
 - O próprio README afirmava coisas que o código não sustentava (a chave de auditoria e a migration que faltavam no passo a passo); corrigi.
 - O que não verifiquei fica marcado como **não verificado** (Safari/Firefox e aparelho físico).
 
-Versão narrativa do processo, na voz dos agentes: [docs/narrativa-agentes.md](docs/narrativa-agentes.md). Tarefa a tarefa: [diário de construção](docs/diario-construcao.md). Roteiro para explicar as decisões em voz alta: [como explicar o projeto](docs/entrevista.md).
+Versão narrativa do processo, na voz dos agentes: [docs/narrativa-agentes.md](docs/narrativa-agentes.md). Tarefa a tarefa: [diário de construção](docs/diario-construcao.md).
